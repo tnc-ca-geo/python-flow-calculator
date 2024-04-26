@@ -1,2 +1,130 @@
-# python-flow-calculator
-A Python package containing the flow calculator
+# Functional Flows Calculator
+
+## Table of Contents
+
+1. [About](#about)
+2. [Getting Started](#getting-started)
+3. [Using the Calculator](#using-the-calculator)
+4. [Supported Data & Modes of Use](#supported-data--modes-of-use)
+   - [Data Sources](#data-sources)
+   - [Questionnaire Mode](#questionnaire-mode)
+   - [Batch CSV Mode](#batch-csv-mode)
+     - [Formatting the CSV](#formatting-the-csv)
+   - [Alteration Assessments](#alteration-assessments)
+5. [Testing](#testing)
+6. [Questions and Comments](#questions-and-comments)
+   - [Extra info](#extra-info)
+
+## About
+
+This is a remastered functional flow calculator a majority of the logic has been left unchanged but lots of new functionality has been added. The repository has been refactored to be more maintainable and the dependencies have all been updated. Sourced from the [original functional flows calculator](https://github.com/leogoesger/func-flow). Additional functionality has been implemented from [the ffc api client](https://github.com/ceff-tech/ffc_api_client) and [the alternate rule set functional flow calculator](https://github.com/camcarpenter6/Alternate-Ruleset-FFC-BETA). It is still in active development so please report any bugs you find!
+
+## Getting Started
+
+1. Clone this repo to your machine
+
+2. Ensure you have python on your machine. Currently tested and working identically for python 3.10, 3.11 and 3.12
+
+3. Ensure you have `gdal` installed so that the drivers may be used by one of this packages dependencies. Information on gdal installation can be found at [this link](https://mapscaping.com/installing-gdal-for-beginners/)
+
+4. Optionally make a python venv with your preferred method:
+
+   - **Using Conda:**
+     If you're using Conda, you can create a virtual environment with the following command:
+
+     ```bash
+     conda create --name myenv python=3.12
+     ```
+
+     Replace `myenv` with your desired environment name, and `3.12` with the Python version you prefer.
+
+   - **Using `venv`:**
+     Alternatively, if you prefer using Python's built-in `venv` module, you can create a virtual environment with:
+
+     ```bash
+     python3.12 -m venv myenv
+     ```
+
+     Replace `myenv` with your desired environment name and 3.12 with your desired python version or exclude it entirely if you want to use your machines default python version.
+
+   If you chose to create a virtual environment ensure you activate it before running the below
+
+5. Install dependencies in the root directory:
+
+   ``` bash
+   pip install -r requirements.txt
+   ```
+
+## Using the Calculator
+
+1. If you chose to make a venv then activate it
+
+2. Optionally modify some of the params in the `params.py` file
+
+3. Simply run
+
+   ``` bash
+   python main.py
+   ```
+
+   and follow prompts provided to you via the command line interface.
+
+See below for more information on what data you might want to give it.
+
+## Supported Data & Modes of Use
+
+   There are two main modes of usage for the calculator. Firstly there is the questionnaire, this mode is intended for more casual use. It will ask you a series of questions about the data you are trying to calculate metrics on. Secondly there is the batch processing csv mode. This mode is intended for users who want to process large amounts of data from many data sources and don't want to spend the time entering answers for every data source. More in-depth descriptions of how to use each mode can be found below.
+
+### Data Sources
+
+   Currently there are 3 supported data sources for the functional flows calculator:
+
+   1. [USGS](https://www.usgs.gov/) gage data downloaded using the [dataretrieval-python](https://github.com/DOI-USGS/dataretrieval-python) package developed by USGS. This API is very speedy and seems well supported! Currently only [parameter id 00060](https://help.waterdata.usgs.gov/parameter_cd?group_cd=PHY) is supported (discharge in cf/s). A couple example gage ids are 11274500 and 11522500 if you wish to test it out.  
+   2. [CDEC](http://cdec.water.ca.gov/) gage data downloaded using the CDEC API. Note that this api is not documented anywhere and is very slow. Currently only parameter id 20 (discharge) is supported. Where possible use USGS gage data or take the files downloaded by the flow calculator on the first go through and use them as user uploaded data to save time. Data is downloaded to the /gage_data directory if you wish to view it after the flow calculator runs. A couple example gage ID's are 'NRN' and 'LTK' if you wish to test it out.
+   3. User uploaded data. If you have a csv of observations or data from a different data source that is not supported it can be accepted. Ensure all CSVs to be uploaded have a column labeled 'flow' and a column labeled 'date' it is fine if more columns exist but those two must as they are used as the observations of discharge in cf/s at the given date. If you plan on using Questionnaire mode please ensure your formatted csv files are all in `user_input_files/`. An example file is located at `user_input_files/example_input.csv`
+
+### Questionnaire Mode
+
+   In this mode you will be asked a bunch of questions about each file you want to upload or gage data you want to analyze. It is recommended for poking around or quickly checking things. For large amounts of processing it will be very tedious to use. You will be locked to just one of the three supported data sources when using this mode at a time.
+
+### Batch CSV Mode
+
+   In this mode your input will be read from a specifically formatted csv file. You will be asked a few general questions at the start of the calculator including: if you want an alteration assessment or not and what water year start date applies to the data you would like to analyze.
+
+   After entering this information it will automatically proceed calculating for all the data supplied in the batch csv. This is done so users with an exceptionally large amount of data don't need to wait for all the csvs to download then confirm before the calculations start.
+
+#### Formatting the CSV
+
+   The batch processing csv needs the following columns (case sensitive) to work: `usgs, cdec, path, comid, class, lat, lng` more columns can exist but those ones are required. Every entry in the csv must have one of `usgs`, `cdec` or `path` populated this is because they are used to fetch the data for the calculator.
+
+   usgs is expected to be a USGS gage id.
+
+   cdec is expected to be a CDEC gage id.
+
+   path can be a file path to the file relative to the root of this repository or a total path on your machine. For user uploaded data Latitude and Longitude can also be supplied using the `lat`, `lng` fields. These lat and long will then be used to snap to a comid and hopefully populate the stream class on its own using the file in `extra_info/comid_to_stream_class.csv`. If the snapped comid or your supplied comid is not within that csv an error will be throw and you will be asked to supply a stream class. This error can also occur for cdec and usgs gages if they cannot get stream class from their comid. In this case you will be asked to populate it yourself in the `class` field.
+
+   For any of the above cases a stream class and comid can be provided in `class` and `comid` fields and they will overwrite what is found for that gage. You can see an example batch csv in `batch_example.csv` with some dummy numbers feel free to use it and see how the batch processing functionality works before making your own csv.
+
+### Alteration Assessments
+
+   Alteration assessments are one of the core functionalities imported from [the ffc api client](https://github.com/ceff-tech/ffc_api_client). They are done by taking the observed functional flows computed from your data and comparing them with expected natural functional flow metrics retrieved via [the Code for Nature natural flow metrics api](https://rivers.codefornature.org/#/data) using your comid as the key. If one or more of your supplied comids (either auto populated or manually supplied) does not exist in the Code For Nature database you will get a warning in the command line interface but all of the remaining locations will still have their alteration assessed.
+
+   In addition to a default alteration assessment there is also the possibility to do a alteration assessment by water year type. For this to be possible your comid must be found within the `extra_info/comid_to_wyt.csv` file. More information on the specifics of that file is contained within the `extra_info/README.md` file. These alteration assessments by water year type will split up the output metrics based on what water year type they had and compare them to the correct water year type of Code for Nature natural functional flow metrics. This can be more accurate if you have a very large amount of data with a good distribution of different water year types.
+
+## Testing
+
+   To run the test suite found in the `tests/` directory run the following command while in the root directory of this project:
+
+   ``` python
+   pytest
+   ```
+
+   Note they are currently meaningless as the logic has been getting updated so rapidly. A robust test suite will be made once the major logic changes have ceased to help the maintainability of this repo.
+
+## Questions and Comments
+
+All questions or comment are encouraged to be sent to <nenerson@foundryspatial.com>
+
+### Extra info
+
+There are other README.md files within this project they can be found in the following directories: `extra_info/`, `user_input_files/` and `user_output_files/` directories. There is also a ReadMe.csv file from the original flow calculator in `extra_info/`. Make sure to check them for a bit more information about the calculator.
