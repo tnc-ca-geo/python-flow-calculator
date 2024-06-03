@@ -1,5 +1,6 @@
 from utils.upload_files import upload_files
 from utils.constants import VERSION
+from utils.constants import WY_START_DATE
 from utils.helpers import comid_to_class
 from utils.alteration_assessment import assess_alteration, assess_alteration_by_wyt
 from classes.USGSGage import USGSGage
@@ -23,7 +24,7 @@ done = False
 gage_arr = []
 alterationNeeded = False
 wyt_analysis = False
-start_date = '10/1'
+start_date = WY_START_DATE
 auto_start = False
 
 def clear_screen():
@@ -87,13 +88,6 @@ if __name__ == '__main__':
             if selected_file is None:
                 questionary.print("🛑 Please select a file you would like to use 🛑", style="bold fg:red")
                 sys.exit()
-
-            start_date = questionary.text('What water-year start date would you like to use m/d?',
-                            validate = lambda date: True if bool(re.match(r'^(1[0-2]|0?[1-9])/(3[01]|[12][0-9]|0?[1-9])$', date)) else "Please enter a valid date in m/d format"
-                            ).ask()
-        
-            if not start_date:
-                start_date = '10/1'
             
             cdec_to_be_downloaded = []
             usgs_to_be_downloaded = []
@@ -490,12 +484,6 @@ if __name__ == '__main__':
                     questionary.print("🛑 No flow class selected 🛑", style="bold fg:red")
                     sys.exit()
     
-        start_date = questionary.text('Start Date of each water year m/d?',
-                            validate = lambda date: True if bool(re.match(r'^(1[0-2]|0?[1-9])/(3[01]|[12][0-9]|0?[1-9])$', date)) else "Please enter a valid date in m/d format"
-                            ).ask()
-        
-        if not start_date:
-            start_date = '10/1'
     if not auto_start:
         formatted_files = ''
         firstGage = True
