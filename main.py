@@ -5,6 +5,7 @@ from utils.alteration_assessment import assess_alteration, assess_alteration_by_
 from classes.USGSGage import USGSGage
 from classes.UserUploadedData import UserUploadedData
 from classes.CDECGage import CDECGage
+from datetime import datetime
 import os
 import glob
 import sys
@@ -518,6 +519,18 @@ if __name__ == '__main__':
             sys.exit() 
     else:
         batch = True
+    
+    # make directory for this run to store its files in
+    current_time = datetime.now()
+    formatted_time = current_time.strftime("%Y-%m-%d-%H:%M")
+    dir_name = ''
+    if len(gage_arr) == 1:
+        dir_name = f'{gage_arr[0].gage_id}_{formatted_time}' 
+    else:
+        dir_name = f'Multiple_{formatted_time}'
+    os.mkdir(os.path.join(output_files_dir,dir_name)) 
+    output_files_dir = os.path.join(output_files_dir,dir_name)
+    
     try:
         done = False
         spinner_thread = threading.Thread(target=spinning_bar, args = ('Calculating Metrics... ',))
