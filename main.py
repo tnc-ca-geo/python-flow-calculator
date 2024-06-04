@@ -119,7 +119,7 @@ if __name__ == '__main__':
                         if line['usgs'] != '':
                             usgs_to_be_downloaded.append({'id': line['usgs'], 'comid': line['comid'], 'class': line['class']})
                         elif line['cdec'] != '':
-                            cdec_to_be_downloaded.append({'id': line['cdec'], 'comid': line['comid'], 'class': line['class']})
+                            cdec_to_be_downloaded.append({'id': line['cdec'].upper(), 'comid': line['comid'], 'class': line['class']})
                         elif line['path'] != '':
                             file_name = os.path.splitext(os.path.basename(line['path']))[0]
                             if line['comid'] != '':
@@ -289,8 +289,9 @@ if __name__ == '__main__':
 
             while entering:
                 gage_id = questionary.text('Please enter a CDEC Gage ID you would like to analyze'
-                                        ,validate = lambda id: True if bool(re.match(r'^[A-Z]{3}', id)) else "Please enter a valid CDEC Gage id").ask()
+                                        ,validate = lambda id: True if bool(re.match(r'^[a-zA-Z]{3}', id)) else "Please enter a valid CDEC Gage id").ask()
                 
+                gage_id = gage_id.upper()
                 if not gage_id:
                     questionary.print("🛑 No CDEC Gage ID provided 🛑", style="bold fg:red")
                     sys.exit()
