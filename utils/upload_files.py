@@ -232,8 +232,8 @@ def read_csv_to_arrays(file_path):
 
     df = pd.read_csv(file_path, skipinitialspace=True, usecols=fields)
     
-    # Some gages use very large negative numbers to represent their missing values, turning them into None which is how the calculator expects missing vlaues
-    df.loc[df['flow'] < 0, 'flow'] = None
+    # Some gages use very large negative numbers to represent their missing values, turning them into nan which is how the calculator expects missing vlaues
+    df.loc[df['flow'] < 0, 'flow'] = np.nan
     
     dates = df['date']
     flow = df['flow']
