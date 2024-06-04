@@ -69,3 +69,4 @@ TYPES = {
     'winter_frequencys_fifty': "Peak_Fre_2",
     # : "Peak_Dur_2": "Peak_Fre_2": "Peak_Mag_2": "Peak_Tim_5": "Peak_Dur_5": "Peak_Fre_5": "Peak_Mag_5": "Peak_Tim_10": "Peak_Dur_10": "Peak_Fre_10": "Peak_Mag_10": "Peak_Tim_20": "Peak_Dur_20": "Peak_Fre_20": "Peak_Mag_20"
 }
+NUMBER_TO_CLASS = {1: 'SM', 2: 'HSR', 3: 'LSR', 4: 'WS', 5: 'GW', 6: 'PGR', 7: 'FER', 8: 'RGW', 9: 'HLP'} 
