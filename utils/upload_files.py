@@ -21,22 +21,30 @@ def upload_files(start_date, gage_arr, output_files = 'user_output_files', batch
     
     
     for gage in gage_arr:
-        file = gage.download_directory
-        file_name = os.path.join(output_files, os.path.splitext(os.path.basename(file))[0])
-        file_identifiers.append(os.path.splitext(os.path.basename(file))[0])
-        dataset = read_csv_to_arrays(file)
-        matrix = MatrixConversion(
-            dataset['date'], dataset['flow'], start_date)
         
-        results = get_results(matrix, int(gage.flow_class), start_date, gage.comid)
-        output_dir = write_annual_flow_matrix(file_name, results, file_base_name[0])
-        output_file_dirs[0].append(output_dir)
-        output_dir, output_dir2 = write_annual_flow_result(file_name, results, file_base_name[1])
-        output_file_dirs[1].append(output_dir)
-        output_file_dirs[3].append(output_dir2)
-        write_drh(file_name, results, 'drh')
-        output_dir = write_low_flow(file_name, results, file_base_name[2])
-        output_file_dirs[2].append(output_dir)
+        try:
+            
+            file = gage.download_directory
+            file_name = os.path.join(output_files, os.path.splitext(os.path.basename(file))[0])
+            file_identifiers.append(os.path.splitext(os.path.basename(file))[0])
+            dataset = read_csv_to_arrays(file)
+            matrix = MatrixConversion(
+                dataset['date'], dataset['flow'], start_date)
+            
+            results = get_results(matrix, int(gage.flow_class), start_date, gage.comid)
+            output_dir = write_annual_flow_matrix(file_name, results, file_base_name[0])
+            output_file_dirs[0].append(output_dir)
+            output_dir, output_dir2 = write_annual_flow_result(file_name, results, file_base_name[1])
+            output_file_dirs[1].append(output_dir)
+            output_file_dirs[3].append(output_dir2)
+            write_drh(file_name, results, 'drh')
+            output_dir = write_low_flow(file_name, results, file_base_name[2])
+            output_file_dirs[2].append(output_dir)
+        
+        except Exception as e:
+            original_message = str(e)
+            gage_message = f"ERROR PROCESSING GAGE: {gage}"
+            raise type(e)(f"{original_message}. \n{gage_message}")
         
     now = datetime.now()
     formatted = now.strftime("%m%d%Y%H%M")
@@ -223,7 +231,10 @@ def read_csv_to_arrays(file_path):
     fields = ['date', 'flow']
 
     df = pd.read_csv(file_path, skipinitialspace=True, usecols=fields)
-
+    
+    # Some gages use very large negative numbers to represent their missing values, turning them into None which is how the calculator expects missing vlaues
+    df.loc[df['flow'] < 0, 'flow'] = None
+    
     dates = df['date']
     flow = df['flow']
 
