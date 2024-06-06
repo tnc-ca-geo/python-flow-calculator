@@ -1,7 +1,5 @@
 from utils.upload_files import upload_files
-from utils.constants import NUMBER_TO_CLASS
 from utils.constants import VERSION
-from utils.constants import WY_START_DATE
 from utils.helpers import comid_to_class
 from utils.alteration_assessment import assess_alteration, assess_alteration_by_wyt
 from classes.USGSGage import USGSGage
@@ -25,7 +23,7 @@ done = False
 gage_arr = []
 alterationNeeded = False
 wyt_analysis = False
-start_date = WY_START_DATE
+start_date = '10/1'
 auto_start = False
 
 def clear_screen():
@@ -61,10 +59,10 @@ if __name__ == '__main__':
     
     input_method = questionary.select(
 
-                f"Would you like to upload a formatted batch csv or fill in information in questionnaire mode?",
+                f"Would you like to upload a formatted batch csv or fill in information via CLI",
 
                 choices=[
-                    'Questionnaire',
+                    'CLI Questionnaire',
                     'Batch CSV'         
                 ]).ask()
     
@@ -89,6 +87,13 @@ if __name__ == '__main__':
             if selected_file is None:
                 questionary.print("🛑 Please select a file you would like to use 🛑", style="bold fg:red")
                 sys.exit()
+
+            start_date = questionary.text('What water-year start date would you like to use m/d?',
+                            validate = lambda date: True if bool(re.match(r'^(1[0-2]|0?[1-9])/(3[01]|[12][0-9]|0?[1-9])$', date)) else "Please enter a valid date in m/d format"
+                            ).ask()
+        
+            if not start_date:
+                start_date = '10/1'
             
             cdec_to_be_downloaded = []
             usgs_to_be_downloaded = []
@@ -114,7 +119,7 @@ if __name__ == '__main__':
                         if line['usgs'] != '':
                             usgs_to_be_downloaded.append({'id': line['usgs'], 'comid': line['comid'], 'class': line['class']})
                         elif line['cdec'] != '':
-                            cdec_to_be_downloaded.append({'id': line['cdec'].upper(), 'comid': line['comid'], 'class': line['class']})
+                            cdec_to_be_downloaded.append({'id': line['cdec'], 'comid': line['comid'], 'class': line['class']})
                         elif line['path'] != '':
                             file_name = os.path.splitext(os.path.basename(line['path']))[0]
                             if line['comid'] != '':
@@ -257,7 +262,7 @@ if __name__ == '__main__':
             asyncio.set_event_loop(asyncio.new_event_loop())
     
     
-    elif input_method == 'Questionnaire':
+    elif input_method == 'CLI Questionnaire':
         data_type = questionary.select(
 
             "Would you like to use your own time-series or USGS/CDEC gage data?",
@@ -284,9 +289,8 @@ if __name__ == '__main__':
 
             while entering:
                 gage_id = questionary.text('Please enter a CDEC Gage ID you would like to analyze'
-                                        ,validate = lambda id: True if bool(re.match(r'^[a-zA-Z]{3}', id)) else "Please enter a valid CDEC Gage id").ask()
+                                        ,validate = lambda id: True if bool(re.match(r'^[A-Z]{3}', id)) else "Please enter a valid CDEC Gage id").ask()
                 
-                gage_id = gage_id.upper()
                 if not gage_id:
                     questionary.print("🛑 No CDEC Gage ID provided 🛑", style="bold fg:red")
                     sys.exit()
@@ -459,51 +463,55 @@ if __name__ == '__main__':
 
                     choices=[
 
-                        "Flow Class 1 (SM: Snowmelt)",
+                        "Flow Class 1",
 
-                        "Flow Class 2 (HSR: High-volume snowmelt and rain)",
+                        "Flow Class 2",
 
-                        "Flow Class 3 (LSR: Low-volume snowmelt and rain)",
+                        "Flow Class 3",
 
-                        "Flow Class 4 (WS: Winter storms)",
+                        "Flow Class 4",
 
-                        "Flow Class 5 (GW: Groundwater)",
+                        "Flow Class 5",
 
-                        "Flow Class 6 (PGR: Perenial groundwater and rain)",
+                        "Flow Class 6",
 
-                        "Flow Class 7 (FER: Flashy, ephemeral rain)",
+                        "Flow Class 7",
 
-                        "Flow Class 8 (RGW: Rain and seasonal groundwater)",
+                        "Flow Class 8",
 
-                        "Flow Class 9 (HLP: High elevation low precipitation)"
+                        "Flow Class 9"
 
                     ]).ask()
 
                 if flow_class:
-                    flow_class = int(flow_class[11])
+                    flow_class = int(flow_class[-1:])
                     gage.flow_class = flow_class
                 else:
                     questionary.print("🛑 No flow class selected 🛑", style="bold fg:red")
                     sys.exit()
     
+        start_date = questionary.text('Start Date of each water year m/d?',
+                            validate = lambda date: True if bool(re.match(r'^(1[0-2]|0?[1-9])/(3[01]|[12][0-9]|0?[1-9])$', date)) else "Please enter a valid date in m/d format"
+                            ).ask()
+        
+        if not start_date:
+            start_date = '10/1'
     if not auto_start:
         formatted_files = ''
-        formatted_stream_classes = ''
         firstGage = True
         for gage in gage_arr:
             gage_file_name = os.path.basename(gage.download_directory)
             if firstGage:
                 formatted_files = gage_file_name
-                formatted_stream_classes = f"    {gage_file_name}:\n        {NUMBER_TO_CLASS[gage.flow_class]}"
                 firstGage = False
             else:
                 formatted_files = formatted_files + ', ' + gage_file_name    
-                formatted_stream_classes = formatted_stream_classes + f"\n    {gage_file_name}:\n        {NUMBER_TO_CLASS[gage.flow_class]}"
+
         batch = False
         if len(gage_arr) > 1:
             batch = questionary.confirm('Would you like to batch all your processed metrics into a single file?').ask()
 
-        ready = questionary.confirm(f"Calculate metrics with the following general parameters?\nFiles:\n    {formatted_files}\nStream Class per File:\n{formatted_stream_classes}\nStart Date:\n    {start_date}\nBatched:\n    {batch}\nAlteration Assessment:\n    {alterationNeeded}\n").ask()
+        ready = questionary.confirm(f"Calculate metrics with the following general parameters?\nFiles:\n    {formatted_files}\nStart Date:\n    {start_date}\nBatched:\n    {batch}\nAlteration Assessment:\n    {alterationNeeded}\n").ask()
         
         if not ready:
             questionary.print("🛑 User parameters declined 🛑", style="bold fg:red")
@@ -517,7 +525,7 @@ if __name__ == '__main__':
         
         # The original flow calculator depends on the way certain functions behave when given all nan which causes many warnings
         # Ignoring warnings for now as they are expected eventually these warnings should be addressed by writing wrapper functions
-        # These wrapper functions should not change the functionality of the original numpy functions but rather handle the all nan case that is currently throwing warnings more gracefully
+        # These wrapper functions should not change the functionality of the original numpy functions but rather handle the ll nan case that is currently throwing warnings more gracefully
         with warnings.catch_warnings():
             warnings.simplefilter('ignore')
             alteration_files = upload_files(start_date = start_date, gage_arr = gage_arr, output_files = output_files_dir, batched = batch)
