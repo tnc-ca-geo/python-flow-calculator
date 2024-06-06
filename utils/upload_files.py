@@ -36,10 +36,9 @@ def upload_files(start_date, gage_arr, output_files = 'user_output_files', batch
         output_file_dirs[2].append(output_dir2)
         write_drh(file_name, results, 'drh')
         
-    now = datetime.now()
-    formatted = now.strftime("%m%d%Y%H%M")
-    param_path = os.path.join(output_files,formatted)
-    write_parameters(param_path, gage.flow_class)
+        formatted = f"{gage.gage_id}"
+        param_path = os.path.join(output_files,formatted)
+        write_parameters(param_path, gage.flow_class)
     
     if batched:
         for file_paths, base_name in zip(output_file_dirs, file_base_name):
@@ -75,6 +74,8 @@ def get_results(matrix, flow_class, start_date = None, comid = None):
     results["summer"]["timings_water"] = start_of_summer
     results["DRH"] = calculator.get_DRH()
     results["new_low"], results["classification"] = calculator.new_low_flow_metrics()
+    results["year_ranges_new"] = calculator.year_ranges
+    
     if comid is not None:
         results["classification"]["wyt"] = [comid_to_wyt(comid,i+1) for i in calculator.year_ranges]
     return results
@@ -116,12 +117,11 @@ def write_annual_flow_result(file_name, results, file_type):
     dict_to_array(results['summer'], 'summer', dataset)
     dict_to_array(results['new_low'], 'ds', dataset)
     dict_to_array(results['classification'], '', dataset)
-    results['year_ranges'].insert(0,'Year')
+    results['year_ranges_new'].insert(0,'Year')
     df = pd.DataFrame(dataset)
-    df.columns = results['year_ranges']
+    df.columns = results['year_ranges_new']
     output_dir = file_name + '_' + file_type + '.csv'
     df.to_csv(output_dir, index=False,na_rep='None')
-    #np.savetxt(output_dir, a, delimiter=',',fmt='%s', header=, comments='')
     
 
     """Create supplementary metrics file"""
