@@ -528,8 +528,11 @@ if __name__ == '__main__':
         dir_name = f'{gage_arr[0].gage_id}_{formatted_time}' 
     else:
         dir_name = f'Multiple_{formatted_time}'
-    os.mkdir(os.path.join(output_files_dir,dir_name)) 
+    
     output_files_dir = os.path.join(output_files_dir,dir_name)
+    if not os.path.exists(output_files_dir):
+        os.mkdir(output_files_dir) 
+    
     
     try:
         done = False
