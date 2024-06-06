@@ -193,7 +193,7 @@ def batch_files(file_paths, base_file_name, file_identifier, output_dir):
     column_order = ['Source'] + [col for col in combined_data.columns if col != 'Source']
     combined_data = combined_data.astype({'Year':'int'})
     combined_data = combined_data[column_order]
-    combined_data.to_csv(os.path.join(output_dir,base_file_name + "_combined.csv"), index=False)
+    combined_data.to_csv(os.path.join(output_dir, "combined_" + base_file_name + ".csv"), index=False)
 
 def dict_to_array(data, field_type, dataset):
     for key, value in data.items():
