@@ -1,4 +1,5 @@
 VERSION = '0.9.1'
+WY_START_DATE = '10/1'
 TYPES = {
     'all_year_average_annual_flows': "Avg",
     'all_year_standard_deviations': "Std",
