@@ -59,10 +59,10 @@ if __name__ == '__main__':
     
     input_method = questionary.select(
 
-                f"Would you like to upload a formatted batch csv or fill in information via CLI",
+                f"Would you like to upload a formatted batch csv or fill in information in questionnaire mode?",
 
                 choices=[
-                    'CLI Questionnaire',
+                    'Questionnaire',
                     'Batch CSV'         
                 ]).ask()
     
@@ -262,7 +262,7 @@ if __name__ == '__main__':
             asyncio.set_event_loop(asyncio.new_event_loop())
     
     
-    elif input_method == 'CLI Questionnaire':
+    elif input_method == 'Questionnaire':
         data_type = questionary.select(
 
             "Would you like to use your own time-series or USGS/CDEC gage data?",
