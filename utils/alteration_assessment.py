@@ -18,8 +18,8 @@ def assess_alteration(gages, metrics_paths, output_files = 'user_output_files'):
             continue
         formatted_percentiles, formatted_raw = format_metrics(metrics)
         output_df = compare_data_frames(formatted_raw, predicted_metrics, formatted_percentiles)
-        alteration_assessment_list.append(output_df, deep = True)
-    write_alteration_assessment(output_df, gage_id, output_files)
+        alteration_assessment_list.append(output_df.copy(deep = True))
+    write_alteration_assessment(alteration_assessment_list, gage_id, output_files)
     return return_message
 
 def assess_alteration_by_wyt(gages, metrics_paths, output_files = 'user_output_files'):
@@ -67,6 +67,10 @@ def compare_data_frames(raw_metrics, predicted_metrics, raw_percentiles):
     return combined_df
 
 def write_alteration_assessment(dfs, gage_id, output_dir, wyt = None):
+    
+    first_df = True
+    out_df = None
+    
     for df in dfs:
         df.insert(0, 'Source', gage_id)
         peaks = ('Peak_10', 'Peak_5', 'Peak_2')
@@ -77,21 +81,31 @@ def write_alteration_assessment(dfs, gage_id, output_dir, wyt = None):
         condition = (df['metric'].isin(timing_cols)) & (df['alteration_type'] == 'high')
         df.loc[condition, 'alteration_type'] = 'late'
         
+        if first_df:
+            out_df = df
+            first_df = False
+        else:
+            pd.concat([out_df,df], ignore_index=True)
+    
+    file_string = 'combined'
+    if (len(dfs) == 1):
+        file_string = gage_id
+    
 
     if wyt is not None:
-        out_path = os.path.join(output_dir,f'{wyt}_{gage_id}_alteration_assessment.csv')
+        out_path = os.path.join(output_dir,f'{file_string}_{wyt}_alteration_assessment.csv')
     else:
-        out_path = os.path.join(output_dir,f'{gage_id}_alteration_assessment.csv')
+        out_path = os.path.join(output_dir,f'{file_string}_alteration_assessment.csv')
     
-    alteration_results = df[['metric','alteration_type', 'status', 'status_code', 'median_in_iqr']]
+    alteration_results = out_df[['metric','alteration_type', 'status', 'status_code', 'median_in_iqr']]
     alteration_results.to_csv(out_path, index = False)
     
     if wyt is not None:
-        out_path = os.path.join(output_dir,f'{wyt}_{gage_id}_predicted_observed_percentiles.csv')
+        out_path = os.path.join(output_dir,f'{file_string}_{wyt}_predicted_observed_percentiles.csv')
     else:
-        out_path = os.path.join(output_dir,f'{gage_id}_predicted_observed_percentiles.csv')
+        out_path = os.path.join(output_dir,f'{file_string}_predicted_observed_percentiles.csv')
 
-    percentiles = df[['metric', 'p10', 'p25', 'p50', 'p75', 'p90', 'p10_predicted', 'p25_predicted', 'p50_predicted', 'p75_predicted', 'p90_predicted']]
+    percentiles = out_df[['metric', 'p10', 'p25', 'p50', 'p75', 'p90', 'p10_predicted', 'p25_predicted', 'p50_predicted', 'p75_predicted', 'p90_predicted']]
     percentiles.to_csv(out_path, index = False)
 
 def observations_altered(observations, metric, low_bound, high_bound, median):
