@@ -7,7 +7,7 @@ from io import StringIO
 def assess_alteration(gages, metrics_paths, output_files = 'user_output_files'):
     
     return_message = ''
-
+    alteration_assessment_list = []
     for (gage, metrics) in zip(gages, metrics_paths):
         comid = gage.comid
         gage_id = gage.gage_id
@@ -18,7 +18,8 @@ def assess_alteration(gages, metrics_paths, output_files = 'user_output_files'):
             continue
         formatted_percentiles, formatted_raw = format_metrics(metrics)
         output_df = compare_data_frames(formatted_raw, predicted_metrics, formatted_percentiles)
-        write_alteration_assessment(output_df, gage_id, output_files)
+        alteration_assessment_list.append(output_df, deep = True)
+    write_alteration_assessment(output_df, gage_id, output_files)
     return return_message
 
 def assess_alteration_by_wyt(gages, metrics_paths, output_files = 'user_output_files'):
@@ -65,15 +66,17 @@ def compare_data_frames(raw_metrics, predicted_metrics, raw_percentiles):
 
     return combined_df
 
-def write_alteration_assessment(df, gage_id, output_dir, wyt = None):
-    
-    peaks = ('Peak_10', 'Peak_5', 'Peak_2')
-    df = df[~df['metric'].isin(peaks)]
-    timing_cols = ['DS_Tim', 'FA_Tim', 'SP_Tim', 'Wet_Tim']
-    condition = (df['metric'].isin(timing_cols)) & (df['alteration_type'] == 'low')
-    df.loc[condition, 'alteration_type'] = 'early'
-    condition = (df['metric'].isin(timing_cols)) & (df['alteration_type'] == 'high')
-    df.loc[condition, 'alteration_type'] = 'late'
+def write_alteration_assessment(dfs, gage_id, output_dir, wyt = None):
+    for df in dfs:
+        df.insert(0, 'Source', gage_id)
+        peaks = ('Peak_10', 'Peak_5', 'Peak_2')
+        df = df[~df['metric'].isin(peaks)]
+        timing_cols = ['DS_Tim', 'FA_Tim', 'SP_Tim', 'Wet_Tim']
+        condition = (df['metric'].isin(timing_cols)) & (df['alteration_type'] == 'low')
+        df.loc[condition, 'alteration_type'] = 'early'
+        condition = (df['metric'].isin(timing_cols)) & (df['alteration_type'] == 'high')
+        df.loc[condition, 'alteration_type'] = 'late'
+        
 
     if wyt is not None:
         out_path = os.path.join(output_dir,f'{wyt}_{gage_id}_alteration_assessment.csv')
