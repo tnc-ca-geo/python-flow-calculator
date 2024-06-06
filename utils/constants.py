@@ -1,4 +1,5 @@
 VERSION = '0.9.1'
+WY_START_DATE = '10/1'
 TYPES = {
     'all_year_average_annual_flows': "Avg",
     'all_year_standard_deviations': "Std",
@@ -77,3 +78,4 @@ TYPES = {
     'Int_Class': "Int_Class",
     'wyt': "WYT"
 }
+NUMBER_TO_CLASS = {1: 'SM', 2: 'HSR', 3: 'LSR', 4: 'WS', 5: 'GW', 6: 'PGR', 7: 'FER', 8: 'RGW', 9: 'HLP'} 
