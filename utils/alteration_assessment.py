@@ -125,10 +125,11 @@ def write_alteration_assessment(aa_list, output_dir, wyt = False):
             out_df = pd.concat([out_df,df], ignore_index=True)
     
     file_string = 'combined'
-    list_to_add = []
+    list_to_add = ['Source']
+    # case when we are not batching
     if (len(aa_list) == 1) or (wyt and len(aa_list) <= 3):
         file_string = gage_id
-        list_to_add = ['Source']
+        list_to_add = []
 
     if wyt:
         out_path = os.path.join(output_dir,f'{file_string}_wyt_alteration_assessment.csv')
