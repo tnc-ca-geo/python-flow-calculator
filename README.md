@@ -4,8 +4,6 @@
 
 1. [About](#about)
 2. [Getting Started](#getting-started)
-   - [Getting Started (Windows)](#getting-started-windows)
-   - [Getting Started (Windows)](#getting-started-macos)
 3. [Using the Calculator](#using-the-calculator)
 4. [Supported Data & Modes of Use](#supported-data--modes-of-use)
    - [Data Sources](#data-sources)
@@ -19,58 +17,49 @@
 
 ## About
 
-This is a remastered functional flow calculator a majority of the logic has been left unchanged but lots of new functionality has been added. The repository has been refactored to be more maintainable and the dependencies have all been updated. Sourced from the [original functional flows calculator](https://github.com/leogoesger/func-flow). Additional functionality has been implemented from [the ffc api client](https://github.com/ceff-tech/ffc_api_client) and [the alternate rule set functional flow calculator](https://github.com/camcarpenter6/Alternate-Ruleset-FFC-BETA). As well as some [new low flow metrics](https://agupubs.onlinelibrary.wiley.com/doi/pdf/10.1029/2023WR035768) which have an R implementation [here](https://github.com/jessayers20/Functional-Low-Flows). It is still in active development so please report any bugs you find!
+This is a remastered functional flow calculator a majority of the logic has been left unchanged but lots of new functionality has been added. The repository has been refactored to be more maintainable and the dependencies have all been updated. Sourced from the [original functional flows calculator](https://github.com/leogoesger/func-flow). Additional functionality has been implemented from [the ffc api client](https://github.com/ceff-tech/ffc_api_client) and [the alternate rule set functional flow calculator](https://github.com/camcarpenter6/Alternate-Ruleset-FFC-BETA). It is still in active development so please report any bugs you find!
 
 ## Getting Started
 
-Below is a list of steps for different operating systems to get a working environment to run the flow calculator in. If you are already familiar with cloning repositories and installing dependencies from a requirements.txt file you can skip this section and set up your environment in whatever way you prefer. The only requirement needed that is not within the requirements.txt file is [GDAL](https://gdal.org/).
+1. Clone this repo to your machine
 
-## Getting Started (Windows)
+2. Ensure you have python on your machine. Currently tested and working identically for python 3.10, 3.11 and 3.12
 
-1. Install [Git](https://git-scm.com/download/) and [Miniconda](https://docs.anaconda.com/free/miniconda/). Most likely you will need the 64 bit windows installers!
+3. Ensure you have `gdal` installed so that the drivers may be used by one of this packages dependencies. Information on gdal installation can be found at [this link](https://mapscaping.com/installing-gdal-for-beginners/)
 
-2. Create the directory you would like to have the flow calculator in using file explorer and copy the **full** path to that directory.
+4. Optionally make a python venv with your preferred method:
 
-3. Use the following to open a conda command shell instance in your new directory:
-   - In the search bar at the bottom left of your desktop search `Anaconda Prompt (miniconda3)`
-   - Run `Anaconda Prompt (miniconda3)`
-   - Inside the command shell instance that just opened up type `cd <path-to-directory>` replacing `<path-to-directory>` with the directory path you copied in step 2
+   - **Using Conda:**
+     If you're using Conda, you can create a virtual environment with the following command:
 
-4. Clone this repository and change your command shell's window to be within the cloned repository by using:
-   - first `git clone https://github.com/tnc-ca-geo/python-flow-calculator.git`
-   - second `cd python-flow-calculator`
+     ```bash
+     conda create --name myenv python=3.12
+     ```
 
-5. Now create a conda environment and install all the dependencies into it using `conda env create -f environment.yaml`
+     Replace `myenv` with your desired environment name, and `3.12` with the Python version you prefer.
 
-6. Activate the environment with `conda activate flow-calculator-env`
+   - **Using `venv`:**
+     Alternatively, if you prefer using Python's built-in `venv` module, you can create a virtual environment with:
 
-7. Once you are done using the flow calculator deactivate the environment using `conda deactivate`. Make sure to activate it again before you use the flow calculator the next time!
+     ```bash
+     python3.12 -m venv myenv
+     ```
 
-It should be noted that you only need to use `Anaconda Prompt (miniconda)` because by default conda does not modify PATH variables on Windows if you would like to set up conda to work outside of Anaconda Prompt (miniconda) and within your normal powershell or command shell you need to [modify your path variables to include conda](https://www.geeksforgeeks.org/how-to-setup-anaconda-path-to-environment-variable/).
+     Replace `myenv` with your desired environment name and 3.12 with your desired python version or exclude it entirely if you want to use your machines default python version.
 
-## Getting Started (MacOS)
+   If you chose to create a virtual environment ensure you activate it before running the below
 
-1. Install [Git](https://git-scm.com/download/) and [Miniconda](https://docs.anaconda.com/free/miniconda/)
+5. Install dependencies in the root directory:
 
-2. Create and copy the path to the folder you would like to store the functional flows calculator in.
-
-3. In the Finder application, open the `/Applications/Utilities` folder, then double-click Terminal.
-
-4. Within Terminal use cd `cd <path-to-directory>`  replacing `<path-to-directory>` with the directory path you copied in step 2
-
-5. Clone this repository and change your command shell's window to be within the cloned repository by using:
-   - First `git clone https://github.com/tnc-ca-geo/python-flow-calculator.git`
-   - Second `cd python-flow-calculator`
-
-6. Now create a conda environment and install all the dependencies into it using `conda env create -f environment.yaml`
-
-7. Once you are done using the flow calculator deactivate the environment using `conda deactivate`. Make sure to activate it again before you use the flow calculator the next time!
+   ``` bash
+   pip install -r requirements.txt
+   ```
 
 ## Using the Calculator
 
-1. Activate the conda environment made in the "[Getting Started](#getting-started)" section with `conda activate flow-calculator-env`
+1. If you chose to make a venv then activate it
 
-2. Optionally modify some of the params in the `params.py` file.
+2. Optionally modify some of the params in the `params.py` file
 
 3. Simply run
 
@@ -91,7 +80,7 @@ See below for more information on what data you might want to give it.
    Currently there are 3 supported data sources for the functional flows calculator:
 
    1. [USGS](https://www.usgs.gov/) gage data downloaded using the [dataretrieval-python](https://github.com/DOI-USGS/dataretrieval-python) package developed by USGS. This API is very speedy and seems well supported! Currently only [parameter id 00060](https://help.waterdata.usgs.gov/parameter_cd?group_cd=PHY) is supported (discharge in cf/s). A couple example gage ids are 11274500 and 11522500 if you wish to test it out.  
-   2. [CDEC](http://cdec.water.ca.gov/) gage data downloaded using the CDEC API. Note that this api is not documented anywhere and is very slow. Currently only parameter id 20 (discharge) is supported. Where possible use USGS gage data or take the files downloaded by the flow calculator on the first go through and use them as user uploaded data to save time. Data is downloaded to the /gage_data directory if you wish to view it after the flow calculator runs. A couple example gage ID's are 'NRN' and 'LCH' if you wish to test it out.
+   2. [CDEC](http://cdec.water.ca.gov/) gage data downloaded using the CDEC API. Note that this api is not documented anywhere and is very slow. Currently only parameter id 20 (discharge) is supported. Where possible use USGS gage data or take the files downloaded by the flow calculator on the first go through and use them as user uploaded data to save time. Data is downloaded to the /gage_data directory if you wish to view it after the flow calculator runs. A couple example gage ID's are 'NRN' and 'LTK' if you wish to test it out.
    3. User uploaded data. If you have a csv of observations or data from a different data source that is not supported it can be accepted. Ensure all CSVs to be uploaded have a column labeled 'flow' and a column labeled 'date' it is fine if more columns exist but those two must as they are used as the observations of discharge in cf/s at the given date. If you plan on using Questionnaire mode please ensure your formatted csv files are all in `user_input_files/`. An example file is located at `user_input_files/example_input.csv`
 
 ### Questionnaire Mode
@@ -112,13 +101,13 @@ See below for more information on what data you might want to give it.
 
    cdec is expected to be a CDEC gage id.
 
-   path can be a file path to the file relative to the root of this repository or a total path on your machine. For user uploaded data Latitude and Longitude can also be supplied using the `lat`, `lng` fields. These lat and long will then be used to snap to a comid and hopefully populate the stream class on its own using the file in `extra_info/comid_to_stream_class.csv`. If the snapped comid or your supplied comid is not within that csv an error will be throw and you will be asked to supply a stream class. This error can also occur for cdec and usgs gages if they cannot get stream class from their comid. In this case you will be asked to populate it yourself in the `class` field. Stream classes used to populate the `class` field can be found with at the [eFlows website](https://eflows.ucdavis.edu/).
+   path can be a file path to the file relative to the root of this repository or a total path on your machine. For user uploaded data Latitude and Longitude can also be supplied using the `lat`, `lng` fields. These lat and long will then be used to snap to a comid and hopefully populate the stream class on its own using the file in `extra_info/comid_to_stream_class.csv`. If the snapped comid or your supplied comid is not within that csv an error will be throw and you will be asked to supply a stream class. This error can also occur for cdec and usgs gages if they cannot get stream class from their comid. In this case you will be asked to populate it yourself in the `class` field.
 
    For any of the above cases a stream class and comid can be provided in `class` and `comid` fields and they will overwrite what is found for that gage. You can see an example batch csv in `batch_example.csv` with some dummy numbers feel free to use it and see how the batch processing functionality works before making your own csv.
 
 ### Alteration Assessments
 
-   Alteration assessments are one of the core functionalities imported from [the ffc api client](https://github.com/ceff-tech/ffc_api_client). They are done by taking the observed functional flows computed from your data and comparing them with expected natural functional flow metrics retrieved via [the Code for Nature natural flow metrics api](https://rivers.codefornature.org/#/data) using your comid as the key. If one or more of your supplied comid's (either auto populated or manually supplied) does not exist in the Code For Nature database you will get a warning in the command line interface but all of the remaining locations will still have their alteration assessed.
+   Alteration assessments are one of the core functionalities imported from [the ffc api client](https://github.com/ceff-tech/ffc_api_client). They are done by taking the observed functional flows computed from your data and comparing them with expected natural functional flow metrics retrieved via [the Code for Nature natural flow metrics api](https://rivers.codefornature.org/#/data) using your comid as the key. If one or more of your supplied comids (either auto populated or manually supplied) does not exist in the Code For Nature database you will get a warning in the command line interface but all of the remaining locations will still have their alteration assessed.
 
    In addition to a default alteration assessment there is also the possibility to do a alteration assessment by water year type. For this to be possible your comid must be found within the `extra_info/comid_to_wyt.csv` file. More information on the specifics of that file is contained within the `extra_info/README.md` file. These alteration assessments by water year type will split up the output metrics based on what water year type they had and compare them to the correct water year type of Code for Nature natural functional flow metrics. This can be more accurate if you have a very large amount of data with a good distribution of different water year types.
 
