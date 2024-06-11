@@ -46,7 +46,7 @@ Below is a list of steps for different operating systems to get a working enviro
 
 7. Once you are done using the flow calculator deactivate the environment using `conda deactivate`. Make sure to activate it again before you use the flow calculator the next time!
 
-It should be noted that you only need to use `Anaconda Prompt (miniconda)` because by default conda does not modify PATH variables on Windows if you would like to set up conda to work outside of Anaconda Prompt (miniconda) and within your normal powershell or command shell you need to [modify your path variables to include conda](https://www.geeksforgeeks.org/how-to-setup-anaconda-path-to-environment-variable/).
+It should be noted that you only need to use `Anaconda Prompt (miniconda)` because by default conda does not modify PATH variables on Windows. If you would like to set up conda to work outside of Anaconda Prompt (miniconda) and within your normal powershell or command shell you need to [modify your path variables to include conda](https://www.geeksforgeeks.org/how-to-setup-anaconda-path-to-environment-variable/).
 
 ## Getting Started (MacOS)
 
