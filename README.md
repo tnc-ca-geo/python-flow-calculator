@@ -5,7 +5,7 @@
 1. [About](#about)
 2. [Getting Started](#getting-started)
    - [Getting Started (Windows)](#getting-started-windows)
-   - [Getting Started (Windows)](#getting-started-macos)
+   - [Getting Started (MacOS)](#getting-started-macos)
 3. [Using the Calculator](#using-the-calculator)
 4. [Supported Data & Modes of Use](#supported-data--modes-of-use)
    - [Data Sources](#data-sources)
