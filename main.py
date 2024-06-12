@@ -253,7 +253,7 @@ if __name__ == '__main__':
                 sys.stdout.write("\r" + " " * (len("This may take a bit, CDEC's API can be slow") + 1) + "\r")
                 questionary.print("Downloading CDEC data... ✔️", style="bold fg:lightgreen")
             
-            # skip over the prompts at the end as users that took the time to make a batch csv probably are computing alot of data and just want to be able to set it and not worry about it until its done 
+            # skip over the prompts at the end as users that took the time to make a batch csv probably are computing a lot of data and just want to be able to set it and not worry about it until its done 
             auto_start = True
             asyncio.set_event_loop(asyncio.new_event_loop())
     
@@ -394,7 +394,7 @@ if __name__ == '__main__':
             
             questionary.print("Downloading gage data... ✔️", style="bold fg:lightgreen")
             
-            # pynhd package kills the asyncio event loop so need to recreate it before we do more asyncronous questions with questionairy
+            # pynhd package kills the asyncio event loop so need to recreate it before we do more asynchronous questions with questionary
             asyncio.set_event_loop(asyncio.new_event_loop())
 
         elif data_type == "Timeseries data":
@@ -470,7 +470,7 @@ if __name__ == '__main__':
 
                         "Flow Class 5 (GW: Groundwater)",
 
-                        "Flow Class 6 (PGR: Perenial groundwater and rain)",
+                        "Flow Class 6 (PGR: Perennial groundwater and rain)",
 
                         "Flow Class 7 (FER: Flashy, ephemeral rain)",
 

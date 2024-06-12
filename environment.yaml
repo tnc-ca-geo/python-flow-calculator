@@ -1,0 +1,9 @@
+name: flow-calculator-env
+channels:
+  - conda-forge
+dependencies:
+  - python=3.12
+  - conda-forge::gdal
+  - pip
+  - pip:
+    - -r requirements.txt
