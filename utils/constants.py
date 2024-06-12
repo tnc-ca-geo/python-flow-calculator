@@ -1,5 +1,6 @@
-VERSION = '0.9.1'
+VERSION = '0.9.2'
 WY_START_DATE = '10/1'
+DELETE_INDIVIDUAL_FILES_WHEN_BATCH = True
 TYPES = {
     'all_year_average_annual_flows': "Avg",
     'all_year_standard_deviations': "Std",
