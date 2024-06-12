@@ -4,10 +4,10 @@ import requests
 import os
 from io import StringIO
 
-def assess_alteration(gages, metrics_paths, output_files = 'user_output_files'):
+def assess_alteration(gages, metrics_paths, output_files = 'user_output_files', aa_start_year = None, aa_end_year = None):
     
     return_message = ''
-
+    alteration_assessment_list = []
     for (gage, metrics) in zip(gages, metrics_paths):
         comid = gage.comid
         gage_id = gage.gage_id
@@ -16,30 +16,59 @@ def assess_alteration(gages, metrics_paths, output_files = 'user_output_files'):
         if predicted_metrics.empty:
             return_message = return_message + f"Predicted metrics could not be generated for comid {comid}. Is it outside the study area? Skipping it...\n"
             continue
-        formatted_percentiles, formatted_raw = format_metrics(metrics)
-        output_df = compare_data_frames(formatted_raw, predicted_metrics, formatted_percentiles)
-        write_alteration_assessment(output_df, gage_id, output_files)
+        
+        formatted_percentiles, formatted_raw, count = format_metrics(metrics,aa_start_year=aa_start_year, aa_end_year= aa_end_year)
+
+        if formatted_raw.empty:
+            return_message = return_message + f"The time range you selected {aa_start_year}-{aa_end_year} leaves the gage {gage_id} with no data. Skipping it...\n"
+            continue
+
+        output_df = compare_data_frames(formatted_raw, predicted_metrics, formatted_percentiles,count)
+        
+        aa_dict = {}
+        aa_dict['aa'] = output_df.copy(deep = True)
+        aa_dict['gage_id'] = gage_id
+        alteration_assessment_list.append(aa_dict)
+    
+    if len(alteration_assessment_list) > 0:
+        write_alteration_assessment(alteration_assessment_list, output_files)
     return return_message
 
-def assess_alteration_by_wyt(gages, metrics_paths, output_files = 'user_output_files'):
+def assess_alteration_by_wyt(gages, metrics_paths, output_files = 'user_output_files', aa_start_year = None, aa_end_year = None):
     
     return_message = ''
-    
+    alteration_assessment_list = []
     for (gage, metrics) in zip(gages, metrics_paths):
         comid = gage.comid
         gage_id = gage.gage_id
             
         for wyt in ('dry', 'wet', 'moderate'):
             predicted_metrics = get_predicted_flow_metrics(comid, wyt=wyt)
+            
             if predicted_metrics.empty:
                 return_message = return_message + f"Predicted metrics could not be generated for comid {comid} and water year type {wyt}. Is this comid outside the study area? Skipping it...\n"
                 continue
-            formatted_percentiles, formatted_raw = format_metrics(metrics, wyt = wyt)
-            output_df = compare_data_frames(formatted_raw, predicted_metrics, formatted_percentiles)
-            write_alteration_assessment(output_df, gage_id, output_files, wyt = wyt)
+            
+            formatted_percentiles, formatted_raw, count = format_metrics(metrics, wyt = wyt, aa_start_year = aa_start_year, aa_end_year = aa_end_year)
+            
+            if formatted_raw.empty:
+                return_message = return_message + f"The year range selected {aa_start_year}-{aa_end_year} leaves the gage {gage_id} with no data for water year type {wyt}. Skipping it...\n"
+                continue
+
+            output_df = compare_data_frames(formatted_raw, predicted_metrics, formatted_percentiles, count)
+            
+            output_df.insert(0, 'WYT', wyt)
+            aa_dict = {}
+            aa_dict['aa'] = output_df.copy(deep = True)
+            aa_dict['gage_id'] = gage_id
+            alteration_assessment_list.append(aa_dict)
+    
+    if len(alteration_assessment_list) > 0:
+        write_alteration_assessment(alteration_assessment_list, output_files, wyt = True)        
+    
     return return_message
 
-def compare_data_frames(raw_metrics, predicted_metrics, raw_percentiles):
+def compare_data_frames(raw_metrics, predicted_metrics, raw_percentiles, count):
     
     combined_df = pd.merge(raw_percentiles, predicted_metrics, on='metric', suffixes=('', '_predicted'))
     combined_df['alteration_type'] = "unknown"
@@ -63,32 +92,62 @@ def compare_data_frames(raw_metrics, predicted_metrics, raw_percentiles):
             combined_df.at[index, 'status'] = "likely_altered"
             combined_df.at[index, 'status_code'] = -1
 
+    count = count.to_frame()
+    count.columns = ['years_used']
+    count['metric'] = count.index
+    combined_df = pd.merge(combined_df, count, on='metric')
+    combined_df['sufficient_data'] = np.where(combined_df['years_used'] < 10, False, True)
+
     return combined_df
 
-def write_alteration_assessment(df, gage_id, output_dir, wyt = None):
+def write_alteration_assessment(aa_list, output_dir, wyt = False):
     
-    peaks = ('Peak_10', 'Peak_5', 'Peak_2')
-    df = df[~df['metric'].isin(peaks)]
-    timing_cols = ['DS_Tim', 'FA_Tim', 'SP_Tim', 'Wet_Tim']
-    condition = (df['metric'].isin(timing_cols)) & (df['alteration_type'] == 'low')
-    df.loc[condition, 'alteration_type'] = 'early'
-    condition = (df['metric'].isin(timing_cols)) & (df['alteration_type'] == 'high')
-    df.loc[condition, 'alteration_type'] = 'late'
+    first_df = True
+    out_df = None
+    
+    for dict in aa_list:
+        df = dict['aa']
+        gage_id = dict['gage_id']
+        peaks = ('Peak_10', 'Peak_5', 'Peak_2')
+        df = df[~df['metric'].isin(peaks)]
+        timing_cols = ['DS_Tim', 'FA_Tim', 'SP_Tim', 'Wet_Tim']
+        condition = (df['metric'].isin(timing_cols)) & (df['alteration_type'] == 'low')
+        df.loc[condition, 'alteration_type'] = 'early'
+        condition = (df['metric'].isin(timing_cols)) & (df['alteration_type'] == 'high')
+        df.loc[condition, 'alteration_type'] = 'late'
 
-    if wyt is not None:
-        out_path = os.path.join(output_dir,f'{wyt}_{gage_id}_alteration_assessment.csv')
-    else:
-        out_path = os.path.join(output_dir,f'{gage_id}_alteration_assessment.csv')
+        df.insert(0, 'Source', gage_id)
+        if first_df:
+            out_df = df
+            first_df = False
+        else:
+            out_df, df
+            out_df = pd.concat([out_df,df], ignore_index=True)
     
-    alteration_results = df[['metric','alteration_type', 'status', 'status_code', 'median_in_iqr']]
+    file_string = 'combined'
+    list_to_add = ['Source']
+    # case when we are not batching
+    if (len(aa_list) == 1) or (wyt and len(aa_list) <= 3):
+        file_string = gage_id
+        list_to_add = []
+
+    if wyt:
+        out_path = os.path.join(output_dir,f'{file_string}_wyt_alteration_assessment.csv')
+        alteration_results = out_df[list_to_add + ['WYT' ,'metric','alteration_type', 'status', 'status_code', 'median_in_iqr', 'years_used', 'sufficient_data']]
+    else:
+        out_path = os.path.join(output_dir,f'{file_string}_alteration_assessment.csv')
+        alteration_results = out_df[list_to_add + ['metric','alteration_type', 'status', 'status_code', 'median_in_iqr', 'years_used', 'sufficient_data']]
+    
     alteration_results.to_csv(out_path, index = False)
     
-    if wyt is not None:
-        out_path = os.path.join(output_dir,f'{wyt}_{gage_id}_predicted_observed_percentiles.csv')
+    if wyt:
+        out_path = os.path.join(output_dir,f'{file_string}_wyt_predicted_observed_percentiles.csv')
+        percentiles = out_df[['Source', 'WYT', 'metric', 'p10', 'p25', 'p50', 'p75', 'p90', 'p10_predicted', 'p25_predicted', 'p50_predicted', 'p75_predicted', 'p90_predicted']]
     else:
-        out_path = os.path.join(output_dir,f'{gage_id}_predicted_observed_percentiles.csv')
+        out_path = os.path.join(output_dir,f'{file_string}_predicted_observed_percentiles.csv')
+        percentiles = out_df[['Source', 'metric', 'p10', 'p25', 'p50', 'p75', 'p90', 'p10_predicted', 'p25_predicted', 'p50_predicted', 'p75_predicted', 'p90_predicted']]
 
-    percentiles = df[['metric', 'p10', 'p25', 'p50', 'p75', 'p90', 'p10_predicted', 'p25_predicted', 'p50_predicted', 'p75_predicted', 'p90_predicted']]
+    percentiles = out_df[['Source', 'metric', 'p10', 'p25', 'p50', 'p75', 'p90', 'p10_predicted', 'p25_predicted', 'p50_predicted', 'p75_predicted', 'p90_predicted']]
     percentiles.to_csv(out_path, index = False)
 
 def observations_altered(observations, metric, low_bound, high_bound, median):
@@ -102,22 +161,28 @@ def observations_altered(observations, metric, low_bound, high_bound, median):
         return False
 
 
-def format_metrics(file_path, wyt = None):
+def format_metrics(file_path, wyt = None, aa_start_year = None, aa_end_year = None):
     
     metric_data = pd.read_csv(file_path, header=None).T
     metric_data.columns = metric_data.iloc[0]    
     metric_data.drop(0,inplace=True)
     metric_data = metric_data.astype({'Year':'int'})
+    if aa_start_year is not None:
+        metric_data.drop(metric_data[metric_data.Year < aa_start_year].index, inplace=True)
+    if aa_end_year is not None:
+        metric_data.drop(metric_data[metric_data.Year > aa_end_year].index, inplace=True)
     if wyt is not None:
         metric_data = metric_data.loc[metric_data['WYT'] == wyt]
+    if metric_data.empty:
+        return None, metric_data, None
+    count = metric_data.count(axis = 0)
     metric_data = metric_data.drop(columns=['WYT'])
     metric_columns = metric_data.columns.difference(['Year'])
     melted_df = pd.melt(metric_data, id_vars=['Year'], value_vars=metric_columns, var_name='metric', value_name='value')
     melted_df['value'] = pd.to_numeric(melted_df['value'], errors='coerce')
     percentiles_df = melted_df.groupby(['metric'])['value'].quantile([0.1, 0.25, 0.5, 0.75, 0.9]).unstack().reset_index()
     percentiles_df.columns = ['metric', 'p10', 'p25', 'p50', 'p75', 'p90']
-    
-    return percentiles_df, metric_data
+    return percentiles_df, metric_data, count
 
 
 def get_predicted_flow_metrics(comid, wyt="all"):

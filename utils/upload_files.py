@@ -6,13 +6,14 @@ from classes.matrix_convert import MatrixConversion
 from classes.MetricCalculator import Calculator
 from utils.helpers import comid_to_wyt
 from utils.constants import TYPES
+from utils.constants import DELETE_INDIVIDUAL_FILES_WHEN_BATCH
 from params import summer_params
 from params import fall_params
 from params import spring_params
 from params import winter_params
 
 
-def upload_files(start_date, gage_arr, output_files = 'user_output_files', batched = False):
+def upload_files(start_date, gage_arr, output_files = 'user_output_files', batched = False, alteration_needed = False):
     
     # these 4 are for storing file names and file types of files that will later need to be batched together 
     output_file_dirs = [[],[],[]]
@@ -42,7 +43,7 @@ def upload_files(start_date, gage_arr, output_files = 'user_output_files', batch
     
     if batched:
         for file_paths, base_name in zip(output_file_dirs, file_base_name):
-            batch_files(file_paths, base_name, file_identifiers, output_files)
+            batch_files(file_paths, base_name, file_identifiers, output_files, alteration_needed)
 
 
 
@@ -167,7 +168,7 @@ def write_parameters(file_name, flow_class, file_type = 'run_metadata'):
     df.to_csv(output_dir, sep=',', header=False)
     return output_dir
 
-def batch_files(file_paths, base_file_name, file_identifier, output_dir):
+def batch_files(file_paths, base_file_name, file_identifier, output_dir, alteration_needed):
     
     combined_data = pd.DataFrame()
 
@@ -182,6 +183,9 @@ def batch_files(file_paths, base_file_name, file_identifier, output_dir):
             combined_data = current_data
         else:
             combined_data = pd.concat([combined_data,current_data])
+        if os.path.isfile(file_path) and DELETE_INDIVIDUAL_FILES_WHEN_BATCH:
+            if not (alteration_needed and base_file_name == 'annual_flow_result'):
+                os.remove(file_path)
     
     column_order = ['Source'] + [col for col in combined_data.columns if col != 'Source']
     combined_data = combined_data.astype({'Year':'int'})

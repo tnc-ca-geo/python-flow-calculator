@@ -1,10 +1,13 @@
 from utils.upload_files import upload_files
 from utils.constants import VERSION
+from utils.constants import WY_START_DATE
+from utils.constants import DELETE_INDIVIDUAL_FILES_WHEN_BATCH
 from utils.helpers import comid_to_class
 from utils.alteration_assessment import assess_alteration, assess_alteration_by_wyt
 from classes.USGSGage import USGSGage
 from classes.UserUploadedData import UserUploadedData
 from classes.CDECGage import CDECGage
+from datetime import datetime
 import os
 import glob
 import sys
@@ -25,6 +28,8 @@ alterationNeeded = False
 wyt_analysis = False
 start_date = '10/1'
 auto_start = False
+aa_start_year = None
+aa_end_year = None
 
 def clear_screen():
     # Clear screen using ANSI escape codes
@@ -54,9 +59,23 @@ if __name__ == '__main__':
         sys.exit()
 
     elif alterationNeeded:
+        
         wyt_analysis = questionary.confirm("In addition to the default alteration assessment would you like to do an alteration assessment by water year type?").ask()
+        year_range = questionary.confirm("Would you like to limit the year range of data used for the alteration assessment?").ask()
+        
+        if year_range:
+            aa_start_year = questionary.text(f'Please enter the start year for alteration assessment',
+                                        validate = lambda year: True if bool(re.match(r'^[12][0-9]{3}$', year)) else "Please enter a valid start year (YYYY)").ask()
+            aa_end_year = questionary.text(f'Please enter the end year for alteration assessment',
+                                        validate = lambda year: True if bool(re.match(r'^[12][0-9]{3}$', year)) else "Please enter a valid end year (YYYY)").ask()
+            if int(aa_start_year) > int(aa_end_year):
+                questionary.print("🛑 Start year must become before end year 🛑", style="bold fg:red")
+                sys.exit()
+            
+            aa_start_year = int(aa_start_year)
+            aa_end_year = int(aa_end_year)
+            
 
-    
     input_method = questionary.select(
 
                 f"Would you like to upload a formatted batch csv or fill in information via CLI",
@@ -257,7 +276,7 @@ if __name__ == '__main__':
                 sys.stdout.write("\r" + " " * (len("This may take a bit, CDEC's API can be slow") + 1) + "\r")
                 questionary.print("Downloading CDEC data... ✔️", style="bold fg:lightgreen")
             
-            # skip over the prompts at the end as users that took the time to make a batch csv probably are computing alot of data and just want to be able to set it and not worry about it until its done 
+            # skip over the prompts at the end as users that took the time to make a batch csv probably are computing a lot of data and just want to be able to set it and not worry about it until its done 
             auto_start = True
             asyncio.set_event_loop(asyncio.new_event_loop())
     
@@ -397,7 +416,7 @@ if __name__ == '__main__':
             
             questionary.print("Downloading gage data... ✔️", style="bold fg:lightgreen")
             
-            # pynhd package kills the asyncio event loop so need to recreate it before we do more asyncronous questions with questionairy
+            # pynhd package kills the asyncio event loop so need to recreate it before we do more asynchronous questions with questionary
             asyncio.set_event_loop(asyncio.new_event_loop())
 
         elif data_type == "Timeseries data":
@@ -473,7 +492,7 @@ if __name__ == '__main__':
 
                         "Flow Class 5",
 
-                        "Flow Class 6",
+                        "Flow Class 6 (PGR: Perennial groundwater and rain)",
 
                         "Flow Class 7",
 
@@ -518,6 +537,21 @@ if __name__ == '__main__':
             sys.exit() 
     else:
         batch = True
+    
+    # make directory for this run to store its files in
+    current_time = datetime.now()
+    formatted_time = current_time.strftime("%Y-%m-%d-%H:%M")
+    dir_name = ''
+    if len(gage_arr) == 1:
+        dir_name = f'{gage_arr[0].gage_id}_{formatted_time}' 
+    else:
+        dir_name = f'Multiple_{formatted_time}'
+    
+    output_files_dir = os.path.join(output_files_dir,dir_name)
+    if not os.path.exists(output_files_dir):
+        os.mkdir(output_files_dir) 
+    
+    
     try:
         done = False
         spinner_thread = threading.Thread(target=spinning_bar, args = ('Calculating Metrics... ',))
@@ -528,7 +562,7 @@ if __name__ == '__main__':
         # These wrapper functions should not change the functionality of the original numpy functions but rather handle the ll nan case that is currently throwing warnings more gracefully
         with warnings.catch_warnings():
             warnings.simplefilter('ignore')
-            alteration_files = upload_files(start_date = start_date, gage_arr = gage_arr, output_files = output_files_dir, batched = batch)
+            alteration_files = upload_files(start_date = start_date, gage_arr = gage_arr, output_files = output_files_dir, batched = batch, alteration_needed=alterationNeeded)
         sys.stdout.write("\r" + " " * (len("Calculating Metrics... ") + 1) + "\r")
     except Exception as e:
         done = True
@@ -557,11 +591,15 @@ if __name__ == '__main__':
         done = False
         alteration_thread= threading.Thread(target=spinning_bar, args = ('Performing Alteration Assessment... ',))
         alteration_thread.start()
-        warning_message = assess_alteration(gage_arr, alteration_files, output_files = output_files_dir)
+        warning_message = assess_alteration(gage_arr, alteration_files, output_files = output_files_dir, aa_start_year=aa_start_year, aa_end_year=aa_end_year)
         if wyt_analysis:
-            wyt_warning_message = assess_alteration_by_wyt(gage_arr, alteration_files, output_files = output_files_dir)
+            wyt_warning_message = assess_alteration_by_wyt(gage_arr, alteration_files, output_files = output_files_dir, aa_start_year=aa_start_year, aa_end_year=aa_end_year)
             warning_message =  warning_message + wyt_warning_message
-    
+        
+        for alteration_file in alteration_files:
+            if DELETE_INDIVIDUAL_FILES_WHEN_BATCH and batch and os.path.isfile(alteration_file):
+               os.remove(alteration_file)
+
         sys.stdout.write("\r" + " " * (len("Performing Alteration Assessment... ") + 1) + "\r")
         
     except Exception as e:
