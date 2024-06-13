@@ -142,12 +142,11 @@ def write_alteration_assessment(aa_list, output_dir, wyt = False):
     
     if wyt:
         out_path = os.path.join(output_dir,f'{file_string}_wyt_predicted_observed_percentiles.csv')
-        percentiles = out_df[['Source', 'WYT', 'metric', 'p10', 'p25', 'p50', 'p75', 'p90', 'p10_predicted', 'p25_predicted', 'p50_predicted', 'p75_predicted', 'p90_predicted']]
+        percentiles = out_df[list_to_add + ['WYT', 'metric', 'p10', 'p25', 'p50', 'p75', 'p90', 'p10_predicted', 'p25_predicted', 'p50_predicted', 'p75_predicted', 'p90_predicted']]
     else:
         out_path = os.path.join(output_dir,f'{file_string}_predicted_observed_percentiles.csv')
-        percentiles = out_df[['Source', 'metric', 'p10', 'p25', 'p50', 'p75', 'p90', 'p10_predicted', 'p25_predicted', 'p50_predicted', 'p75_predicted', 'p90_predicted']]
+        percentiles = out_df[list_to_add + ['metric', 'p10', 'p25', 'p50', 'p75', 'p90', 'p10_predicted', 'p25_predicted', 'p50_predicted', 'p75_predicted', 'p90_predicted']]
 
-    percentiles = out_df[['Source', 'metric', 'p10', 'p25', 'p50', 'p75', 'p90', 'p10_predicted', 'p25_predicted', 'p50_predicted', 'p75_predicted', 'p90_predicted']]
     percentiles.to_csv(out_path, index = False)
 
 def observations_altered(observations, metric, low_bound, high_bound, median):

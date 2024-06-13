@@ -6,4 +6,4 @@ dependencies:
   - conda-forge::gdal
   - pip
   - pip:
-    - -r requirements.txt
+    - -r requirements.txt 
