@@ -79,4 +79,3 @@ TYPES = {
     'Int_Class': "Int_Class",
     'wyt': "WYT"
 }
-NUMBER_TO_CLASS = {1: 'SM', 2: 'HSR', 3: 'LSR', 4: 'WS', 5: 'GW', 6: 'PGR', 7: 'FER', 8: 'RGW', 9: 'HLP'} 
