@@ -70,5 +70,13 @@ TYPES = {
     'winter_frequencys_twenty': "Peak_Fre_5",
     'winter_frequencys_fifty': "Peak_Fre_2",
     # : "Peak_Dur_2": "Peak_Fre_2": "Peak_Mag_2": "Peak_Tim_5": "Peak_Dur_5": "Peak_Fre_5": "Peak_Mag_5": "Peak_Tim_10": "Peak_Dur_10": "Peak_Fre_10": "Peak_Mag_10": "Peak_Tim_20": "Peak_Dur_20": "Peak_Fre_20": "Peak_Mag_20"
+
+    'ds_low_min_avgs': "DS_7d_Low_Mag",
+    'ds_low_min_date': "DS_7d_Low_Tim",
+    'ds_first_zero': "DS_No_Flow_Tim",
+    'ds_zeros_per_year': "DS_No_Flow_Dur",
+    'Overall_Int_Class': "Overall_Int_Class",
+    'Int_Class': "Int_Class",
+    'wyt': "WYT"
 }
 NUMBER_TO_CLASS = {1: 'SM', 2: 'HSR', 3: 'LSR', 4: 'WS', 5: 'GW', 6: 'PGR', 7: 'FER', 8: 'RGW', 9: 'HLP'} 

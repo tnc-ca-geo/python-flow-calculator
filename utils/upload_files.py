@@ -16,9 +16,9 @@ from params import winter_params
 def upload_files(start_date, gage_arr, output_files = 'user_output_files', batched = False, alteration_needed = False):
     
     # these 4 are for storing file names and file types of files that will later need to be batched together 
-    output_file_dirs = [[],[],[],[]]
+    output_file_dirs = [[],[],[]]
     file_identifiers = []
-    file_base_name = ['annual_flow_matrix', 'annual_flow_result', 'new_low_flow_metrics','supplementary_metrics']
+    file_base_name = ['annual_flow_matrix', 'annual_flow_result','supplementary_metrics']
     
     
     for gage in gage_arr:
@@ -37,20 +37,19 @@ def upload_files(start_date, gage_arr, output_files = 'user_output_files', batch
             output_file_dirs[0].append(output_dir)
             output_dir, output_dir2 = write_annual_flow_result(file_name, results, file_base_name[1])
             output_file_dirs[1].append(output_dir)
-            output_file_dirs[3].append(output_dir2)
+            output_file_dirs[2].append(output_dir2)
             write_drh(file_name, results, 'drh')
-            output_dir = write_low_flow(file_name, results, file_base_name[2])
-            output_file_dirs[2].append(output_dir)
-        
+            
+            formatted = f'{gage.gage_id}'
+            param_path = os.path.join(output_files,formatted)
+            write_parameters(param_path, gage.flow_class)
+
         except Exception as e:
             original_message = str(e)
             gage_message = f"ERROR PROCESSING GAGE: {gage}"
             raise type(e)(f"{original_message}. \n{gage_message}")
         
-    now = datetime.now()
-    formatted = now.strftime("%m%d%Y%H%M")
-    param_path = os.path.join(output_files,formatted)
-    write_parameters(param_path, gage.flow_class)
+    
     
     if batched:
         for file_paths, base_name in zip(output_file_dirs, file_base_name):
@@ -85,9 +84,10 @@ def get_results(matrix, flow_class, start_date = None, comid = None):
     results["summer"] = calculator.summer_baseflow_durations_magnitude()
     results["summer"]["timings_water"] = start_of_summer
     results["DRH"] = calculator.get_DRH()
-    results["new_low"] = calculator.new_low_flow_metrics()
+    results["new_low"], results["classification"] = calculator.new_low_flow_metrics()
+    results["year_ranges_new"] = calculator.year_ranges
     if comid is not None:
-        results['wyt'] = [comid_to_wyt(comid,i+1) for i in matrix.year_array]
+        results["classification"]["wyt"] = [comid_to_wyt(comid,i+1) for i in calculator.year_ranges]
     return results
 
 def write_annual_flow_matrix(file_name, results, file_type):
@@ -125,11 +125,15 @@ def write_annual_flow_result(file_name, results, file_type):
     dict_to_array(results['winter'], 'winter', dataset)
     dict_to_array(results['spring'], 'spring', dataset)
     dict_to_array(results['summer'], 'summer', dataset)
-    a = np.array(dataset)
-    a = np.vstack([a, ['WYT'] + results['wyt']])
+    dict_to_array(results['new_low'], 'ds', dataset)
+    dict_to_array(results['classification'], '', dataset)
+    results['year_ranges_new'].insert(0,'Year')
+    df = pd.DataFrame(dataset)
+    df.columns = results['year_ranges_new']
     output_dir = file_name + '_' + file_type + '.csv'
-    np.savetxt(output_dir, a, delimiter=',',
-                fmt='%s', header='Year, ' + year_ranges, comments='')
+    df.to_csv(output_dir, index=False,na_rep='None')
+    output_dir = file_name + '_' + file_type + '.csv'
+    
 
     """Create supplementary metrics file"""
     supplementary = []
@@ -144,16 +148,6 @@ def write_annual_flow_result(file_name, results, file_type):
     np.savetxt(output_dir2, supplementary, delimiter=',',
                 fmt='%s', header='Year, ' + year_ranges, comments='')
     return output_dir, output_dir2
-
-def write_low_flow(file_name, results, file_type):
-    year_ranges = ",".join(str(year) for year in results['year_ranges'])
-    result_array = np.vstack((results["new_low"]["first_zero"], results["new_low"]["zeros_per_year"], results["new_low"]["low_min_date"], results["new_low"]["low_min_avgs"], results["new_low"]["yearly_classification"]))
-    row_descriptions = np.array(['Date_First_No_Flow', 'No_Flow', 'Min_7_Day_Date', 'Min_7_Day_Mag', 'Int_Class'])
-    result_array_with_desc = np.c_[row_descriptions, result_array]
-    output_dir = file_name + '_' + file_type + '.csv'
-    np.savetxt(file_name + '_' + file_type + '.csv', result_array_with_desc, delimiter=',',
-                header='Year,'+year_ranges, fmt='%s', comments='', footer=f'Overall Classification: {results["new_low"]["classification"]}')
-    return output_dir
 
 def write_parameters(file_name, flow_class, file_type = 'run_metadata'):
     now = datetime.now()
@@ -225,6 +219,11 @@ def dict_to_array(data, field_type, dataset):
                     else:
                         data.insert(0, TYPES[field_type+'_'+key+'_'+str(k)])
                     dataset.append(data)
+        elif field_type == '':
+            # dont add a leading underscore for no reason
+            data = value
+            data.insert(0, TYPES[key])
+            dataset.append(data)
 
         else:
             data = value
