@@ -35,13 +35,7 @@ class Calculator:
 
     def _format_low_flow(self, low_min_avgs, low_min_indices, classification, zeros_per_year, first_zero, classification_per_year):
             results = {}
-            results_general = {}
-            
-            desired_size = len(self.year_ranges)
-            for arr in (low_min_avgs,low_min_indices,zeros_per_year,first_zero,classification_per_year):
-                pad_size = desired_size - len(arr)
-                arr = np.append(arr, pad_size * [None] )
-            results["low_min_avgs"] = np.where(np.isnan(low_min_avgs), None, low_min_avgs).tolist()
+            results["low_min_avgs"] = np.where(np.isnan(low_min_avgs), None, low_min_avgs)
             results["low_min_date"] = list(map(
             lambda args: get_date_from_offset_julian_date(args[0], args[1],'6/1'),
             zip(low_min_indices, self.year_ranges[1:]))
@@ -50,11 +44,10 @@ class Calculator:
             lambda args: get_date_from_offset_julian_date(args[0], args[1],'6/1'),
             zip(first_zero, self.year_ranges[1:]))
             )
-
-            results["zeros_per_year"] = zeros_per_year.astype(int).tolist()
-            results_general["Overall_Int_Class"] = np.full_like(classification_per_year, classification).tolist()
-            results_general["Int_Class"] = classification_per_year.tolist()
-            return results, results_general
+            results["classification"] = classification
+            results["zeros_per_year"] = zeros_per_year.astype(int)
+            results["yearly_classification"] = classification_per_year
+            return results
     
     def get_DRH(self):
         drh = calc_drh(self.flow_matrix)
