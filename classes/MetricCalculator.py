@@ -213,7 +213,7 @@ class Calculator:
         return results
     
     def calc_RBFI(self):
-        flow_array =  self.flow_matrix.flatten()
+        flow_array =  self.flow_matrix.flatten('F')
         flow_array = replace_nan(flow_array)
         diffs = np.abs(np.diff(flow_array))
         sum_diffs = np.sum(diffs)
