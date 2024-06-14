@@ -2,7 +2,7 @@ import math
 import numpy as np
 import scipy.interpolate as ip
 from scipy.ndimage import gaussian_filter1d
-from utils.helpers import crossings_nonzero_all, find_index, peakdet, replace_nan
+from utils.helpers import crossings_nonzero_all, find_index, peakdet, replace_nan, get_max_consecutive_nan
 from params import spring_params as def_spring_params
 from utils.helpers import set_user_params
 
@@ -10,7 +10,7 @@ from utils.helpers import set_user_params
 def calc_spring_transition_timing_magnitude(flow_matrix, class_number, summer_timings, spring_params=def_spring_params):
     params = set_user_params(spring_params, def_spring_params)
 
-    max_zero_allowed_per_year, max_nan_allowed_per_year, max_peak_flow_date, search_window_left, search_window_right, peak_sensitivity, peak_filter_percentage, min_max_flow_rate, window_sigma, fit_sigma, sensitivity, min_percentage_of_max_flow, lag_time, timing_cutoff, min_flow_rate = params.values()
+    max_zero_allowed_per_year, max_nan_allowed_per_year, max_consecutive_nan_allowed_per_year, max_peak_flow_date, search_window_left, search_window_right, peak_sensitivity, peak_filter_percentage, min_max_flow_rate, window_sigma, fit_sigma, sensitivity, min_percentage_of_max_flow, lag_time, timing_cutoff, min_flow_rate = params.values()
 
     timings = []
     magnitudes = []
@@ -24,9 +24,13 @@ def calc_spring_transition_timing_magnitude(flow_matrix, class_number, summer_ti
         if np.isnan(flow_matrix[:, column_number]).sum() > max_nan_allowed_per_year or np.count_nonzero(flow_matrix[:, column_number] == 0) > max_zero_allowed_per_year or max(flow_matrix[:, column_number]) < min_flow_rate:
             continue
 
+        """Check max consecutive missing days"""
+        if get_max_consecutive_nan(flow_matrix[:, column_number]) > max_consecutive_nan_allowed_per_year:
+            continue
+
         """Get flow data and interpolate between None values"""
         flow_data = flow_matrix[:, column_number]
-        flow_data = replace_nan(flow_data)
+        flow_data = replace_nan(flow_data.copy())
         
         current_sensitivity = sensitivity / 1000
 

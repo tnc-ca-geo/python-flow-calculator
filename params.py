@@ -1,11 +1,13 @@
 winter_params = {
     'max_zero_allowed_per_year': 270,
-    'max_nan_allowed_per_year': 100,
+    'max_nan_allowed_per_year': 18,
+    'max_consecutive_nan_allowed_per_year': 7
 }
 
 fall_params = {
     'max_zero_allowed_per_year': 270,
-    'max_nan_allowed_per_year': 100,
+    'max_nan_allowed_per_year': 18,
+    'max_consecutive_nan_allowed_per_year': 7,
     'min_flow_rate': 1, # Don't calculate flow metrics if max flow is befow this value.
     'sigma': 0.2,  # Smaller filter to find fall flush peak
     'broad_sigma': 15,  # Larger filter to find wet season peak
@@ -25,7 +27,8 @@ fall_params = {
 
 spring_params = {
     'max_zero_allowed_per_year': 270,
-    'max_nan_allowed_per_year': 100,
+    'max_nan_allowed_per_year': 18,
+    'max_consecutive_nan_allowed_per_year': 7,
     'max_peak_flow_date': 350,  # max search date for the peak flow date
     'search_window_left': 20,  # left side of search window set around max peak
     'search_window_right': 50,  # right side of search window set around max peak
@@ -49,7 +52,8 @@ spring_params = {
 
 summer_params = {
     'max_zero_allowed_per_year': 270,
-    'max_nan_allowed_per_year': 100,
+    'max_nan_allowed_per_year': 18,
+    'max_consecutive_nan_allowed_per_year': 7,
     'sigma': 7,  # scalar to set amount of smoothing
     'sensitivity': 900,  # increased sensitivity returns smaller threshold for derivative
     # identifies last major peak after which to search for start date
@@ -61,5 +65,9 @@ summer_params = {
     'min_flow_rate': 1
 }
 
-general_params = {'annual_result_low_Percentille_filter': 0,
-                  'annual_result_high_Percentille_filter': 100, 'max_nan_allowed_per_year': 100}
+general_params = {
+    'annual_result_low_Percentille_filter': 0,
+    'annual_result_high_Percentille_filter': 100,
+    'max_nan_allowed_per_year': 18, 
+    'max_consecutive_nan_allowed_per_year': 7
+}

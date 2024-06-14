@@ -116,7 +116,7 @@ def Altered_Spring_Recession(flow_matrix):
 
         else:
             # Now that the data has passed the checks, replace the NA data
-            flow_data = replace_nan(flow_data)
+            flow_data = replace_nan(flow_data.copy())
 
             # Calculate the 50th and 9th percentile for the flows
             quants = np.percentile(flow_data, q=[50, 90], interpolation='nearest')

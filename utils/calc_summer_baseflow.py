@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import scipy.interpolate as ip
 from scipy.ndimage import gaussian_filter1d
-from utils.helpers import find_index, peakdet, replace_nan
+from utils.helpers import find_index, get_max_consecutive_nan, peakdet, replace_nan
 from params import summer_params as def_summer_params
 from utils.helpers import set_user_params
 
@@ -11,7 +11,7 @@ def calc_start_of_summer(matrix, class_number, summer_params=def_summer_params):
     """Set adjustable parameters for start of summer date detection"""
     params = set_user_params(summer_params, def_summer_params)
 
-    max_zero_allowed_per_year, max_nan_allowed_per_year, sigma, sensitivity, peak_sensitivity, max_peak_flow_date, min_summer_flow_percent, min_flow_rate = params.values()
+    max_zero_allowed_per_year, max_nan_allowed_per_year, max_consecutive_nan_allowed_per_year, sigma, sensitivity, peak_sensitivity, max_peak_flow_date, min_summer_flow_percent, min_flow_rate = params.values()
 
     start_dates = []
     for column_number, flow_data in enumerate(matrix[0]):
@@ -20,6 +20,10 @@ def calc_start_of_summer(matrix, class_number, summer_params=def_summer_params):
         if pd.isnull(matrix[:, column_number]).sum() > max_nan_allowed_per_year or np.count_nonzero(matrix[:, column_number] == 0) > max_zero_allowed_per_year or max(matrix[:, column_number]) < min_flow_rate:
             continue
 
+        """Check max consecutive missing days"""
+        if get_max_consecutive_nan(matrix[:, column_number]) > max_consecutive_nan_allowed_per_year:
+            continue
+        
         """Append each column with 30 more days from next column, except the last column"""
         if column_number != len(matrix[0])-1:
             flow_data = list(matrix[:, column_number]) + \
@@ -28,7 +32,7 @@ def calc_start_of_summer(matrix, class_number, summer_params=def_summer_params):
             flow_data = matrix[:, column_number]
 
         """Replace any NaNs with previous day's flow"""
-        flow_data = replace_nan(flow_data)
+        flow_data = replace_nan(flow_data.copy())
 
         """Set specific parameters for rain-dominated classes"""
         if class_number == 4 or class_number == 6 or class_number == 7 or class_number == 8:

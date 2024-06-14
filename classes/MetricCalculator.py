@@ -212,7 +212,7 @@ class Calculator:
     def _format_fall_winter_baseflow(self, wet_baseflows,wet_baseflows_10,wet_baseflows_50,wet_bfl_durs):
         results = {}
         # results["baseflows"] =wet_baseflows
-        results["baseflows_10"] =wet_baseflows_10
+        results["baseflows_10"] = wet_baseflows_10
         results["baseflows_50"] = wet_baseflows_50
         results["bfl_durs"] = wet_bfl_durs
         return results
