@@ -9,7 +9,7 @@ from utils.calc_fall_flush import calc_fall_flush_timings_durations
 from utils.calc_spring_transition import calc_spring_transition_timing_magnitude, calc_spring_transition_roc, calc_spring_transition_duration
 from utils.calc_fall_winter_baseflow import calc_fall_winter_baseflow
 from utils.calc_new_low_flow_metrics import calc_new_low_flow_metrics
-from utils.helpers import remove_offset_from_julian_date, get_date_from_offset_julian_date, fill_year_array
+from utils.helpers import remove_offset_from_julian_date, get_date_from_offset_julian_date, fill_year_array, replace_nan
 from params import general_params, winter_params, spring_params, summer_params, fall_params
 
 
@@ -216,4 +216,11 @@ class Calculator:
         results["baseflows_50"] = wet_baseflows_50
         results["bfl_durs"] = wet_bfl_durs
         return results
-
+    
+    def calc_RBFI(self):
+        flow_array =  self.flow_matrix.flatten('F')
+        flow_array = replace_nan(flow_array)
+        diffs = np.abs(np.diff(flow_array))
+        sum_diffs = np.sum(diffs)
+        sum_flows = np.sum(flow_array)
+        return sum_diffs / sum_flows
