@@ -63,7 +63,7 @@ def Altered_Fall_Wet_Timing(flow_matrix, DS_Tim):
         WY_start = len(previous_year) - 1
 
         flow_data = np.concatenate((previous_year, current_year), axis=0)
-        flow_data = replace_nan(flow_data)
+        flow_data = replace_nan(flow_data.copy())
 
         WY_median = np.median(flow_data)
         FA_Check = False

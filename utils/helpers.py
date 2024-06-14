@@ -115,6 +115,16 @@ def replace_nan(flow_data):
             flow_data[index] = flow_data[index-1]
     return flow_data
 
+def get_max_consecutive_nan(flow_data):
+    max_nan = 0
+    for flow in flow_data:
+        if np.isnan(flow):
+            current_count += 1
+            max_nan = max(max_nan, current_count)
+        else:
+            current_count = 0
+    return max_nan
+
 def get_date_from_offset_julian_date(row_number, year, start_date):
     start_year = year
     end_year = year + 1

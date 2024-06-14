@@ -145,7 +145,7 @@ def calc_winter_highflow_annual_combined(flow_matrix, original_method=False):
             continue
 
         # Now that the data has passed the checks, replace the NA data
-        flow_data = replace_nan(flow_data)
+        flow_data = replace_nan(flow_data.copy())
 
         # If the year does qualify, iterate through exceed values
         for j, exceed_value in enumerate(peak_exceedance_values):

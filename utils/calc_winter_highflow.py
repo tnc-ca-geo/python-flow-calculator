@@ -1,5 +1,5 @@
 import numpy as np
-from utils.helpers import median_of_time, set_user_params
+from utils.helpers import get_max_consecutive_nan, median_of_time, set_user_params
 from classes.FlowExceedance import FlowExceedance
 from params import winter_params as def_winter_params
 
@@ -7,7 +7,7 @@ def calc_winter_highflow_annual(matrix, winter_params = def_winter_params):
 
     params = set_user_params(winter_params, def_winter_params)
 
-    max_zero_allowed_per_year, max_nan_allowed_per_year = params.values()
+    max_zero_allowed_per_year, max_nan_allowed_per_year, max_consecutive_nan_allowed_per_year = params.values()
 
     """Get peak percentiles calculated from each year's peak flow values"""
     peak_flows = []
@@ -53,7 +53,17 @@ def calc_winter_highflow_annual(matrix, winter_params = def_winter_params):
                 magnitude[i].append(None)
                 peak_magnitude[i].append(None)
             continue
-
+        
+        """Check max consecutive missing days"""
+        if get_max_consecutive_nan(matrix[:, column_number]) > max_consecutive_nan_allowed_per_year:
+            for i, value in enumerate(exceedance_values):
+                freq[i].append(None)
+                duration[i].append(None)
+                timing[i].append(None)
+                magnitude[i].append(None)
+                peak_magnitude[i].append(None)
+            continue
+        
         exceedance_object = {}
         exceedance_duration = {}
         current_flow_object = {}

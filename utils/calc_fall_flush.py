@@ -1,7 +1,7 @@
 import numpy as np
 import scipy.interpolate as ip
 from scipy.ndimage import gaussian_filter1d
-from utils.helpers import find_index, peakdet, replace_nan
+from utils.helpers import find_index, get_max_consecutive_nan, peakdet, replace_nan
 from params import fall_params as def_fall_params
 from utils.helpers import set_user_params
 
@@ -9,7 +9,7 @@ from utils.helpers import set_user_params
 def calc_fall_flush_timings_durations(flow_matrix, summer_timings, class_number, fall_params=def_fall_params):
     params = set_user_params(fall_params, def_fall_params)
 
-    max_zero_allowed_per_year, max_nan_allowed_per_year, min_flow_rate, sigma, broad_sigma, wet_season_sigma, peak_sensitivity, peak_sensitivity_wet, max_flush_duration, min_flush_percentage, wet_threshold_perc, peak_detect_perc, flush_threshold_perc, min_flush_threshold, date_cutoff, slope_sensitivity = params.values()
+    max_zero_allowed_per_year, max_nan_allowed_per_year, max_consecutive_nan_allowed_per_year , min_flow_rate, sigma, broad_sigma, wet_season_sigma, peak_sensitivity, peak_sensitivity_wet, max_flush_duration, min_flush_percentage, wet_threshold_perc, peak_detect_perc, flush_threshold_perc, min_flush_threshold, date_cutoff, slope_sensitivity = params.values()
 
     start_dates = []
     wet_dates = []
@@ -26,13 +26,17 @@ def calc_fall_flush_timings_durations(flow_matrix, summer_timings, class_number,
         """Check to see if water year has more than allowed nan or zeros"""
         if np.isnan(flow_matrix[:, column_number]).sum() > max_nan_allowed_per_year or np.count_nonzero(flow_matrix[:, column_number] == 0) > max_zero_allowed_per_year or max(flow_matrix[:, column_number]) < min_flow_rate:
             continue
+        
+        """Check max consecutive missing days"""
+        if get_max_consecutive_nan(flow_matrix[:, column_number]) > max_consecutive_nan_allowed_per_year:
+            continue
 
         """Get flow data"""
         flow_data = flow_matrix[:, column_number]
         x_axis = list(range(len(flow_data)))
 
         """Interpolate between None values"""
-        flow_data = replace_nan(flow_data)
+        flow_data = replace_nan(flow_data.copy())
 
         """Return to Wet Season"""
         if class_number == 3 or class_number == 4 or class_number == 5 or class_number == 6 or class_number == 7 or class_number == 8:
