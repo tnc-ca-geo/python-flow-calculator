@@ -8,8 +8,7 @@ Name,Unit,Code,Description
 Fall pulse magnitude,cfs,FA_Mag,Peak magnitude of fall pulse event (maximum daily peak flow during event)
 Fall pulse timing,water year day,FA_Tim,Water year day of fall pulse event peak
 Fall pulse duration,days,FA_Dur,Duration of fall pulse event
-Wet-season low baseflow,cfs,"Wet_BFL_Mag_10
-","Magnitude of wet-season baseflows (10th percentile of daily flows within that season, including peak flow events)"
+Wet-season low baseflow,cfs,"Wet_BFL_Mag_10","Magnitude of wet-season baseflows (10th percentile of daily flows within that season, including peak flow events)"
 Wet-season median baseflow,cfs,Wet_BFL_Mag_50,"Magnitude of wet-season baseflows (50th percentile of daily flows within that season, including peak flow events)"
 Wet-season timing,water year day,Wet_Tim,Start date of wet-season in water year days
 Wet-season duration,days,Wet_BFL_Dur,Wet-season baseflow duration (# of days from start of wet-season to start of spring season)

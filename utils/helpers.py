@@ -3,6 +3,7 @@ import os
 from datetime import datetime, timedelta
 import numpy as np
 from numpy import NaN, Inf, arange, isscalar, asarray, array
+from utils.constants import TYPES
 
 def fill_year_array(years):
     complete_years = list(range(min(years), max(years) + 1))
@@ -203,6 +204,16 @@ def comid_to_wyt(comid, water_year):
     
     return wyt
 
+def calc_avg_nan_per_year(results):
+    dataset = []
+    dict_to_array(results['wet'], 'wet', dataset)
+    dict_to_array(results['spring'], 'spring', dataset)
+    dict_to_array(results['summer'], 'summer', dataset)
+    df = pd.DataFrame(dataset)
+    df.dropna(axis = 1, how = 'all',inplace = True)
+    total_nan = df.isnull().sum().sum()
+    num_years = len(df.columns) - 1
+    return(total_nan/num_years)
 
 def remove_offset_from_julian_date(julian_offset_date, julian_start_date):
     """offset date counts 0 for start date. Converted to use 0 for 1/1"""
@@ -213,3 +224,32 @@ def remove_offset_from_julian_date(julian_offset_date, julian_start_date):
     else:
         julian_nonoffset_date = julian_offset_date - (365 - julian_start_date)
     return julian_nonoffset_date
+
+def dict_to_array(data, field_type, dataset):
+    for key, value in data.items():
+        if field_type == 'winter':
+            for k, v in value.items():
+                if key.find('timings') > -1:
+                    continue
+                data = v
+                # remove two and five percentiles from output
+                if k.find('two') > -1 or k.find('five') > -1:
+                    continue
+                else:
+                    if k.find('_water') > -1:
+                        tmp = k.split('_water')[0]
+                        data.insert(
+                            0, TYPES[field_type+'_'+key+'_'+str(tmp)] + '_water')
+                    else:
+                        data.insert(0, TYPES[field_type+'_'+key+'_'+str(k)])
+                    dataset.append(data)
+        elif field_type == '':
+            # dont add a leading underscore for no reason
+            data = value
+            data.insert(0, TYPES[key])
+            dataset.append(data)
+
+        else:
+            data = value
+            data.insert(0, TYPES[field_type+'_'+key])
+            dataset.append(data)

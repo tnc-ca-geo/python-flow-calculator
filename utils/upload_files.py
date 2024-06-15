@@ -4,8 +4,7 @@ import numpy as np
 import pandas as pd
 from classes.matrix_convert import MatrixConversion
 from classes.MetricCalculator import Calculator
-from utils.helpers import comid_to_wyt
-from utils.constants import TYPES
+from utils.helpers import comid_to_wyt, dict_to_array
 from utils.constants import DELETE_INDIVIDUAL_FILES_WHEN_BATCH
 from params import summer_params
 from params import fall_params
@@ -200,35 +199,6 @@ def batch_files(file_paths, base_file_name, file_identifier, output_dir, alterat
     combined_data = combined_data.astype({'Year':'int'})
     combined_data = combined_data[column_order]
     combined_data.to_csv(os.path.join(output_dir, "combined_" + base_file_name + ".csv"), index=False)
-
-def dict_to_array(data, field_type, dataset):
-    for key, value in data.items():
-        if field_type == 'winter':
-            for k, v in value.items():
-                if key.find('timings') > -1:
-                    continue
-                data = v
-                # remove two and five percentiles from output
-                if k.find('two') > -1 or k.find('five') > -1:
-                    continue
-                else:
-                    if k.find('_water') > -1:
-                        tmp = k.split('_water')[0]
-                        data.insert(
-                            0, TYPES[field_type+'_'+key+'_'+str(tmp)] + '_water')
-                    else:
-                        data.insert(0, TYPES[field_type+'_'+key+'_'+str(k)])
-                    dataset.append(data)
-        elif field_type == '':
-            # dont add a leading underscore for no reason
-            data = value
-            data.insert(0, TYPES[key])
-            dataset.append(data)
-
-        else:
-            data = value
-            data.insert(0, TYPES[field_type+'_'+key])
-            dataset.append(data)
 
 def read_csv_to_arrays(file_path):
     fields = ['date', 'flow']
