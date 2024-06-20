@@ -8,16 +8,16 @@ fall_params = {
     'max_zero_allowed_per_year': 270,
     'max_nan_allowed_per_year': 18,
     'max_consecutive_nan_allowed_per_year': 7,
-    'min_flow_rate': 1, # Don't calculate flow metrics if max flow is befow this value.
+    'min_flow_rate': 1, # Don't calculate flow metrics if max flow is below this value.
     'sigma': 0.2,  # Smaller filter to find fall flush peak
     'broad_sigma': 15,  # Larger filter to find wet season peak
-    'wet_season_sigma': 12,  # Medium sigma to find wet season initation peak
+    'wet_season_sigma': 12,  # Medium sigma to find wet season initiation peak
     'peak_sensitivity': 0.005,  # smaller value detects more peaks
     'peak_sensitivity_wet': .005, # larger value used for detection of wet season initiation
     'max_flush_duration': 40,  # Maximum duration from start to end, for fall flush peak
     'min_flush_percentage': 0.10, # minimum flush, to satisfy the min required to be called a flush
     'wet_threshold_perc': 0.2, # Return to wet season flow must be certain percentage of that year's max flow
-    'peak_detect_perc': 0.30, # The peak identified to search after for wet season initation
+    'peak_detect_perc': 0.30, # The peak identified to search after for wet season initiation
     'flush_threshold_perc': 0.30, # Size of flush peak, from rising limb to top of peak, has great enough change
     'min_flush_threshold': 1, # minimum allowable magnitude threshold for fall flush flow
     'date_cutoff': 75, # Latest accepted date for fall flush, in Julian Date counting from Oct 1st = 0. (i.e. Dec 15th = 75)
@@ -44,9 +44,9 @@ spring_params = {
     # the detected date's flow has be certain percentage of the max flow in that region
     'min_percentage_of_max_flow': 0.5,
     'lag_time': 4,
-    # Earliest accepted date for spring timing, in Julian Date couting from Oct 1st = 0 (i.e. February 15 = 138)
+    # Earliest accepted date for spring timing, in Julian Date counting from Oct 1st = 0 (i.e. February 15 = 138)
     'timing_cutoff': 138,
-    # Don't calculate flow metrics if max flow is befow this value.
+    # Don't calculate flow metrics if max flow is below this value.
     'min_flow_rate': 1
 }
 
@@ -61,7 +61,7 @@ summer_params = {
     'max_peak_flow_date': 325,  # max search date for the peak flow date
     # require that summer start is below this flow threshold. Represents percentage of the flow difference between annual max flow and summer minimum.
     'min_summer_flow_percent': 0.125,
-    # Don't calculate flow metrics if max flow is befow this value.
+    # Don't calculate flow metrics if max flow is below this value.
     'min_flow_rate': 1
 }
 
@@ -70,4 +70,21 @@ general_params = {
     'annual_result_high_Percentille_filter': 100,
     'max_nan_allowed_per_year': 18, 
     'max_consecutive_nan_allowed_per_year': 7
+}
+
+flashy_params = {
+    'max_nan_allowed_per_year': 100, # max nan days allowed in a year for metrics to still attempt to be calculated (missing or bad data eg: -99999)
+    'max_zero_allowed_per_year': 360, # max no flow days (< 0.1 cfs) allowed in a year for metrics to still attempt to be calculated
+    'rel_height': 0.99, # relative height compared to the top of the peak for surrounding data do be considered a plateau rather then no longer part of the peak
+    'dry_min_flow_percent': 0.125, # a min flow threshold for the dry season to start based on the spring and min dry season baseflow
+    'dry_max_plateau_size': 3, # max number of days a peak can have a flat top and still be considered a peak
+    'dry_filter_sigma': 1.3, # sigma value to use in the gaussian filtering step fro calculating the spring recession timing, higher value = more aggressively smoothed
+    'dry_min_peak_height': 15, # minimum peak height for a peak to be considered eligible for dry season recession (next param also affects this)
+    'dry_min_peak_scaling_factor': 0.15, # factor to multiply the water year median by when calculating the min size of an elidible peak the min of min_peak_height_dry (above param) and Median*min_peak_scaling_factor_dry is used
+    'wet_min_peak_height': 10, # same as "dry_min_peak_height" but for peaks used by the wet timing metric 
+    'wet_min_peak_scaling_factor': 0.1, # same as "dry_min_peak_scaling_factor" but for peaks used by the wet timing metric 
+    'wet_prominence': 1, # how prominent a peak must be to be used when calculating wet timing
+    'fall_min_height': 1, # min height for a peak to be considered for fall pulse flow
+    'fall_min_prominence': 1.1, # min peak prominence from surrounding data for a peak to be considered for fall pulse flow (very sensitive)
+    'fall_median_scaling_factor': 1.5 # within the peak detection for fall pulse flow and wet timings the median is regularly multiplied by this factor for eligibility of peaks
 }

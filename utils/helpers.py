@@ -228,21 +228,27 @@ def remove_offset_from_julian_date(julian_offset_date, julian_start_date):
 def dict_to_array(data, field_type, dataset):
     for key, value in data.items():
         if field_type == 'winter':
-            for k, v in value.items():
-                if key.find('timings') > -1:
-                    continue
-                data = v
-                # remove two and five percentiles from output
-                if k.find('two') > -1 or k.find('five') > -1:
-                    continue
-                else:
-                    if k.find('_water') > -1:
-                        tmp = k.split('_water')[0]
-                        data.insert(
-                            0, TYPES[field_type+'_'+key+'_'+str(tmp)] + '_water')
+            try:
+                for k, v in value.items():
+                    if key.find('timings') > -1:
+                        continue
+                    data = v
+                    # remove two and five percentiles from output
+                    if k.find('two') > -1 or k.find('five') > -1:
+                        continue
                     else:
-                        data.insert(0, TYPES[field_type+'_'+key+'_'+str(k)])
-                    dataset.append(data)
+                        if k.find('_water') > -1:
+                            tmp = k.split('_water')[0]
+                            data.insert(
+                                0, TYPES[field_type+'_'+key+'_'+str(tmp)] + '_water')
+                        else:
+                            data.insert(0, TYPES[field_type+'_'+key+'_'+str(k)])
+                        dataset.append(data)
+            except AttributeError as e:
+                data = value
+                data.insert(0, TYPES[field_type+'_'+key])
+                dataset.append(data)
+                
         elif field_type == '':
             # dont add a leading underscore for no reason
             data = value

@@ -1,22 +1,36 @@
 import numpy as np
 from utils.helpers import replace_nan
 from scipy.signal import find_peaks, peak_widths
+from params import flashy_params
 
 def Altered_Fall_Wet_Timing(flow_matrix, DS_Tim):
     
     # Setup the output vectors
-
     FA_Tim = []
     Wet_Tim = []
     FA_Mag = []
     FA_Dur = []
     FA_Dif_num = []
-    Temp_FA_Tim  = []
     Temp_Wet_Tim = []
     Temp_DS_flow = []
+    # fall peak
+    min_height = flashy_params['fall_min_height']
+    min_prominence = flashy_params['fall_min_prominence']
+    rel_height = flashy_params['rel_height']
+    
+    # wet peak
+    wet_prominence = flashy_params['wet_prominence']
+    min_peak_height = flashy_params['wet_min_peak_height']
+    min_peak_scaling_factor = flashy_params['wet_min_peak_scaling_factor']
+
+    # general
+    median_scaling_factor = flashy_params['fall_median_scaling_factor']
+    max_nan_per_year = flashy_params['max_nan_allowed_per_year']
+    max_zero_per_year = flashy_params['max_zero_allowed_per_year']
+
     # Loop through all of the water years
     for column_number in range(flow_matrix.shape[1]):
-        
+        wet_tim_len = len(Wet_Tim)
         # Filter the flow data to the individual water year
         flow_data = flow_matrix[:, column_number]
         
@@ -29,7 +43,7 @@ def Altered_Fall_Wet_Timing(flow_matrix, DS_Tim):
             continue
         
         # Skip the year if there are more than 100 NA flow data points
-        if (np.count_nonzero(np.isnan(flow_data)) >= 100  or
+        if (np.count_nonzero(np.isnan(flow_data)) >= max_nan_per_year  or
             np.all(flow_data < 1)):
             # If conditions are met, set all the metrics to NaN
             FA_Tim.append(np.nan)
@@ -40,7 +54,7 @@ def Altered_Fall_Wet_Timing(flow_matrix, DS_Tim):
             continue
 
         # Check to see if there are more than the allowable number of 0s in the vector
-        elif np.sum((flow_data == 0) & ~np.isnan(flow_data)) >= 365:
+        elif np.sum((flow_data <= 0.1) & ~np.isnan(flow_data)) >= max_zero_per_year:
             FA_Tim.append(np.nan)
             FA_Mag.append(np.nan)
             FA_Dif_num.append(np.nan)
@@ -70,8 +84,8 @@ def Altered_Fall_Wet_Timing(flow_matrix, DS_Tim):
 
         flow_window = flow_data[WY_start-1:(WY_start + 75)]
 
-        peak_indecies, _ = find_peaks(flow_window, height= 1, prominence=1.1)
-        _, _, left, right = peak_widths(flow_window, peak_indecies, rel_height=0.99)
+        peak_indecies, _ = find_peaks(flow_window, height = min_height, prominence = min_prominence)
+        _, _, left, right = peak_widths(flow_window, peak_indecies, rel_height=rel_height)
         left = np.rint(left)
         right = np.rint(right)
         values_at_peaks = flow_window[peak_indecies]
@@ -95,7 +109,7 @@ def Altered_Fall_Wet_Timing(flow_matrix, DS_Tim):
                     Temp_DS_Mag = np.median(Temp_DS_flow)
     
                 # To check if the fall pulse meets certain criteria
-                if FA_peaks[j, 0] > 1.5 * Temp_DS_Mag and FA_peaks[j, 0] >= 1:
+                if FA_peaks[j, 0] > median_scaling_factor * Temp_DS_Mag and FA_peaks[j, 0] >= 1:
 
                     # Store the identified timing for the fall pulse
                     FA_Tim_Temp = FA_peaks[j, 1]
@@ -107,9 +121,9 @@ def Altered_Fall_Wet_Timing(flow_matrix, DS_Tim):
                     # Calculate the rolling median of flows post fall
                     median_array = np.array([np.median(post_fall_flow[:i+1]) for i in range(len(post_fall_flow))])
                     # Find the index of the first flow that is 1.5 times the median
-                    wet_tim = np.where(post_fall_flow > 1.5 * median_array)
+                    wet_tim = np.where(post_fall_flow > median_scaling_factor * median_array)
                     if not (wet_tim[0].size == 0):
-                        Temp_Wet_Tim = np.where(post_fall_flow > 1.5 * median_array)[0][0]
+                        Temp_Wet_Tim = np.where(post_fall_flow > median_scaling_factor * median_array)[0][0]
                     else:
                         continue
                     # To get the dry season median, make sure there was a dry season timing next year
@@ -125,7 +139,7 @@ def Altered_Fall_Wet_Timing(flow_matrix, DS_Tim):
                         Temp_DS_Mag = np.median(flow_data[0:(FA_Tim_Temp + FA_Dur_Temp + Temp_Wet_Tim + WY_start).astype(int)])
 
                     # Check if the fall pulse is still 1.5 times the dry season 50th percentile flow
-                    if FA_Mag_Temp > 1.5 * Temp_DS_Mag:
+                    if FA_Mag_Temp > median_scaling_factor * Temp_DS_Mag:
                         FA_Tim.append(FA_peaks[j, 1])
                         Wet_Tim.append(FA_peaks[j, 1] + FA_Dur_Temp + Temp_Wet_Tim - 2)
                         FA_Mag.append(FA_peaks[j,0])
@@ -153,8 +167,8 @@ def Altered_Fall_Wet_Timing(flow_matrix, DS_Tim):
             # first get the flow data from after the fall pulse window
             Wet_Peaks_flow = flow_data[WY_start + 75:]
             # Now find the peaks after in the post fall window
-            peak_indecies, _ = find_peaks(Wet_Peaks_flow, height = min((0.1*WY_median),10), prominence=10)
-            _, _, left, right = peak_widths(Wet_Peaks_flow, peak_indecies, rel_height=0.99)
+            peak_indecies, _ = find_peaks(Wet_Peaks_flow, height = min((min_peak_scaling_factor*WY_median),min_peak_height), prominence=wet_prominence)
+            _, _, left, right = peak_widths(Wet_Peaks_flow, peak_indecies, rel_height=rel_height)
             left = np.rint(left)
             right = np.rint(right)
             values_at_peaks = Wet_Peaks_flow[peak_indecies]
@@ -180,7 +194,7 @@ def Altered_Fall_Wet_Timing(flow_matrix, DS_Tim):
                         Temp_DS_Mag = np.median(Temp_DS_flow)
                         
                     # Check to see if the peak is larger than the estimated dry season baseflow
-                    if WS_peaks[j, 0] > 1.5 * Temp_DS_Mag:
+                    if WS_peaks[j, 0] > median_scaling_factor * Temp_DS_Mag:
                         # Now we know we either have a peak on or peak before a "hat" scenario,
                         # so we need to check the timing of the peak
 
@@ -219,7 +233,7 @@ def Altered_Fall_Wet_Timing(flow_matrix, DS_Tim):
                 Temp_dry_flow = replace_nan(Temp_dry_flow)
                 threshold_90 = np.quantile(Temp_dry_flow, 0.9)
 
-                if all(WS_peaks[:, 0] < 1.5 * Temp_DS_Mag) or len(WS_peaks) <= 0:
+                if all(WS_peaks[:, 0] < median_scaling_factor * Temp_DS_Mag) or len(WS_peaks) <= 0:
                     # Find subset of data above the 90th percentile
                     flow_90th = Temp_dry_flow[Temp_dry_flow >= threshold_90]
                     # find the first day that is at or above the 90th percentile of flow
@@ -250,7 +264,7 @@ def Altered_Fall_Wet_Timing(flow_matrix, DS_Tim):
                     Temp_DS_Mag = np.median(Temp_DS_flow)
 
                 threshold_90 = np.quantile(Temp_dry_flow, 0.9)
-                if all(WS_peaks[:, 0] < 1.5 * Temp_DS_Mag) or len(WS_peaks) <= 0:
+                if all(WS_peaks[:, 0] < median_scaling_factor * Temp_DS_Mag) or len(WS_peaks) <= 0:
                     # Find subset of data above the 90th percentile
                     flow_90th = Temp_dry_flow[(Temp_dry_flow >= threshold_90 ) & (Temp_dry_flow > 0)]
                     # find the first day that is at or above the 90th percentile of flow
@@ -260,14 +274,18 @@ def Altered_Fall_Wet_Timing(flow_matrix, DS_Tim):
 
                     # Set the wet season timing to that date
                     Wet_Tim.append(Wet_start_index)
-                
+                    
+        # The calculator has failed to assign a wet timing this iteration, give it nan
+        if wet_tim_len == len(Wet_Tim):
+            Wet_Tim.append(np.nan)
+
 
     # Put all the metrics into a dictionary
     Fall_Metrics_and_Wet_tim = {
-    "FA_Tim": FA_Tim,
-    "FA_Mag": FA_Mag,
-    "FA_Dur": FA_Dur,
-    "FA_Dif_num": FA_Dif_num,
+    "timings_water": FA_Tim,
+    "magnitudes": FA_Mag,
+    "durations": FA_Dur,
+    #"FA_Dif_num": FA_Dif_num,
     "Wet_Tim": Wet_Tim
     }
     

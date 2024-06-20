@@ -106,7 +106,7 @@ See below for more information on what data you might want to give it.
 
 #### Formatting the CSV
 
-   The batch processing csv needs the following columns (case sensitive) to work: `usgs, cdec, path, comid, class, lat, lng` more columns can exist but those ones are required. Every entry in the csv must have one of `usgs`, `cdec` or `path` populated this is because they are used to fetch the data for the calculator.
+   The batch processing csv needs the following columns (case sensitive) to work: `usgs, cdec, path, comid, class, lat, lng, calculator` more columns can exist but those ones are required. Every entry in the csv must have one of `usgs`, `cdec` or `path` populated this is because they are used to fetch the data for the calculator.
 
    usgs is expected to be a USGS gage id.
 
@@ -115,6 +115,8 @@ See below for more information on what data you might want to give it.
    path can be a file path to the file relative to the root of this repository or a total path on your machine. For user uploaded data Latitude and Longitude can also be supplied using the `lat`, `lng` fields. These lat and long will then be used to snap to a comid and hopefully populate the stream class on its own using the file in `extra_info/comid_to_stream_class.csv`. If the snapped comid or your supplied comid is not within that csv an error will be throw and you will be asked to supply a stream class. This error can also occur for cdec and usgs gages if they cannot get stream class from their comid. In this case you will be asked to populate it yourself in the `class` field. Stream classes used to populate the `class` field can be found with at the [eFlows website](https://eflows.ucdavis.edu/).
 
    For any of the above cases a stream class and comid can be provided in `class` and `comid` fields and they will overwrite what is found for that gage. You can see an example batch csv in `batch_example.csv` with some dummy numbers feel free to use it and see how the batch processing functionality works before making your own csv.
+
+   Additionally using the `calculator` field you can select which of the two currently supported calculators to use on your data. Each row needs either "Flashy" "Original" or to be left blank. Supplying "Flashy" will make that dataset's functional flow metrics be calculated using a translated version of the [UCDavis alternate functional flows calculator](https://github.com/camcarpenter6/Alternate-Ruleset-FFC-BETA) whereas "Original" will make that dataset's functional flow metrics be calculated using an updated version of [the original functional flows calculator](https://github.com/leogoesger/func-flow). Leaving the field blank will let the program determine which calculator will produce the best results for your data by using the nature of your input data, the flow class and the metrics produced by the original calculator. It is recommended to leave this field blank if you are not familiar with both calculators.
 
 ### Alteration Assessments
 

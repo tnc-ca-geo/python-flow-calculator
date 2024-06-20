@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from pynhd import NLDI
 
 class AbstractGage(ABC):
-    def __init__(self, gage_id, measurement_unit='cfs', longitude=None, latitude=None, comid=None, flow_class = None, download_directory = None):
+    def __init__(self, gage_id, measurement_unit='cfs', longitude=None, latitude=None, comid=None, flow_class = None, download_directory = None, selected_calculator = None):
         self.gage_id = gage_id
         self.measurement_unit = measurement_unit
         self.readings = []
@@ -11,6 +11,7 @@ class AbstractGage(ABC):
         self.comid = comid
         self.flow_class = flow_class
         self.download_directory = download_directory
+        self.selected_calculator = selected_calculator
 
     @abstractmethod
     def download_metadata(self):

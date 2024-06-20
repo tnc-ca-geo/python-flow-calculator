@@ -86,5 +86,5 @@ class USGSGage(AbstractGage):
         Return a string representation of the USGS Gage.
         """
         
-        return f"USGSGage ID: {self.gage_id}, Location: {self.latitude}, {self.longitude}, Measurement Unit: {self.measurement_unit}"
+        return f"USGS Gage ID: {self.gage_id}, Location: {self.latitude}, {self.longitude}, Measurement Unit: {self.measurement_unit}"
         

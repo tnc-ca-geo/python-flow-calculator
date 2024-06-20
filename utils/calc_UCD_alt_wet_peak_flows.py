@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.stats import norm
 from utils.helpers import replace_nan
+from params import flashy_params
 
 def median_of_time(lt):
     n = len(lt)
@@ -77,8 +78,8 @@ def peak_flow_analysis(peaks, average_return_interval):
 
 def calc_winter_highflow_annual_combined(flow_matrix, original_method=False):
 
-    max_zero_allowed_per_year = 365
-    max_nan_allowed_per_year = 100
+    max_zero_allowed_per_year = flashy_params['max_zero_allowed_per_year']
+    max_nan_allowed_per_year = flashy_params['max_nan_allowed_per_year']
 
     # Set up output arrays
     peak_dur_10 = []
@@ -103,7 +104,7 @@ def calc_winter_highflow_annual_combined(flow_matrix, original_method=False):
     for column_number in range(flow_matrix.shape[1]):
         # Filters flow to the water year of interest
         flow_data = flow_matrix[:, column_number]
-        if (np.count_nonzero(np.isnan(flow_data)) >= 100  or
+        if (np.count_nonzero(np.isnan(flow_data)) >= max_nan_allowed_per_year  or
             np.all(flow_data < 1)):
             continue
         
@@ -116,9 +117,8 @@ def calc_winter_highflow_annual_combined(flow_matrix, original_method=False):
         # This mode follows the original calculator
         if original_method:
             peak_exceedance_values.append(np.quantile(peak_flows, 1 - (1 / ari)))
-        # This method uses Log Pearson Type III method to calculate the return flows
         else:
-            # Assuming you have a Peak_Flow_Analysis function
+            # This method uses Log Pearson Type III method to calculate the return flows
             peak_exceedance_values.append(peak_flow_analysis(peak_flows, ari))
 
     # Now iterate through the water years to see when these flows occur
@@ -127,7 +127,7 @@ def calc_winter_highflow_annual_combined(flow_matrix, original_method=False):
 
         # Check to make sure that flow years qualify for the analysis
         if ( np.sum(np.isnan(flow_data)) > max_nan_allowed_per_year or
-                 np.sum((flow_data == 0)) > max_zero_allowed_per_year or
+                 np.sum((flow_data <= 0.1)) > max_zero_allowed_per_year or
                 len(flow_data) <= 358):
             # Set all the values to NA besides the peak flow thresholds
             peak_dur_10.append(np.nan)
@@ -188,20 +188,21 @@ def calc_winter_highflow_annual_combined(flow_matrix, original_method=False):
                 peak_10.append(peak_exceedance_values[2])
                 peak_fre_10.append(ph_fre)
                 peak_tim_10.append(ph_tim)
-
+    
+    # the names below are a bit weird because the original calculator used exceedance percentiles instead of recurrence intervals
     high_flow_metrics = {
-        "Peak_Dur_10": peak_dur_10,
-        "Peak_Dur_2": peak_dur_2,
-        "Peak_Dur_5": peak_dur_5,
-        "Peak_10": peak_10,
-        "Peak_2": peak_2,
-        "Peak_5": peak_5,
-        "Peak_Fre_10": peak_fre_10,
-        "Peak_Fre_2": peak_fre_2,
-        "Peak_Fre_5": peak_fre_5,
-        "Peak_Tim_10": peak_tim_10,
-        "Peak_Tim_2": peak_tim_2,
-        "Peak_Tim_5": peak_tim_5
+        "durations_ten": peak_dur_10,
+        "durations_fifty": peak_dur_2,
+        "durations_twenty": peak_dur_5,
+        "magnitudes_ten": peak_10,
+        "magnitudes_fifty": peak_2,
+        "magnitudes_twenty": peak_5,
+        "frequencys_ten": peak_fre_10,
+        "frequencys_fifty": peak_fre_2,
+        "frequencys_twenty": peak_fre_5,
+        "timings_ten": peak_tim_10,
+        "timings_fifty": peak_tim_2,
+        "timings_twenty": peak_tim_5
     }
 
     return high_flow_metrics
