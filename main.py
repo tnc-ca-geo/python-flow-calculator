@@ -588,7 +588,7 @@ if __name__ == '__main__':
         # These wrapper functions should not change the functionality of the original numpy functions but rather handle the all nan case that is currently throwing warnings more gracefully
         with warnings.catch_warnings():
             warnings.simplefilter('ignore')
-            alteration_files = upload_files(start_date = start_date, gage_arr = gage_arr, output_files = output_files_dir, batched = batch, alteration_needed=alterationNeeded)
+            alteration_files, upload_warning = upload_files(start_date = start_date, gage_arr = gage_arr, output_files = output_files_dir, batched = batch, alteration_needed=alterationNeeded)
         sys.stdout.write("\r" + " " * (len("Calculating Metrics... ") + 1) + "\r")
     except Exception as e:
         done = True
@@ -605,6 +605,9 @@ if __name__ == '__main__':
         if 'spinner_thread' in locals():
             spinner_thread.join()
 
+    if upload_warning:
+        questionary.print('\nWarnings encountered while computing metrics ⚠️', style='fg:#deda03')
+        questionary.print(upload_warning)
     questionary.print("Calculating Metrics... ✔️", style="bold fg:lightgreen")
     questionary.print(f"Calculated metrics can be found in {output_files_dir}/", style="bold fg:lightgreen")
     

@@ -7,7 +7,7 @@ from classes.FlashyMetricCalculator import FlashyCalculator
 from classes.matrix_convert import MatrixConversion
 from classes.MetricCalculator import Calculator
 from utils.helpers import calc_avg_nan_per_year, comid_to_wyt, dict_to_array
-from utils.constants import DELETE_INDIVIDUAL_FILES_WHEN_BATCH
+from utils.constants import DELETE_INDIVIDUAL_FILES_WHEN_BATCH, QUIT_ON_ERROR
 from params import summer_params
 from params import fall_params
 from params import spring_params
@@ -17,10 +17,12 @@ from params import flashy_params
 
 def upload_files(start_date, gage_arr, output_files = 'user_output_files', batched = False, alteration_needed = False):
     
-    # these 4 are for storing file names and file types of files that will later need to be batched together 
+    warning_message = ''
+
+    # these 3 are for storing file names and file types of files that will later need to be batched together 
     output_file_dirs = [[],[],[]]
     file_identifiers = []
-    file_base_name = ['annual_flow_matrix', 'annual_flow_result','supplementary_metrics']
+    file_base_name = ['annual_flow_matrix', 'annual_flow_result', 'supplementary_metrics']
     
     
     for gage in gage_arr:
@@ -49,17 +51,23 @@ def upload_files(start_date, gage_arr, output_files = 'user_output_files', batch
         except Exception as e:
             original_message = str(e)
             gage_message = f"ERROR PROCESSING GAGE: {gage}"
-            raise type(e)(f"{original_message}. \n{gage_message}")
-        
+            if QUIT_ON_ERROR:
+                raise type(e)(f"{original_message}. \n{gage_message}")
+            else:
+                warning_message += f"There was an error when processing gage {gage} using the data it completed and proceeding...\n"
+                continue
     
     
     if batched:
         for file_paths, base_name in zip(output_file_dirs, file_base_name):
-            batch_files(file_paths, base_name, file_identifiers, output_files, alteration_needed)
+            if not file_paths:
+                warning_message += f"There is no {base_name} files to batch together, all gages likely errored proceeding to the next file type...\n"
+            else:
+                batch_files(file_paths, base_name, file_identifiers, output_files, alteration_needed)
 
 
 
-    return output_file_dirs[1]
+    return output_file_dirs[1], warning_message
 
 def calc_results_flashy(matrix, flow_class, start_date = None, comid = None):
     results = {}
