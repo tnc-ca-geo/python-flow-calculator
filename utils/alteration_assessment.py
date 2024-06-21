@@ -8,6 +8,8 @@ def assess_alteration(gages, metrics_paths, output_files = 'user_output_files', 
     
     return_message = ''
     alteration_assessment_list = []
+    if not metrics_paths:
+        return_message += 'No metric data entered alteration assessment, it is likely all metric calculation failed\n'
     for (gage, metrics) in zip(gages, metrics_paths):
         comid = gage.comid
         gage_id = gage.gage_id
@@ -37,6 +39,10 @@ def assess_alteration(gages, metrics_paths, output_files = 'user_output_files', 
 def assess_alteration_by_wyt(gages, metrics_paths, output_files = 'user_output_files', aa_start_year = None, aa_end_year = None):
     
     return_message = ''
+
+    if not metrics_paths:
+        return_message += 'No metric data entered WYT alteration assessment, it is likely all metric calculation failed\n'
+
     alteration_assessment_list = []
     for (gage, metrics) in zip(gages, metrics_paths):
         comid = gage.comid
