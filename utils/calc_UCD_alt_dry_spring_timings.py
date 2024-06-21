@@ -2,10 +2,12 @@ import numpy as np
 from utils.helpers import replace_nan
 from scipy.signal import find_peaks
 from scipy.ndimage import gaussian_filter1d
+from params import flashy_params
 
 def Altered_Summer_Dry_Season_Tim_Varied(flow, flow_thresh, day_thresh=5, roc_thresh=0.02):
     
     roc = np.diff(flow) / flow[:-1]
+    roc = np.insert(roc,0,np.nan)
     dif = np.diff(flow, prepend=np.nan)
 
     n_consec = 0
@@ -51,7 +53,9 @@ def Altered_Summer_Dry_Season_Tim_Varied(flow, flow_thresh, day_thresh=5, roc_th
             DS_Tim = Altered_Summer_Dry_Season_Tim_Varied(
                 flow=flow, flow_thresh=flow_thresh, day_thresh=day_thresh, roc_thresh=roc_thresh
             )
-
+    if DS_Tim is None and idx_consec is None:
+        return None
+    
     if DS_Tim is None:
         if n_neg > 3:
             DS_Tim = idx_consec[-1]
@@ -67,9 +71,16 @@ def Altered_Summer_Dry_Season_Tim_Varied(flow, flow_thresh, day_thresh=5, roc_th
 
 def Altered_Spring_Recession(flow_matrix):
     
+    min_dry_flow_percent = flashy_params["dry_min_flow_percent"]
+    max_plateau_size = flashy_params["dry_max_plateau_size"]
+    max_nan_per_year = flashy_params["max_nan_allowed_per_year"]
+    max_zero_per_year = flashy_params["max_zero_allowed_per_year"]
+    filter_sigma = flashy_params["dry_filter_sigma"]
+    min_peak_height = flashy_params["dry_min_peak_height"]
+    min_peak_scaling_factor = flashy_params["dry_min_peak_scaling_factor"]
+    
     # Setup the output vectors
     SP_Mag = []
-    SP_Tim_test = []
     SP_Tim = []
     SP_ROC = []
     SP_ROC_Max = []
@@ -82,10 +93,9 @@ def Altered_Spring_Recession(flow_matrix):
         flow_data = flow_matrix[:, column_number]
 
         # Skip the year if there are more than 100 NA flow data points
-        if np.isnan(flow_data).sum() > 100 or len(flow_data) < 358:
+        if np.isnan(flow_data).sum() > max_nan_per_year:
             SP_Tim.append(np.nan)
             SP_Mag.append(np.nan)
-            SP_Tim_test.append(np.nan)
             SP_ROC.append(np.nan)
             SP_ROC_Max.append(np.nan)
             SP_Dur.append(np.nan)
@@ -93,10 +103,9 @@ def Altered_Spring_Recession(flow_matrix):
             continue
 
         # Check to see if there are more than the allowable number of 0s in the vector
-        elif np.sum((flow_data == 0) & ~np.isnan(flow_data)) >= 365:
+        elif np.sum((flow_data <= 0.1) & ~np.isnan(flow_data)) >= max_zero_per_year:
             SP_Tim.append(np.nan)
             SP_Mag.append(np.nan)
-            SP_Tim_test.append(np.nan)
             SP_ROC.append(np.nan)
             SP_ROC_Max.append(np.nan)
             SP_Dur.append(np.nan)
@@ -107,7 +116,6 @@ def Altered_Spring_Recession(flow_matrix):
         elif np.all(~np.isnan(flow_data) & (flow_data == flow_data[~np.isnan(flow_data)][0])):
             SP_Tim.append(np.nan)
             SP_Mag.append(np.nan)
-            SP_Tim_test.append(np.nan)
             SP_ROC.append(np.nan)
             SP_ROC_Max.append(np.nan)
             SP_Dur.append(np.nan)
@@ -118,17 +126,17 @@ def Altered_Spring_Recession(flow_matrix):
             # Now that the data has passed the checks, replace the NA data
             flow_data = replace_nan(flow_data.copy())
 
-            # Calculate the 50th and 9th percentile for the flows
+            # Calculate the 50th and 90th percentile for the flows
             quants = np.percentile(flow_data, q=[50, 90], interpolation='nearest')
 
             WY_median = np.median(flow_data)
             # Filter the flow to remove the noise on the rising limb
-            filter_flow = gaussian_filter1d(flow_data, 1.3)
+            filter_flow = gaussian_filter1d(flow_data, filter_sigma)
 
-            # Returns array with indicies for each peak and valley
+            # Returns array with indices for each peak and valley
             # do not add prominence here, better matches the R code without it
             # max of 3 flat top points to match R code
-            peaks, valleys = find_peaks(filter_flow, height= min((0.15*WY_median),15), plateau_size=[0,3])
+            peaks, valleys = find_peaks(filter_flow, height= min((min_peak_scaling_factor*WY_median),min_peak_height), plateau_size=[0,max_plateau_size])
 
             values_at_peaks = filter_flow[peaks]
             # Combine the two data sets of peaks
@@ -183,11 +191,10 @@ def Altered_Spring_Recession(flow_matrix):
         # Make a new data frame with just the flows after the top of the spring recession
         flow_post_SP = flow_data[springindex:]
 
-        # Set a min flow threshold for the dry season to start based on the spring and min dry season baseflow
-        min_summer_flow_percent = 0.125
+
         WY_max_flow = np.max(flow_data)
         post_SP_min_flow = np.min(flow_post_SP)
-        Min_DS_Threshold = post_SP_min_flow + (WY_max_flow - post_SP_min_flow) * min_summer_flow_percent
+        Min_DS_Threshold = post_SP_min_flow + (WY_max_flow - post_SP_min_flow) * min_dry_flow_percent
 
         # Calculate the dry season start timing by subtracting the length of the water year by the time remaining
         # after the spring recession peak and then add the timing of the start of the dry season after the spring peak
@@ -196,10 +203,10 @@ def Altered_Spring_Recession(flow_matrix):
         roc = np.nan_to_num(roc, nan=0)
         roc = np.insert(roc, 0, np.nan)
         if PH_DS_Tim is None:
-            DS_Tim.append(-9999)
-            SP_ROC.append(-9999)
-            SP_ROC_Max.append(-9999)
-            SP_Dur.append(-9999)
+            DS_Tim.append(np.nan)
+            SP_ROC.append(np.nan)
+            SP_ROC_Max.append(np.nan)
+            SP_Dur.append(np.nan)
             continue
             
         if PH_DS_Tim is not None and PH_DS_Tim == 0:
@@ -217,11 +224,11 @@ def Altered_Spring_Recession(flow_matrix):
             SP_ROC_Max.append(0)
     # Put all the metrics into a dictionary
     SP_Metrics_and_Dry_Season_Tim = {
-        "SP_Tim": SP_Tim,
-        "SP_Mag": SP_Mag,
-        "SP_ROC": SP_ROC,
-        "SP_Dur": SP_Dur,
-        "SP_ROC_Max": SP_ROC_Max,
+        "timings_water": SP_Tim,
+        "magnitudes": SP_Mag,
+        "rocs": SP_ROC,
+        "durations": SP_Dur,
+        # "SP_ROC_Max": SP_ROC_Max,
         "DS_Tim": DS_Tim
     }
     # Return all of the metrics

@@ -126,20 +126,33 @@ if __name__ == '__main__':
                                 if 'csv_thread' in locals():
                                     csv_thread.join()
                                 sys.stdout.write("\r" + " " * (len("Processing CSV... ") + 1) + "\r")
-                                questionary.print(f"❌ Please only include one of usgs, path or cdec ❌\n The line that failed looks like: \n\tusgs: {line['usgs']}\n\tcdec: {line['cdec']}\n\tpath: {line['path']}", style="bold fg:red")
+                                questionary.print(f"❌ Please only include one of usgs, path or cdec ❌\n The line that failed looks like: \n\tusgs: {line['usgs']}\n\tcdec: {line['cdec']}\n\tpath: {line['path']}\n\tcalculator: {line['calculator']}", style="bold fg:red")
                                 sys.exit()
-
+                        
+                        selected_calculator = line['calculator'].lower()
+                        if selected_calculator == '':
+                            selected_calculator = None
+                        if not (selected_calculator == 'flashy' or selected_calculator == 'original' or selected_calculator == '' or selected_calculator == None):
+                            done = True
+                            if 'csv_thread' in locals():
+                                csv_thread.join()
+                            sys.stdout.write("\r" + " " * (len("Processing CSV... ") + 1) + "\r")
+                            questionary.print(f"❌ 'calculator' field must be Flashy, Original or blank for all rows ❌\n The line that failed looks like: \n\tusgs: {line['usgs']}\n\tcdec: {line['cdec']}\n\tpath: {line['path']}\n\tcalculator: {line['calculator']}", style="bold fg:red")
+                            sys.exit()
+                        
                         if line['usgs'] != '':
-                            usgs_to_be_downloaded.append({'id': line['usgs'], 'comid': line['comid'], 'class': line['class']})
+                            usgs_to_be_downloaded.append({'id': line['usgs'], 'comid': line['comid'], 'class': line['class'], 'calc': selected_calculator})
                         elif line['cdec'] != '':
-                            cdec_to_be_downloaded.append({'id': line['cdec'].upper(), 'comid': line['comid'], 'class': line['class']})
+                            cdec_to_be_downloaded.append({'id': line['cdec'].upper(), 'comid': line['comid'], 'class': line['class'], 'calc': selected_calculator})
                         elif line['path'] != '':
                             file_name = os.path.splitext(os.path.basename(line['path']))[0]
+                            
                             if line['comid'] != '':
-                                line_gage_obj = UserUploadedData(file_name=file_name, comid = line['comid'], download_directory=line['path'])
+                                line_gage_obj = UserUploadedData(file_name=file_name, comid = line['comid'], download_directory=line['path'], selected_calculator=selected_calculator)
 
                             elif (line['lat'] != '') and (line['lng'] != ''):
-                                line_gage_obj = UserUploadedData(file_name=file_name, longitude = line['lng'], latitude = line['lat'], download_directory=line['path'])
+                                
+                                line_gage_obj = UserUploadedData(file_name=file_name, longitude = line['lng'], latitude = line['lat'], download_directory=line['path'],  selected_calculator=selected_calculator)
                                 line_gage_obj.get_comid()
 
                             else:
@@ -197,6 +210,7 @@ if __name__ == '__main__':
                         new_gage = USGSGage(gage_id = usgs_dict['id'])
                         new_gage.download_metadata()
                         new_gage.save_daily_data()   
+                        new_gage.selected_calculator = usgs_dict['calc']
                         new_gage.comid = usgs_dict['comid']
                         comid = new_gage.get_comid() 
                         new_gage.flow_class = usgs_dict['class']
@@ -238,6 +252,7 @@ if __name__ == '__main__':
                         new_gage = CDECGage(gage_id = cdec_dict['id'])
                         new_gage.download_metadata()
                         new_gage.save_daily_data()
+                        new_gage.selected_calculator = cdec_dict['calc']
                         new_gage.comid = cdec_dict['comid']
                         comid = new_gage.get_comid() 
                         new_gage.flow_class = cdec_dict['class']
@@ -304,10 +319,11 @@ if __name__ == '__main__':
                 gage_id = questionary.text('Please enter a CDEC Gage ID you would like to analyze'
                                         ,validate = lambda id: True if bool(re.match(r'^[a-zA-Z]{3}', id)) else "Please enter a valid CDEC Gage id").ask()
                 
-                gage_id = gage_id.upper()
+                
                 if not gage_id:
                     questionary.print("🛑 No CDEC Gage ID provided 🛑", style="bold fg:red")
                     sys.exit()
+                gage_id = gage_id.upper()
                 gages_to_be_downloaded.append(gage_id)
                 
                 if len(formatted_gages) == 0:
@@ -503,25 +519,44 @@ if __name__ == '__main__':
                 else:
                     questionary.print("🛑 No flow class selected 🛑", style="bold fg:red")
                     sys.exit()
-    
+
+            selected_calc = questionary.select(f"Which calculator would you like to use for {gage.gage_id}?",
+                        choices=[
+
+                        "Recommended calculator based on the supplied/downloaded data",
+
+                        "Original calculator",
+
+                        "Flashy calculator"
+                    ]).ask()
+            if selected_calc == "Original calculator":
+                gage.selected_calculator = "Original"
+            elif selected_calc == "Flashy calculator":
+                 gage.selected_calculator = "Flashy"
+            else:
+                gage.selected_calculator = None
+
     if not auto_start:
         formatted_files = ''
         formatted_stream_classes = ''
         firstGage = True
         for gage in gage_arr:
             gage_file_name = os.path.basename(gage.download_directory)
+            calc_string = gage.selected_calculator
+            if  calc_string is None:
+                calc_string = 'Recommended'
             if firstGage:
                 formatted_files = gage_file_name
-                formatted_stream_classes = f"    {gage_file_name}:\n        {NUMBER_TO_CLASS[gage.flow_class]}"
+                formatted_stream_classes = f"    {gage_file_name}:\n        Class: {NUMBER_TO_CLASS[gage.flow_class]}\n        Calculator: {calc_string}"
                 firstGage = False
             else:
                 formatted_files = formatted_files + ', ' + gage_file_name    
-                formatted_stream_classes = formatted_stream_classes + f"\n    {gage_file_name}:\n        {NUMBER_TO_CLASS[gage.flow_class]}"
+                formatted_stream_classes = formatted_stream_classes + f"\n    {gage_file_name}:\n        Class: {NUMBER_TO_CLASS[gage.flow_class]}\n        Calculator: {calc_string}"
         batch = False
         if len(gage_arr) > 1:
             batch = questionary.confirm('Would you like to batch all your processed metrics into a single file?').ask()
 
-        ready = questionary.confirm(f"Calculate metrics with the following general parameters?\nFiles:\n    {formatted_files}\nStream Class per File:\n{formatted_stream_classes}\nStart Date:\n    {start_date}\nBatched:\n    {batch}\nAlteration Assessment:\n    {alterationNeeded}\n").ask()
+        ready = questionary.confirm(f"Calculate metrics with the following general parameters?\nFiles:\n    {formatted_files}\nStream Class & Calculator per File:\n{formatted_stream_classes}\nStart Date:\n    {start_date}\nBatched:\n    {batch}\nAlteration Assessment:\n    {alterationNeeded}\n").ask()
         
         if not ready:
             questionary.print("🛑 User parameters declined 🛑", style="bold fg:red")
@@ -553,7 +588,7 @@ if __name__ == '__main__':
         # These wrapper functions should not change the functionality of the original numpy functions but rather handle the all nan case that is currently throwing warnings more gracefully
         with warnings.catch_warnings():
             warnings.simplefilter('ignore')
-            alteration_files = upload_files(start_date = start_date, gage_arr = gage_arr, output_files = output_files_dir, batched = batch, alteration_needed=alterationNeeded)
+            alteration_files, upload_warning = upload_files(start_date = start_date, gage_arr = gage_arr, output_files = output_files_dir, batched = batch, alteration_needed=alterationNeeded)
         sys.stdout.write("\r" + " " * (len("Calculating Metrics... ") + 1) + "\r")
     except Exception as e:
         done = True
@@ -570,6 +605,9 @@ if __name__ == '__main__':
         if 'spinner_thread' in locals():
             spinner_thread.join()
 
+    if upload_warning:
+        questionary.print('\nWarnings encountered while computing metrics ⚠️', style='fg:#deda03')
+        questionary.print(upload_warning)
     questionary.print("Calculating Metrics... ✔️", style="bold fg:lightgreen")
     questionary.print(f"Calculated metrics can be found in {output_files_dir}/", style="bold fg:lightgreen")
     

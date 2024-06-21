@@ -1,7 +1,7 @@
 from classes.AbstractGage import AbstractGage
 
 class UserUploadedData(AbstractGage):
-    def __init__(self, file_name, download_directory,measurement_unit='cfs', longitude = None, latitude = None, comid = None):
+    def __init__(self, file_name, download_directory,measurement_unit='cfs', longitude = None, latitude = None, comid = None, selected_calculator = None):
         super().__init__(gage_id=file_name, measurement_unit = measurement_unit, longitude = longitude, latitude = latitude, comid = comid, download_directory = download_directory)
         
     def download_metadata(self):
