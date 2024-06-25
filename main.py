@@ -566,7 +566,7 @@ if __name__ == '__main__':
     
     # make directory for this run to store its files in
     current_time = datetime.now()
-    formatted_time = current_time.strftime("%Y-%m-%d-%H:%M")
+    formatted_time = current_time.strftime("%Y-%m-%d-%H-%M")
     dir_name = ''
     if len(gage_arr) == 1:
         dir_name = f'{gage_arr[0].gage_id}_{formatted_time}' 
