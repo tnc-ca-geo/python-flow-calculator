@@ -15,7 +15,7 @@ from params import winter_params
 from params import flashy_params
 
 
-def upload_files(start_date, gage_arr, output_files = 'user_output_files', batched = False, alteration_needed = False):
+def upload_files(start_date, gage_arr, output_files = 'user_output_files', batched = False, alteration_needed = False, aa_start_year = None, aa_end_year = None):
     
     warning_message = ''
 
@@ -46,7 +46,7 @@ def upload_files(start_date, gage_arr, output_files = 'user_output_files', batch
             
             formatted = f'{gage.gage_id}'
             param_path = os.path.join(output_files,formatted)
-            write_parameters(param_path, gage.flow_class, used_calculator)
+            write_parameters(param_path, gage.flow_class, used_calculator, aa_start_year, aa_end_year)
 
         except Exception as e:
             original_message = str(e)
@@ -210,15 +210,17 @@ def write_annual_flow_result(file_name, results, file_type):
                 fmt='%s', header='Year, ' + year_ranges, comments='')
     return output_dir, output_dir2
 
-def write_parameters(file_name, flow_class, used_calculator, file_type = 'run_metadata'):
+def write_parameters(file_name, flow_class, used_calculator, aa_start = None, aa_end = None, file_type = 'run_metadata'):
     # List of all the calculator used strings that want the flashy params outputted
     used_flashy  = ["Flashy (Class 7)","Flashy (User Specified)","Flashy (RBFI + mean annual nan > 0.8)"]
     # list of all the calculator used strings that want the original calculator params outputted
     used_original = ["Flashy (RBFI + mean annual nan > 0.8)", "Original (RBFI + mean annual nan <= 0.8)", "Original (User Specified)"]
     now = datetime.now()
     timestamp = now.strftime("%m/%d/%Y, %H:%M")
-
-    cols = {'Date_time': timestamp, 'Stream_class': flow_class, 'Used_Calculator': used_calculator}
+    if aa_start and aa_end:
+        cols = {'Date_time': timestamp, 'Stream_class': flow_class, 'Used_Calculator': used_calculator, 'Alteration Assessment range': f'{aa_start}-{aa_end}'}
+    else:
+        cols = {'Date_time': timestamp, 'Stream_class': flow_class, 'Used_Calculator': used_calculator}
     df = pd.DataFrame(cols, index=[0])
     if used_calculator in used_original:
         df['Fall_params'] = '_'
