@@ -90,9 +90,8 @@ def calc_results_flashy(matrix, flow_class, start_date = None, comid = None):
     results["summer"]["timings_water"] = start_of_summer
     results["DRH"] = calculator.get_DRH()
     results["new_low"], results["classification"] = calculator.new_low_flow_metrics()
-    results["year_ranges_new"] = calculator.year_ranges
     if comid is not None:
-        results["classification"]["wyt"] = [comid_to_wyt(comid,i+1) for i in calculator.year_ranges]
+        results["classification"]["wyt"] = [comid_to_wyt(comid,i) for i in results["year_ranges"]]
     return results
 
 def calc_results_original(matrix, flow_class, start_date = None, comid = None):
@@ -120,9 +119,8 @@ def calc_results_original(matrix, flow_class, start_date = None, comid = None):
     results["summer"]["timings_water"] = start_of_summer
     results["DRH"] = calculator.get_DRH()
     results["new_low"], results["classification"] = calculator.new_low_flow_metrics()
-    results["year_ranges_new"] = calculator.year_ranges
     if comid is not None:
-        results["classification"]["wyt"] = [comid_to_wyt(comid,i+1) for i in calculator.year_ranges]
+        results["classification"]["wyt"] = [comid_to_wyt(comid,i) for i in results["year_ranges"]]
     return results, calculator.calc_RBFI(), calc_avg_nan_per_year(copy.deepcopy(results)) 
 
 def get_results(matrix, flow_class, start_date = None, comid = None, desired_calculator = None):
@@ -188,9 +186,9 @@ def write_annual_flow_result(file_name, results, file_type):
     dict_to_array(results['summer'], 'summer', dataset)
     dict_to_array(results['new_low'], 'ds', dataset)
     dict_to_array(results['classification'], '', dataset)
-    results['year_ranges_new'].insert(0,'Year')
+    results['year_ranges'].insert(0,'Year')
     df = pd.DataFrame(dataset)
-    df.columns = results['year_ranges_new']
+    df.columns = results['year_ranges']
     output_dir = file_name + '_' + file_type + '.csv'
     df.to_csv(output_dir, index=False,na_rep='None')
     output_dir = file_name + '_' + file_type + '.csv'
