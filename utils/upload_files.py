@@ -69,7 +69,7 @@ def upload_files(start_date, gage_arr, output_files = 'user_output_files', batch
 
     return output_file_dirs[1], warning_message
 
-def calc_results_flashy(matrix, flow_class, start_date = None, comid = None):
+def calc_results_flashy(matrix, flow_class, start_date = '10/1', comid = None):
     results = {}
     results["year_ranges"] = [int(i) + 1 for i in matrix.year_array]
     results["flow_matrix"] = np.where(
@@ -95,7 +95,7 @@ def calc_results_flashy(matrix, flow_class, start_date = None, comid = None):
         results["classification"]["wyt"] = [comid_to_wyt(comid,i+1) for i in calculator.year_ranges]
     return results
 
-def calc_results_original(matrix, flow_class, start_date = None, comid = None):
+def calc_results_original(matrix, flow_class, start_date = '10/1', comid = None):
     results = {}
     results["year_ranges"] = [int(i) + 1 for i in matrix.year_array]
     results["flow_matrix"] = np.where(

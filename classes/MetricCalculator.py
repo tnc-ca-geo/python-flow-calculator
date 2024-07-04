@@ -41,14 +41,16 @@ class Calculator:
                 pad_size = desired_size - len(arr)
                 arr = np.append(arr, pad_size * [None] )
             results["low_min_avgs"] = np.where(np.isnan(low_min_avgs), None, low_min_avgs).tolist()
-            results["low_min_date"] = list(map(
-            lambda args: get_date_from_offset_julian_date(args[0], args[1],'6/1'),
-            zip(low_min_indices, self.year_ranges[1:]))
-            )
-            results["first_zero"] = list(map(
-            lambda args: get_date_from_offset_julian_date(args[0], args[1],'6/1'),
-            zip(first_zero, self.year_ranges[1:]))
-            )
+            
+            
+            june_1 = datetime.strptime('2023/06/01','%Y/%m/%d')
+            current_start_time = datetime.strptime('2023/' + self.start_date, '%Y/%m/%d')
+            if current_start_time > june_1:
+                june_1 = datetime.strptime('2024/06/01','%Y/%m/%d')
+            delta =  (june_1 - current_start_time).days
+
+            results["low_min_date"] = [int(x) + delta if not np.isnan(x) else None for x in low_min_indices]
+            results["first_zero"] = [int(x) + delta if not np.isnan(x) else None for x in first_zero]
             results["zeros_per_year"] = zeros_per_year.astype(int).tolist()
             results_general["Overall_Int_Class"] = np.full_like(classification_per_year, classification).tolist()
             results_general["Int_Class"] = classification_per_year.tolist()
