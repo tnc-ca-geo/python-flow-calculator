@@ -85,7 +85,11 @@ def calc_summer_baseflow_durations_magnitude(flow_matrix, summer_start_dates, fa
     summer_flush_durations = []
     summer_wet_durations = []
     summer_no_flow_counts = []
-
+    # The old calculator (possibly unintentionally) did all of its data filtering steps in other metrics without .copy() 
+    # This caused a difference in the calculators because this one did not have the replace_nan applied at this step due to proper copying when passing by reference
+    # going to include this so that it is clear it is a more intentional step for now and the values match the old calculator but we will need to discuss if the unintentional step before was good or bad
+    flow_matrix = np.apply_along_axis(replace_nan, 0, flow_matrix.copy())
+    
     for column_number, summer_start_date in enumerate(summer_start_dates):
         if column_number == len(summer_start_dates) - 1:
             if not pd.isnull(summer_start_date) and not pd.isnull(fall_flush_wet_dates[column_number]):
