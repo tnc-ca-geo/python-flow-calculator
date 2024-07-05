@@ -57,7 +57,9 @@ if __name__ == '__main__':
     
     if alterationNeeded is None:
         questionary.print("🛑 Please provide if you wish for an alteration assessment 🛑", style="bold fg:red")
+        questionary.print("→ Restart the calculator by running \"python main.py\" ←")
         sys.exit()
+
 
     elif alterationNeeded:
         
@@ -71,6 +73,7 @@ if __name__ == '__main__':
                                         validate = lambda year: True if bool(re.match(r'^[12][0-9]{3}$', year)) else "Please enter a valid end year (YYYY)").ask()
             if int(aa_start_year) > int(aa_end_year):
                 questionary.print("🛑 Start year must become before end year 🛑", style="bold fg:red")
+                questionary.print("→ Restart the calculator by running \"python main.py\" ←")
                 sys.exit()
             
             aa_start_year = int(aa_start_year)
@@ -88,6 +91,7 @@ if __name__ == '__main__':
     
     if input_method is None:
         questionary.print("🛑 Please provide what input method you wish to use 🛑", style="bold fg:red")
+        questionary.print("→ Restart the calculator by running \"python main.py\" ←")
         sys.exit()
     elif input_method == 'Batch CSV':
             questionary.print(f"Please ensure your batch processing CSV is in the directory {input_files} and follows the formatting guide in the README")
@@ -96,6 +100,7 @@ if __name__ == '__main__':
             
             if not csv_files:
                 questionary.print("🛑 No CSV files found 🛑", style="bold fg:red")
+                questionary.print("→ Restart the calculator by running \"python main.py\" ←")
                 sys.exit(f"Please ensure your batch processing CSV is in {input_files} and has the .csv file extension then try again")
 
             selected_file = questionary.select(
@@ -106,6 +111,7 @@ if __name__ == '__main__':
             
             if selected_file is None:
                 questionary.print("🛑 Please select a file you would like to use 🛑", style="bold fg:red")
+                questionary.print("→ Restart the calculator by running \"python main.py\" ←")
                 sys.exit()
             
             cdec_to_be_downloaded = []
@@ -127,6 +133,7 @@ if __name__ == '__main__':
                                     csv_thread.join()
                                 sys.stdout.write("\r" + " " * (len("Processing CSV... ") + 1) + "\r")
                                 questionary.print(f"❌ Please only include one of usgs, path or cdec ❌\n The line that failed looks like: \n\tusgs: {line['usgs']}\n\tcdec: {line['cdec']}\n\tpath: {line['path']}\n\tcalculator: {line['calculator']}", style="bold fg:red")
+                                questionary.print("→ Restart the calculator by running \"python main.py\" ←")
                                 sys.exit()
                         
                         selected_calculator = line['calculator'].lower()
@@ -138,6 +145,7 @@ if __name__ == '__main__':
                                 csv_thread.join()
                             sys.stdout.write("\r" + " " * (len("Processing CSV... ") + 1) + "\r")
                             questionary.print(f"❌ 'calculator' field must be Flashy, Original or blank for all rows ❌\n The line that failed looks like: \n\tusgs: {line['usgs']}\n\tcdec: {line['cdec']}\n\tpath: {line['path']}\n\tcalculator: {line['calculator']}", style="bold fg:red")
+                            questionary.print("→ Restart the calculator by running \"python main.py\" ←")
                             sys.exit()
                         
                         if line['usgs'] != '':
@@ -161,6 +169,7 @@ if __name__ == '__main__':
                                     csv_thread.join()
                                 sys.stdout.write("\r" + " " * (len("Processing CSV... ") + 1) + "\r")
                                 questionary.print("❌ all batch csv lines with a path must also have a lat/lng pair or a comid ❌", style="bold fg:red")
+                                questionary.print("→ Restart the calculator by running \"python main.py\" ←")
                                 sys.exit()
                             
                             line_gage_obj.flow_class = line['class']
@@ -172,6 +181,7 @@ if __name__ == '__main__':
                                     csv_thread.join()
                                 sys.stdout.write("\r" + " " * (len("Processing CSV... ") + 1) + "\r")
                                 questionary.print(f"🛑 Could not auto populate flow class for file: {line['path']} and no flow class was supplied in batch csv. 🛑\n🛑 Please supply a flow class for this file or a comid with a known flow class 🛑", style="bold fg:red")            
+                                questionary.print("→ Restart the calculator by running \"python main.py\" ←")
                                 sys.exit()
                             gage_arr.append(line_gage_obj)
 
@@ -181,6 +191,7 @@ if __name__ == '__main__':
                                 csv_thread.join()
                             sys.stdout.write("\r" + " " * (len("Processing CSV... ") + 1) + "\r")
                             questionary.print("❌ all batch csv lines must have a path, USGS ID or a CDEC ID ❌", style="bold fg:red")
+                            questionary.print("→ Restart the calculator by running \"python main.py\" ←")
                             sys.exit()
             except Exception as e:
                 done = True
@@ -189,6 +200,7 @@ if __name__ == '__main__':
                 sys.stdout.write("\r" + " " * (len("Processing CSV... ") + 1) + "\r")
                 questionary.print(traceback.format_exc())
                 questionary.print("🛑 Error parsing selected csv, please ensure it is formatted correctly see error message above 🛑", style="bold fg:red")
+                questionary.print("→ Restart the calculator by running \"python main.py\" ←")
                 sys.exit()
                 
             done = True
@@ -222,6 +234,7 @@ if __name__ == '__main__':
                                 usgs_dl_thread.join()
                             sys.stdout.write("\r" + " " * (len("Downloading USGS data... ") + 1) + "\r")
                             questionary.print(f"🛑 Could not auto populate flow class for USGS gage: {new_gage.gage_id} and no flow class was supplied in batch csv. 🛑\n🛑 Please supply a flow class for this gage or a comid with a known flow class 🛑", style="bold fg:red")            
+                            questionary.print("→ Restart the calculator by running \"python main.py\" ←")
                             sys.exit()
                         gage_arr.append(new_gage)
                     
@@ -232,6 +245,7 @@ if __name__ == '__main__':
                         sys.stdout.write("\r" + " " * (len("Downloading USGS data... ") + 1) + "\r")
                         questionary.print(traceback.format_exc())
                         questionary.print(f"🛑 Error downloading USGS data for gage id: {usgs_dict['id']} see above traceback 🛑", style="bold fg:red")
+                        questionary.print("→ Restart the calculator by running \"python main.py\" ←")
                         sys.exit()
                 
                 done = True
@@ -264,6 +278,7 @@ if __name__ == '__main__':
                                 cdec_dl_thread.join()
                             sys.stdout.write("\r" + " " * (len("Downloading CDEC data... ") + 1) + "\r")
                             questionary.print(f"🛑 Could not auto populate flow class for CDEC gage: {new_gage.gage_id} and no flow class was supplied in batch csv. 🛑\n🛑 Please supply a flow class for this gage or a comid with a known flow class 🛑", style="bold fg:red")            
+                            questionary.print("→ Restart the calculator by running \"python main.py\" ←")
                             sys.exit()
                         gage_arr.append(new_gage)
                         
@@ -275,6 +290,7 @@ if __name__ == '__main__':
                             cdec_dl_thread.join()
                         sys.stdout.write("\r" + " " * (len("Downloading CDEC data... ") + 1) + "\r")
                         questionary.print(f"🛑 Error Downloading CDEC data for gage id: {cdec_dict['id']} 🛑", style="bold fg:red")
+                        questionary.print("→ Restart the calculator by running \"python main.py\" ←")
                         sys.exit()
 
                 done = True
@@ -307,6 +323,7 @@ if __name__ == '__main__':
 
         if not data_type:
             questionary.print("🛑 No Data type selected 🛑", style="bold fg:red")
+            questionary.print("→ Restart the calculator by running \"python main.py\" ←")
             sys.exit()
         
         elif data_type == "CDEC Gage data":
@@ -322,6 +339,7 @@ if __name__ == '__main__':
                 
                 if not gage_id:
                     questionary.print("🛑 No CDEC Gage ID provided 🛑", style="bold fg:red")
+                    questionary.print("→ Restart the calculator by running \"python main.py\" ←")
                     sys.exit()
                 gage_id = gage_id.upper()
                 gages_to_be_downloaded.append(gage_id)
@@ -359,6 +377,7 @@ if __name__ == '__main__':
                     sys.stdout.write("\033[F")
                     sys.stdout.write("\r" + " " * (len("This may take a bit, CDEC's API can be slow") + 1) + "\r")
                     questionary.print(f"🛑 Error downloading gage data for gage: {new_gage} please verify it is a valid CDEC gage id with flow variable availability and try again 🛑", style="bold fg:red")
+                    questionary.print("→ Restart the calculator by running \"python main.py\" ←")
                     sys.exit()
             
             done = True
@@ -386,6 +405,7 @@ if __name__ == '__main__':
                 
                 if not gage_id:
                     questionary.print("🛑 No USGS Gage ID provided 🛑", style="bold fg:red")
+                    questionary.print("→ Restart the calculator by running \"python main.py\" ←")
                     sys.exit()
                 gages_to_be_downloaded.append(gage_id)
                 
@@ -417,6 +437,7 @@ if __name__ == '__main__':
                         gage_thread.join()
                     
                     questionary.print(f"🛑 Error downloading gage data for gage: {new_gage} please verify it is a valid USGS gage id and try again 🛑", style="bold fg:red")
+                    questionary.print("→ Restart the calculator by running \"python main.py\" ←")
                     sys.exit()
             
             done = True
@@ -436,6 +457,7 @@ if __name__ == '__main__':
             csv_files = glob.glob1(input_files, '*.csv')
             if not csv_files:
                 questionary.print("🛑 No CSV files found 🛑", style="bold fg:red")
+                questionary.print("→ Restart the calculator by running \"python main.py\" ←")
                 sys.exit(f"Please ensure your files are all in {input_files} and have the .csv file extension then run again.")
 
             selected_files = questionary.checkbox(
@@ -446,6 +468,7 @@ if __name__ == '__main__':
 
             if not selected_files:
                 questionary.print("🛑 No CSV files selected 🛑", style="bold fg:red")
+                questionary.print("→ Restart the calculator by running \"python main.py\" ←")
                 sys.exit()
             
             for file in selected_files:
@@ -478,6 +501,7 @@ if __name__ == '__main__':
 
                 else:
                     questionary.print("🛑 No provided 🛑", style="bold fg:red")
+                    questionary.print("→ Restart the calculator by running \"python main.py\" ←")
                     sys.exit() 
 
         asyncio.set_event_loop(asyncio.new_event_loop())
@@ -518,6 +542,7 @@ if __name__ == '__main__':
                     gage.flow_class = flow_class
                 else:
                     questionary.print("🛑 No flow class selected 🛑", style="bold fg:red")
+                    questionary.print("→ Restart the calculator by running \"python main.py\" ←")
                     sys.exit()
 
             selected_calc = questionary.select(f"Which calculator would you like to use for {gage.gage_id}?",
@@ -560,6 +585,7 @@ if __name__ == '__main__':
         
         if not ready:
             questionary.print("🛑 User parameters declined 🛑", style="bold fg:red")
+            questionary.print("→ Restart the calculator by running \"python main.py\" ←")
             sys.exit() 
     else:
         batch = True
@@ -598,6 +624,7 @@ if __name__ == '__main__':
         sys.stdout.write("\r" + " " * (len("Calculating Metrics... ") + 1) + "\r")
         questionary.print(traceback.format_exc())
         questionary.print("Metric calculation failed ❌\nSee above error ❌", style="bold fg:red")
+        questionary.print("→ Restart the calculator by running \"python main.py\" ←")
         sys.exit()
     
     finally: 
@@ -614,6 +641,7 @@ if __name__ == '__main__':
     
     if not alterationNeeded:
         questionary.print("Metric calculation completed successfully. Exiting...", style="bold fg:lightgreen")
+        questionary.print("→ Restart the calculator by running \"python main.py\" ←")
         sys.exit()
     
     try:
@@ -640,6 +668,7 @@ if __name__ == '__main__':
         sys.stdout.write("\r" + " " * (len("Performing Alteration Assessment... ") + 1) + "\r")
         questionary.print(traceback.format_exc())
         questionary.print("Alteration Assessment failed ❌\nSee above error ❌", style="bold fg:red")
+        questionary.print("→ Restart the calculator by running \"python main.py\" ←")
         sys.exit()
     
     finally: 
@@ -652,3 +681,4 @@ if __name__ == '__main__':
 
     questionary.print("Performing Alteration Assessment... ✔️", style="bold fg:lightgreen")
     questionary.print(f"Alteration Assessment results and associated percentiles can be found in {output_files_dir}/", style="bold fg:lightgreen")
+    questionary.print("→ Restart the calculator by running \"python main.py\" ←")
