@@ -36,10 +36,6 @@ class Calculator:
     def _format_low_flow(self, low_min_avgs, low_min_indices, classification, zeros_per_year, first_zero, classification_per_year):
             results = {}
             results_general = {}
-            desired_size = len(self.year_ranges)
-            for arr in (low_min_avgs,low_min_indices,zeros_per_year,first_zero,classification_per_year):
-                pad_size = desired_size - len(arr)
-                arr = np.append(arr, pad_size * [None] )
             results["low_min_avgs"] = np.where(np.isnan(low_min_avgs), None, low_min_avgs).tolist()
             
             
