@@ -581,7 +581,7 @@ if __name__ == '__main__':
                     flow_class = flow_class_mapping[returned_value]
                 else:
                     flow_class = CLASS_TO_NUMBER["NA"]
-
+                gage.flow_class = flow_class
             selected_calc = questionary.select(f"Which calculator would you like to use for {gage.gage_id}?",
                         choices=[
 
@@ -609,11 +609,11 @@ if __name__ == '__main__':
                 calc_string = 'Recommended'
             if firstGage:
                 formatted_files = gage_file_name
-                formatted_stream_classes = f"    {gage_file_name}:\n        Class: {NUMBER_TO_CLASS[f'{gage.flow_class}']}\n        Calculator: {calc_string}"
+                formatted_stream_classes = f"    {gage_file_name}:\n        Class: {NUMBER_TO_CLASS[gage.flow_class]}\n        Calculator: {calc_string}"
                 firstGage = False
             else:
                 formatted_files = formatted_files + ', ' + gage_file_name    
-                formatted_stream_classes = formatted_stream_classes + f"\n    {gage_file_name}:\n        Class: {NUMBER_TO_CLASS[f'{gage.flow_class}']}\n        Calculator: {calc_string}"
+                formatted_stream_classes = formatted_stream_classes + f"\n    {gage_file_name}:\n        Class: {NUMBER_TO_CLASS[gage.flow_class]}\n        Calculator: {calc_string}"
         batch = False
         if len(gage_arr) > 1:
             batch = questionary.confirm('Would you like to batch all your processed metrics into a single file?').ask()
