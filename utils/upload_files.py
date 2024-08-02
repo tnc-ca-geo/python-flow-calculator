@@ -7,7 +7,7 @@ from classes.FlashyMetricCalculator import FlashyCalculator
 from classes.matrix_convert import MatrixConversion
 from classes.MetricCalculator import Calculator
 from utils.helpers import calc_avg_nan_per_year, comid_to_wyt, dict_to_array
-from utils.constants import DELETE_INDIVIDUAL_FILES_WHEN_BATCH, QUIT_ON_ERROR
+from utils.constants import DELETE_INDIVIDUAL_FILES_WHEN_BATCH, QUIT_ON_ERROR, NUMBER_TO_CLASS
 from params import summer_params
 from params import fall_params
 from params import spring_params
@@ -124,7 +124,9 @@ def calc_results_original(matrix, flow_class, start_date = '10/1', comid = None)
     return results, calculator.calc_RBFI(), calc_avg_nan_per_year(copy.deepcopy(results)) 
 
 def get_results(matrix, flow_class, start_date = None, comid = None, desired_calculator = None):
-    
+    if flow_class is None or flow_class == 10:
+        flow_class = 3
+
     if desired_calculator is None:
         # no specified calculator, determine which is better
     
@@ -216,9 +218,9 @@ def write_parameters(file_name, flow_class, used_calculator, aa_start = None, aa
     now = datetime.now()
     timestamp = now.strftime("%m/%d/%Y, %H:%M")
     if aa_start and aa_end:
-        cols = {'Date_time': timestamp, 'Stream_class': flow_class, 'Used_Calculator': used_calculator, 'Alteration Assessment range': f'{aa_start}-{aa_end}'}
+        cols = {'Date_time': timestamp, 'Stream_class': NUMBER_TO_CLASS[flow_class], 'Used_Calculator': used_calculator, 'Alteration Assessment range': f'{aa_start}-{aa_end}'}
     else:
-        cols = {'Date_time': timestamp, 'Stream_class': flow_class, 'Used_Calculator': used_calculator}
+        cols = {'Date_time': timestamp, 'Stream_class': NUMBER_TO_CLASS[flow_class], 'Used_Calculator': used_calculator}
     df = pd.DataFrame(cols, index=[0])
     if used_calculator in used_original:
         df['Fall_params'] = '_'

@@ -1,8 +1,5 @@
 from utils.upload_files import upload_files
-from utils.constants import NUMBER_TO_CLASS
-from utils.constants import VERSION
-from utils.constants import WY_START_DATE
-from utils.constants import DELETE_INDIVIDUAL_FILES_WHEN_BATCH
+from utils.constants import NUMBER_TO_CLASS, VERSION, WY_START_DATE, DELETE_INDIVIDUAL_FILES_WHEN_BATCH, CLASS_TO_NUMBER
 from utils.helpers import comid_to_class
 from utils.alteration_assessment import assess_alteration, assess_alteration_by_wyt
 from classes.USGSGage import USGSGage
@@ -97,7 +94,9 @@ if __name__ == '__main__':
             questionary.print(f"Please ensure your batch processing CSV is in the directory {input_files} and follows the formatting guide in the README")
             questionary.press_any_key_to_continue().ask()
             csv_files = glob.glob1(input_files, '*.csv')
-            
+            user_uploaded_parse_warning = ''
+            usgs_parse_warning = ''
+            cdec_parse_warning = ''
             if not csv_files:
                 questionary.print("🛑 No CSV files found 🛑", style="bold fg:red")
                 questionary.print("→ Restart the calculator by running \"python main.py\" ←")
@@ -164,25 +163,17 @@ if __name__ == '__main__':
                                 line_gage_obj.get_comid()
 
                             else:
-                                done = True
-                                if 'csv_thread' in locals():
-                                    csv_thread.join()
-                                sys.stdout.write("\r" + " " * (len("Processing CSV... ") + 1) + "\r")
-                                questionary.print("❌ all batch csv lines with a path must also have a lat/lng pair or a comid ❌", style="bold fg:red")
-                                questionary.print("→ Restart the calculator by running \"python main.py\" ←")
-                                sys.exit()
+                                line_gage_obj = UserUploadedData(file_name=file_name, download_directory=line['path'])
                             
                             line_gage_obj.flow_class = line['class']
-                            if line_gage_obj.flow_class == '':
+                            if line_gage_obj.flow_class == '' and line_gage_obj.comid is not None and line_gage_obj.comid != '':
                                 line_gage_obj.flow_class = comid_to_class(line_gage_obj.comid) 
+                            elif line_gage_obj.flow_class != '':
+                                line_gage_obj.flow_class = CLASS_TO_NUMBER[line['class'].upper()]
                             if (line_gage_obj.flow_class is None) or (line_gage_obj.flow_class == ''):
-                                done = True
-                                if 'csv_thread' in locals():
-                                    csv_thread.join()
-                                sys.stdout.write("\r" + " " * (len("Processing CSV... ") + 1) + "\r")
-                                questionary.print(f"🛑 Could not auto populate flow class for file: {line['path']} and no flow class was supplied in batch csv. 🛑\n🛑 Please supply a flow class for this file or a comid with a known flow class 🛑", style="bold fg:red")            
-                                questionary.print("→ Restart the calculator by running \"python main.py\" ←")
-                                sys.exit()
+                                line_gage_obj.flow_class = CLASS_TO_NUMBER['NA']
+                                user_uploaded_parse_warning = user_uploaded_parse_warning + f'Could not auto populate stream class for file {line['path']} proceeding using default stream class\n'
+                            
                             gage_arr.append(line_gage_obj)
 
                         else:
@@ -193,6 +184,17 @@ if __name__ == '__main__':
                             questionary.print("❌ all batch csv lines must have a path, USGS ID or a CDEC ID ❌", style="bold fg:red")
                             questionary.print("→ Restart the calculator by running \"python main.py\" ←")
                             sys.exit()
+            except KeyError:    
+                done = True
+                if 'csv_thread' in locals():
+                    csv_thread.join()
+                sys.stdout.write("\r" + " " * (len("Downloading USGS data... ") + 1) + "\r")
+                questionary.print(traceback.format_exc())
+                keys_str = ', '.join(CLASS_TO_NUMBER.keys())
+                questionary.print(f"🛑 Error parsing file {line['path']}'s stream class: {line['class']} is not a valid class, please supply one of {keys_str} 🛑", style="bold fg:red")
+                questionary.print("→ Restart the calculator by running \"python main.py\" ←")
+                sys.exit()
+             
             except Exception as e:
                 done = True
                 if 'csv_thread' in locals():
@@ -209,7 +211,9 @@ if __name__ == '__main__':
             sys.stdout.write("\r" + " " * (len("Processing CSV... ") + 1) + "\r")
             questionary.print("Processing CSV... ✔️", style="bold fg:lightgreen")
 
-            
+            if user_uploaded_parse_warning:
+                questionary.print('\nWarnings encountered while parsing user supplied csv ⚠️', style='fg:#deda03')
+                questionary.print(user_uploaded_parse_warning)
             if len(usgs_to_be_downloaded) > 0:
                 done = False
                 usgs_dl_thread = threading.Thread(target=spinning_bar, args= ('Downloading USGS data... ',))
@@ -228,16 +232,25 @@ if __name__ == '__main__':
                         new_gage.flow_class = usgs_dict['class']
                         if new_gage.flow_class == '':
                             new_gage.flow_class = comid_to_class(new_gage.comid)
+                        else:
+                            new_gage.flow_class = CLASS_TO_NUMBER[line['class'].upper()]
                         if (new_gage.flow_class is None) or (new_gage.flow_class == ''):
-                            done = True
-                            if 'usgs_dl_thread' in locals():
-                                usgs_dl_thread.join()
-                            sys.stdout.write("\r" + " " * (len("Downloading USGS data... ") + 1) + "\r")
-                            questionary.print(f"🛑 Could not auto populate flow class for USGS gage: {new_gage.gage_id} and no flow class was supplied in batch csv. 🛑\n🛑 Please supply a flow class for this gage or a comid with a known flow class 🛑", style="bold fg:red")            
-                            questionary.print("→ Restart the calculator by running \"python main.py\" ←")
-                            sys.exit()
+                            new_gage.flow_class = CLASS_TO_NUMBER['NA']
+                            usgs_parse_warning = usgs_parse_warning + f'Could not auto populate stream class for file {usgs_dict['id']} proceeding using default stream class\n'
+                            
                         gage_arr.append(new_gage)
                     
+                    except KeyError:    
+                        done = True
+                        if 'usgs_dl_thread' in locals():
+                            usgs_dl_thread.join()
+                        sys.stdout.write("\r" + " " * (len("Downloading USGS data... ") + 1) + "\r")
+                        questionary.print(traceback.format_exc())
+                        keys_str = ', '.join(CLASS_TO_NUMBER.keys())
+                        questionary.print(f"🛑 Error parsing supplied USGS class for gauge id: {usgs_dict['id']}, {line['class']} is not a valid class, please supply one of {keys_str} 🛑", style="bold fg:red")
+                        questionary.print("→ Restart the calculator by running \"python main.py\" ←")
+                        sys.exit()
+
                     except Exception as e:
                         done = True
                         if 'usgs_dl_thread' in locals():
@@ -253,6 +266,10 @@ if __name__ == '__main__':
                         usgs_dl_thread.join()
                 sys.stdout.write("\r" + " " * (len("Downloading USGS data... ") + 1) + "\r")
                 questionary.print("Downloading USGS data... ✔️", style="bold fg:lightgreen")
+
+            if usgs_parse_warning:
+                questionary.print('\nWarnings encountered while parsing USGS data ⚠️', style='fg:#deda03')
+                questionary.print(usgs_parse_warning)
 
             if len(cdec_to_be_downloaded) > 0:
                 done = False
@@ -271,36 +288,46 @@ if __name__ == '__main__':
                         comid = new_gage.get_comid() 
                         new_gage.flow_class = cdec_dict['class']
                         if new_gage.flow_class == '':
-                            new_gage.flow_class = comid_to_class(new_gage.comid) 
+                            new_gage.flow_class = comid_to_class(new_gage.comid)
+                        else:
+                            new_gage.flow_class = CLASS_TO_NUMBER[cdec_dict['class'].upper()]
                         if (new_gage.flow_class is None) or (new_gage.flow_class == ''):
-                            done = True
-                            if 'cdec_dl_thread' in locals():
-                                cdec_dl_thread.join()
-                            sys.stdout.write("\r" + " " * (len("Downloading CDEC data... ") + 1) + "\r")
-                            questionary.print(f"🛑 Could not auto populate flow class for CDEC gage: {new_gage.gage_id} and no flow class was supplied in batch csv. 🛑\n🛑 Please supply a flow class for this gage or a comid with a known flow class 🛑", style="bold fg:red")            
-                            questionary.print("→ Restart the calculator by running \"python main.py\" ←")
-                            sys.exit()
+                            new_gage.flow_class = CLASS_TO_NUMBER['NA']
+                            cdec_parse_warning = cdec_parse_warning + f'Could not auto populate stream class for file {usgs_dict['id']} proceeding using default stream class\n'
+                            
                         gage_arr.append(new_gage)
                         
 
+                except KeyError:    
+                    done = True
+                    if 'usgs_dl_thread' in locals():
+                        usgs_dl_thread.join()
+                    sys.stdout.write("\r" + " " * (len("Downloading USGS data... ") + 1) + "\r")
+                    questionary.print(traceback.format_exc())
+                    keys_str = ', '.join(CLASS_TO_NUMBER.keys())
+                    questionary.print(f"🛑 Error parsing supplied CDEC class for gauge id: {cdec_dict['id']}, {cdec_dict['class']} is not a valid class, please supply one of {keys_str} 🛑", style="bold fg:red")
+                    questionary.print("→ Restart the calculator by running \"python main.py\" ←")
+                    sys.exit()
 
                 except Exception as e:
-                        done = True
-                        if 'cdec_dl_thread' in locals():
-                            cdec_dl_thread.join()
-                        sys.stdout.write("\r" + " " * (len("Downloading CDEC data... ") + 1) + "\r")
-                        questionary.print(f"🛑 Error Downloading CDEC data for gage id: {cdec_dict['id']} 🛑", style="bold fg:red")
-                        questionary.print("→ Restart the calculator by running \"python main.py\" ←")
-                        sys.exit()
+                    done = True
+                    if 'cdec_dl_thread' in locals():
+                        cdec_dl_thread.join()
+                    sys.stdout.write("\r" + " " * (len("Downloading CDEC data... ") + 1) + "\r")
+                    questionary.print(f"🛑 Error Downloading CDEC data for gage id: {cdec_dict['id']} 🛑", style="bold fg:red")
+                    questionary.print("→ Restart the calculator by running \"python main.py\" ←")
+                    sys.exit()
 
                 done = True
                 if 'cdec_dl_thread' in locals():
-                        cdec_dl_thread.join()
+                    cdec_dl_thread.join()
                 sys.stdout.write("\r" + " " * (len("Downloading CDEC data... ") + 1) + "\r")
                 sys.stdout.write("\033[F")
                 sys.stdout.write("\r" + " " * (len("This may take a bit, CDEC's API can be slow") + 1) + "\r")
                 questionary.print("Downloading CDEC data... ✔️", style="bold fg:lightgreen")
-            
+                if cdec_parse_warning:
+                    questionary.print('\nWarnings encountered while parsing CDEC data ⚠️', style='fg:#deda03')
+                    questionary.print(cdec_parse_warning)
             # skip over the prompts at the end as users that took the time to make a batch csv probably are computing a lot of data and just want to be able to set it and not worry about it until its done 
             auto_start = True
             asyncio.set_event_loop(asyncio.new_event_loop())
@@ -511,39 +538,49 @@ if __name__ == '__main__':
         for gage in gage_arr:
             gage.flow_class = comid_to_class(gage.comid)
             if gage.flow_class is None:
-                flow_class = questionary.select(
+                
+                flow_class_mapping = {
+                    "Flow Class SM: Snowmelt": CLASS_TO_NUMBER["SM"],
+                    "Flow Class HSR: High-volume snowmelt and rain": CLASS_TO_NUMBER["HSR"],
+                    "Flow Class LSR: Low-volume snowmelt and rain (default)": CLASS_TO_NUMBER["LSR"],
+                    "Flow Class WS: Winter storms": CLASS_TO_NUMBER["WS"],
+                    "Flow Class GW: Groundwater": CLASS_TO_NUMBER["GW"],
+                    "Flow Class PGR: Perennial groundwater and rain": CLASS_TO_NUMBER["PGR"],
+                    "Flow Class FER: Flashy, ephemeral rain": CLASS_TO_NUMBER["FER"],
+                    "Flow Class RGW: Rain and seasonal groundwater": CLASS_TO_NUMBER["RGW"],
+                    "Flow Class HLP: High elevation low precipitation": CLASS_TO_NUMBER["HLP"]
+                }
+            
+                returned_value = questionary.select(
 
                     f"What natural flow class best matches {gage.gage_id}? Could not auto populate for comid: {gage.comid}",
 
                     choices=[
 
-                        "Flow Class 1 (SM: Snowmelt)",
+                        "Flow Class SM: Snowmelt",
 
-                        "Flow Class 2 (HSR: High-volume snowmelt and rain)",
+                        "Flow Class HSR: High-volume snowmelt and rain",
 
-                        "Flow Class 3 (LSR: Low-volume snowmelt and rain)",
+                        "Flow Class LSR: Low-volume snowmelt and rain (default)",
 
-                        "Flow Class 4 (WS: Winter storms)",
+                        "Flow Class WS: Winter storms",
 
-                        "Flow Class 5 (GW: Groundwater)",
+                        "Flow Class GW: Groundwater",
 
-                        "Flow Class 6 (PGR: Perennial groundwater and rain)",
+                        "Flow Class PGR: Perennial groundwater and rain",
 
-                        "Flow Class 7 (FER: Flashy, ephemeral rain)",
+                        "Flow Class FER: Flashy, ephemeral rain",
 
-                        "Flow Class 8 (RGW: Rain and seasonal groundwater)",
+                        "Flow Class RGW: Rain and seasonal groundwater",
 
-                        "Flow Class 9 (HLP: High elevation low precipitation)"
+                        "Flow Class HLP: High elevation low precipitation"
 
                     ]).ask()
-
-                if flow_class:
-                    flow_class = int(flow_class[11])
-                    gage.flow_class = flow_class
+                
+                if returned_value:
+                    flow_class = flow_class_mapping[returned_value]
                 else:
-                    questionary.print("🛑 No flow class selected 🛑", style="bold fg:red")
-                    questionary.print("→ Restart the calculator by running \"python main.py\" ←")
-                    sys.exit()
+                    flow_class = CLASS_TO_NUMBER["NA"]
 
             selected_calc = questionary.select(f"Which calculator would you like to use for {gage.gage_id}?",
                         choices=[
@@ -572,11 +609,11 @@ if __name__ == '__main__':
                 calc_string = 'Recommended'
             if firstGage:
                 formatted_files = gage_file_name
-                formatted_stream_classes = f"    {gage_file_name}:\n        Class: {NUMBER_TO_CLASS[gage.flow_class]}\n        Calculator: {calc_string}"
+                formatted_stream_classes = f"    {gage_file_name}:\n        Class: {NUMBER_TO_CLASS[f'{gage.flow_class}']}\n        Calculator: {calc_string}"
                 firstGage = False
             else:
                 formatted_files = formatted_files + ', ' + gage_file_name    
-                formatted_stream_classes = formatted_stream_classes + f"\n    {gage_file_name}:\n        Class: {NUMBER_TO_CLASS[gage.flow_class]}\n        Calculator: {calc_string}"
+                formatted_stream_classes = formatted_stream_classes + f"\n    {gage_file_name}:\n        Class: {NUMBER_TO_CLASS[f'{gage.flow_class}']}\n        Calculator: {calc_string}"
         batch = False
         if len(gage_arr) > 1:
             batch = questionary.confirm('Would you like to batch all your processed metrics into a single file?').ask()
