@@ -464,7 +464,7 @@ if __name__ == '__main__':
             selected_files = []
             formatted_files = ""
             while entering:
-                file_name = questionary.select("Please select a file you would", choices = csv_files).ask()
+                file_name = questionary.select("Please select a file you would like to use", choices = csv_files).ask()
                 
                 if not file_name:
                     questionary.print("🛑 No file provided 🛑", style="bold fg:red")
