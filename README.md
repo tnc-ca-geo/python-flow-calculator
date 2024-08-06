@@ -136,6 +136,18 @@ See below for more information on what data you might want to give it.
 
    Note they are currently meaningless as the logic has been getting updated so rapidly. A robust test suite will be made once the major logic changes have ceased to help the maintainability of this repo.
 
+## Known Differences
+
+   Although intended to be a direct upgrade of the reference flow calculator and the UCDavis Flashy flow calculator there are some known differences listed below:
+
+   1. Data filtering: 
+   
+      The updated calculator requires at least 350 days of data and allows up to 7 days of consecutive missing data. The previous recommendation was to require 358 days of data to run a year. These differences may result in slight changes in metrics that are summarized over multiple years, including peak flow metrics.
+
+   2. Peak detection:
+
+      Within the adaptation of the UCDavis flashy flows calculator the peak detection algorithm is slightly different and includes more peaks then the original version. This may cause many of the metrics that are based off a peak or pulse to be different in cases where a different peak is used than the one that the original UCDavis flashy flows calculator uses.
+
 ## Questions and Comments
 
 All questions or comment are encouraged to be sent to <nenerson@foundryspatial.com>
