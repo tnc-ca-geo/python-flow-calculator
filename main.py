@@ -471,7 +471,7 @@ if __name__ == '__main__':
                     questionary.print("→ Restart the calculator by running \"python main.py\" ←")
                     sys.exit()
                 selected_files.append(file_name)
-                
+                csv_files.remove(file_name)
                 if len(formatted_files) == 0:
                     formatted_files = formatted_files + file_name
                 else:
