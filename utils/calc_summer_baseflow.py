@@ -27,7 +27,7 @@ def calc_start_of_summer(matrix, class_number, summer_params=def_summer_params):
         """Append each column with 30 more days from next column, except the last column"""
         if column_number != len(matrix[0])-1:
             flow_data = list(matrix[:, column_number]) + \
-                list(matrix[:100, column_number+1])
+                list(matrix[:30, column_number+1])
         else:
             flow_data = matrix[:, column_number]
 
