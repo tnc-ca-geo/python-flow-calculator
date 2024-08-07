@@ -54,7 +54,7 @@ def upload_files(start_date, gage_arr, output_files = 'user_output_files', batch
             if QUIT_ON_ERROR:
                 raise type(e)(f"{original_message}. \n{gage_message}")
             else:
-                warning_message += f"There was an error when processing gage {gage} using the data it completed and proceeding...\n"
+                warning_message += f"There was an error when processing metrics for gage {gage} proceeding to next gage\n"
                 continue
     
     

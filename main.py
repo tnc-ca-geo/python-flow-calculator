@@ -188,7 +188,7 @@ if __name__ == '__main__':
                 done = True
                 if 'csv_thread' in locals():
                     csv_thread.join()
-                sys.stdout.write("\r" + " " * (len("Downloading USGS data... ") + 1) + "\r")
+                sys.stdout.write("\r" + " " * (len("Processing CSV... ") + 1) + "\r")
                 questionary.print(traceback.format_exc())
                 keys_str = ', '.join(CLASS_TO_NUMBER.keys())
                 questionary.print(f"🛑 Error parsing file {line['path']}'s stream class: {line['class']} is not a valid class, please supply one of {keys_str} 🛑", style="bold fg:red")
@@ -209,23 +209,23 @@ if __name__ == '__main__':
             if 'csv_thread' in locals():
                     csv_thread.join()
             sys.stdout.write("\r" + " " * (len("Processing CSV... ") + 1) + "\r")
-            questionary.print("Processing CSV... ✔️", style="bold fg:lightgreen")
+            questionary.print("Processing CSV... ✔️", style="bold fg:green")
 
             if user_uploaded_parse_warning:
-                questionary.print('\nWarnings encountered while parsing user supplied csv ⚠️', style='fg:#deda03')
+                questionary.print('\nWarnings encountered while parsing user supplied timeseries data ⚠️', style='fg:#deda03')
                 questionary.print(user_uploaded_parse_warning)
             if len(usgs_to_be_downloaded) > 0:
-                done = False
-                usgs_dl_thread = threading.Thread(target=spinning_bar, args= ('Downloading USGS data... ',))
-                usgs_dl_thread.start()
 
                 for usgs_dict in usgs_to_be_downloaded:
                     
                     try:
-                    
+                        start = time.time()
+                        done = False
+                        usgs_string = f'Downloading and parsing USGS metadata for gage: {usgs_dict['id']}... '
+                        usgs_dl_thread = threading.Thread(target=spinning_bar, args= (usgs_string,))
+                        usgs_dl_thread.start()
                         new_gage = USGSGage(gage_id = usgs_dict['id'])
                         new_gage.download_metadata()
-                        new_gage.save_daily_data()   
                         new_gage.selected_calculator = usgs_dict['calc']
                         new_gage.comid = usgs_dict['comid']
                         comid = new_gage.get_comid() 
@@ -236,18 +236,25 @@ if __name__ == '__main__':
                             new_gage.flow_class = CLASS_TO_NUMBER[line['class'].upper()]
                         if (new_gage.flow_class is None) or (new_gage.flow_class == ''):
                             new_gage.flow_class = CLASS_TO_NUMBER['NA']
-                            usgs_parse_warning = usgs_parse_warning + f'Could not auto populate stream class for file {usgs_dict['id']} proceeding using default stream class\n'
+                            usgs_parse_warning = usgs_parse_warning + f'Could not auto populate stream class for gage: {usgs_dict['id']}, proceeding using default stream class\n'
                             
                         gage_arr.append(new_gage)
+                        time_elapsed =  time.time() - start
+                        time_elapsed = round(time_elapsed,2)
+                        done = True
+                        if 'usgs_dl_thread' in locals():
+                            usgs_dl_thread.join()
+                        sys.stdout.write("\r" + " " * (len(usgs_string) + 1) + "\r")
+                        questionary.print(f"{usgs_string} ✔️, took {time_elapsed} seconds", style="bold fg:green")
                     
                     except KeyError:    
                         done = True
                         if 'usgs_dl_thread' in locals():
                             usgs_dl_thread.join()
-                        sys.stdout.write("\r" + " " * (len("Downloading USGS data... ") + 1) + "\r")
+                        sys.stdout.write("\r" + " " * (len(usgs_string) + 1) + "\r")
                         questionary.print(traceback.format_exc())
                         keys_str = ', '.join(CLASS_TO_NUMBER.keys())
-                        questionary.print(f"🛑 Error parsing supplied USGS class for gauge id: {usgs_dict['id']}, {line['class']} is not a valid class, please supply one of {keys_str} 🛑", style="bold fg:red")
+                        questionary.print(f"🛑 Error parsing supplied USGS class for gage id: {usgs_dict['id']}, {line['class']} is not a valid class, please supply one of {keys_str} 🛑", style="bold fg:red")
                         questionary.print("→ Restart the calculator by running \"python main.py\" ←")
                         sys.exit()
 
@@ -255,34 +262,31 @@ if __name__ == '__main__':
                         done = True
                         if 'usgs_dl_thread' in locals():
                             usgs_dl_thread.join()
-                        sys.stdout.write("\r" + " " * (len("Downloading USGS data... ") + 1) + "\r")
-                        questionary.print(traceback.format_exc())
-                        questionary.print(f"🛑 Error downloading USGS data for gage id: {usgs_dict['id']} see above traceback 🛑", style="bold fg:red")
+                        sys.stdout.write("\r" + " " * (len(usgs_string) + 1) + "\r")
+                        questionary.print(f"🛑 Error Parsing USGS data for gage id: {usgs_dict['id']} ensure it is a valid USGS gage 🛑", style="bold fg:red")
                         questionary.print("→ Restart the calculator by running \"python main.py\" ←")
                         sys.exit()
                 
                 done = True
                 if 'usgs_dl_thread' in locals():
                         usgs_dl_thread.join()
-                sys.stdout.write("\r" + " " * (len("Downloading USGS data... ") + 1) + "\r")
-                questionary.print("Downloading USGS data... ✔️", style="bold fg:lightgreen")
+                sys.stdout.write("\r" + " " * (len("Parsing USGS data... ") + 1) + "\r")
 
             if usgs_parse_warning:
                 questionary.print('\nWarnings encountered while parsing USGS data ⚠️', style='fg:#deda03')
                 questionary.print(usgs_parse_warning)
 
             if len(cdec_to_be_downloaded) > 0:
-                done = False
-                questionary.print("This may take a bit, CDEC's API can be slow")
-                cdec_dl_thread = threading.Thread(target=spinning_bar, args= ('Downloading CDEC data... ',))
-                cdec_dl_thread.start()
                 
                 try:
                     for cdec_dict in cdec_to_be_downloaded:
-
+                        start = time.time()
+                        done = False
+                        cdec_string = f'Downloading and parsing CDEC metadata for gage: {cdec_string['id']}... '
+                        cdec_dl_thread = threading.Thread(target=spinning_bar, args= (cdec_string,))
+                        cdec_dl_thread.start()
                         new_gage = CDECGage(gage_id = cdec_dict['id'])
                         new_gage.download_metadata()
-                        new_gage.save_daily_data()
                         new_gage.selected_calculator = cdec_dict['calc']
                         new_gage.comid = cdec_dict['comid']
                         comid = new_gage.get_comid() 
@@ -293,19 +297,24 @@ if __name__ == '__main__':
                             new_gage.flow_class = CLASS_TO_NUMBER[cdec_dict['class'].upper()]
                         if (new_gage.flow_class is None) or (new_gage.flow_class == ''):
                             new_gage.flow_class = CLASS_TO_NUMBER['NA']
-                            cdec_parse_warning = cdec_parse_warning + f'Could not auto populate stream class for file {usgs_dict['id']} proceeding using default stream class\n'
-                            
+                            cdec_parse_warning = cdec_parse_warning + f'Could not auto populate stream class for gage {cdec_dict['id']} proceeding using default stream class\n'
+                           
                         gage_arr.append(new_gage)
-                        
+                        time_elapsed =  time.time() - start
+                        time_elapsed = round(time_elapsed,2)
+                        done = True
+                        if 'cdec_dl_thread' in locals():
+                            cdec_dl_thread.join()
+                        sys.stdout.write("\r" + " " * (len(cdec_string) + 1) + "\r")
+                        questionary.print(f"{cdec_string} ✔️, took {time_elapsed} seconds", style="bold fg:green")
 
                 except KeyError:    
                     done = True
-                    if 'usgs_dl_thread' in locals():
-                        usgs_dl_thread.join()
-                    sys.stdout.write("\r" + " " * (len("Downloading USGS data... ") + 1) + "\r")
-                    questionary.print(traceback.format_exc())
+                    if 'cdec_dl_thread' in locals():
+                        cdec_dl_thread.join()
+                    sys.stdout.write("\r" + " " * (len(cdec_string) + 1) + "\r")
                     keys_str = ', '.join(CLASS_TO_NUMBER.keys())
-                    questionary.print(f"🛑 Error parsing supplied CDEC class for gauge id: {cdec_dict['id']}, {cdec_dict['class']} is not a valid class, please supply one of {keys_str} 🛑", style="bold fg:red")
+                    questionary.print(f"🛑 Error parsing supplied CDEC class for gage id: {cdec_dict['id']}, {cdec_dict['class']} is not a valid class, please supply one of {keys_str} 🛑", style="bold fg:red")
                     questionary.print("→ Restart the calculator by running \"python main.py\" ←")
                     sys.exit()
 
@@ -313,21 +322,66 @@ if __name__ == '__main__':
                     done = True
                     if 'cdec_dl_thread' in locals():
                         cdec_dl_thread.join()
-                    sys.stdout.write("\r" + " " * (len("Downloading CDEC data... ") + 1) + "\r")
-                    questionary.print(f"🛑 Error Downloading CDEC data for gage id: {cdec_dict['id']} 🛑", style="bold fg:red")
+                    sys.stdout.write("\r" + " " * (len(cdec_string) + 1) + "\r")
+                    questionary.print(traceback.format_exc())
+
+                    questionary.print(f"🛑 Error Parsing CDEC data for gage id: {cdec_dict['id']}, please confirm it is a valid CDEC gage 🛑", style="bold fg:red")
                     questionary.print("→ Restart the calculator by running \"python main.py\" ←")
                     sys.exit()
 
                 done = True
                 if 'cdec_dl_thread' in locals():
                     cdec_dl_thread.join()
-                sys.stdout.write("\r" + " " * (len("Downloading CDEC data... ") + 1) + "\r")
+                sys.stdout.write("\r" + " " * (len(cdec_string) + 1) + "\r")
                 sys.stdout.write("\033[F")
                 sys.stdout.write("\r" + " " * (len("This may take a bit, CDEC's API can be slow") + 1) + "\r")
-                questionary.print("Downloading CDEC data... ✔️", style="bold fg:lightgreen")
                 if cdec_parse_warning:
                     questionary.print('\nWarnings encountered while parsing CDEC data ⚠️', style='fg:#deda03')
                     questionary.print(cdec_parse_warning)
+            
+            if cdec_parse_warning != "" or usgs_parse_warning != "" or user_uploaded_parse_warning != "":
+                # there was a warning
+                questionary(f'USGS WARNINGS:{usgs_parse_warning}, CDEC WARNINGS: {cdec_parse_warning}, Timeseries Data WARNINGS: {user_uploaded_parse_warning}',style='fg:#deda03')
+                proceed = questionary.confirm("The above warnings occured when fetching & processing the required metadata would you like to proceed to downloading the data?")
+                if not proceed:
+                    questionary.print(f"🛑 Please review the batch csv to adress the warnings🛑", style="bold fg:red")
+                    questionary.print("→ Restart the calculator by running \"python main.py\" ←")
+                    sys.exit()
+
+            if len(cdec_to_be_downloaded) > 0:
+                questionary.print("This may take a bit, CDEC's API can be slow")
+            gages_with_data = []
+            gages_without_data = []
+            for gage in gage_arr:
+                start = time.time()
+                done = False
+                gage_string = f"Downloading the data for {gage.gage_id}... "
+                current_gage_dl_thread = threading.Thread(target=spinning_bar, args= (gage_string,))
+                current_gage_dl_thread.start()
+                
+                try:
+                    gage.save_daily_data()
+                except Exception as e:
+                    gages_without_data.append(gage)
+                    done = True
+                    if 'current_gage_dl_thread' in locals():
+                        current_gage_dl_thread.join()
+                    sys.stdout.write("\r" + " " * (len(gage_string) + 1) + "\r")
+                    questionary.print(f"{gage_string} ❌", style="bold fg:red")
+                    continue
+                
+                gages_with_data.append(gage)
+                time_elapsed =  time.time() - start
+                time_elapsed = round(time_elapsed,2)
+                done = True
+                if 'current_gage_dl_thread' in locals():
+                    current_gage_dl_thread.join()
+                sys.stdout.write("\r" + " " * (len(gage_string) + 1) + "\r")
+                questionary.print(f"{gage_string} ✔️, took {time_elapsed} seconds", style="bold fg:green")
+            
+            gage_arr = gages_with_data
+            gages_without_data_string = ', '.join([gage.gage_id for gage in gages_without_data])
+            questionary.print(f"The following gages had no data and will not be included in metric calculation:\n{gages_without_data_string}", style='fg:#deda03')
             # skip over the prompts at the end as users that took the time to make a batch csv probably are computing a lot of data and just want to be able to set it and not worry about it until its done 
             auto_start = True
             asyncio.set_event_loop(asyncio.new_event_loop())
@@ -414,7 +468,7 @@ if __name__ == '__main__':
             sys.stdout.write("\r" + " " * (len("Downloading gage data... ") + 1) + "\r")
             sys.stdout.write("\033[F")
             sys.stdout.write("\r" + " " * (len("This may take a bit, CDEC's API can be slow") + 1) + "\r")
-            questionary.print("Downloading gage data... ✔️", style="bold fg:lightgreen")
+            questionary.print("Downloading gage data... ✔️", style="bold fg:green")
             
             # pynhd package kills the asyncio event loop for some reason so need to recreate it before we do more asynchronous questions
             asyncio.set_event_loop(asyncio.new_event_loop())
@@ -473,7 +527,7 @@ if __name__ == '__main__':
                     gage_thread.join()
             sys.stdout.write("\r" + " " * (len("Downloading gage data... ") + 1) + "\r")
             
-            questionary.print("Downloading gage data... ✔️", style="bold fg:lightgreen")
+            questionary.print("Downloading gage data... ✔️", style="bold fg:green")
             
             # pynhd package kills the asyncio event loop so need to recreate it before we do more asynchronous questions with questionary
             asyncio.set_event_loop(asyncio.new_event_loop())
@@ -672,12 +726,13 @@ if __name__ == '__main__':
     if upload_warning:
         questionary.print('\nWarnings encountered while computing metrics ⚠️', style='fg:#deda03')
         questionary.print(upload_warning)
-    questionary.print("Calculating Metrics... ✔️", style="bold fg:lightgreen")
-    questionary.print(f"Calculated metrics can be found in {output_files_dir}/", style="bold fg:lightgreen")
+    questionary.print("Calculating Metrics... ✔️", style="bold fg:green")
+    output_path = os.path.join(output_files_dir, '')
+    questionary.print(f"Calculated metrics can be found in {output_path}", style="bold fg:green")
     
     
     if not alterationNeeded:
-        questionary.print("Metric calculation completed successfully. Exiting...", style="bold fg:lightgreen")
+        questionary.print("Metric calculation completed successfully. Exiting...", style="bold fg:green")
         questionary.print("→ Restart the calculator by running \"python main.py\" ←")
         sys.exit()
     
@@ -716,6 +771,6 @@ if __name__ == '__main__':
         questionary.print('\nWarnings encountered while computing alteration assessment ⚠️', style='fg:#deda03')
         questionary.print(warning_message)
 
-    questionary.print("Performing Alteration Assessment... ✔️", style="bold fg:lightgreen")
-    questionary.print(f"Alteration Assessment results and associated percentiles can be found in {output_files_dir}/", style="bold fg:lightgreen")
+    questionary.print("Performing Alteration Assessment... ✔️", style="bold fg:green")
+    questionary.print(f"Alteration Assessment results and associated percentiles can be found in {output_files_dir}/", style="bold fg:green")
     questionary.print("→ Restart the calculator by running \"python main.py\" ←")
