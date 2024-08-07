@@ -459,12 +459,25 @@ if __name__ == '__main__':
                 questionary.print("🛑 No CSV files found 🛑", style="bold fg:red")
                 questionary.print("→ Restart the calculator by running \"python main.py\" ←")
                 sys.exit(f"Please ensure your files are all in {input_files} and have the .csv file extension then run again.")
-
-            selected_files = questionary.checkbox(
-
-                'What files would you like to upload?',
-
-                choices=csv_files).ask()
+            
+            entering = True
+            selected_files = []
+            formatted_files = ""
+            while entering:
+                file_name = questionary.select("Please select a file you would like to use", choices = csv_files).ask()
+                
+                if not file_name:
+                    questionary.print("🛑 No file provided 🛑", style="bold fg:red")
+                    questionary.print("→ Restart the calculator by running \"python main.py\" ←")
+                    sys.exit()
+                selected_files.append(file_name)
+                csv_files.remove(file_name)
+                if len(formatted_files) == 0:
+                    formatted_files = formatted_files + file_name
+                else:
+                    formatted_files = formatted_files + ', ' + file_name
+                
+                entering = questionary.confirm(f"Current files: {formatted_files}\n Would you like to add more files?").ask()
 
             if not selected_files:
                 questionary.print("🛑 No CSV files selected 🛑", style="bold fg:red")
