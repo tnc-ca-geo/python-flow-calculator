@@ -39,6 +39,8 @@ class USGSGage(AbstractGage):
         """
 
         df = nwis.get_record(sites = self.gage_id, service="dv", parameterCd = "00060", statCd="00003", start="1800-10-01")
+        if df.empty or len(df.index) < 367:
+            raise Exception(f"There was none or little data available for {self.gage_id}")
         self.start_date = df.index[0]
         df = df.rename(columns={'00060_Mean': 'flow', 'datetime': 'date', 'site_no': 'gage', '00060_Mean_cd': 'flow_flag'})
         folder_path = os.path.join(os.getcwd(), 'gage_data')
