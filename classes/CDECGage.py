@@ -71,11 +71,11 @@ class CDECGage(AbstractGage):
         Saves daily flow data for the CDEC gage to a CSV file.
         """
         today = datetime.today().strftime('%Y-%m-%d')
-        cdec_param_ids_to_try = [{'param_id':'20', 'duration_code':'E'},{'param_id':'41','duration_code':'D'}, {'param_id':'20', 'duration_code':'D'},{'param_id':'20', 'duration_code':'H'}]
+        cdec_param_ids_to_try = [{'param_id':'20', 'duration_code':'D'}, {'param_id':'20', 'duration_code':'H'}, {'param_id':'41','duration_code':'D'}, {'param_id':'20', 'duration_code':'E'}, {'param_id':'165', 'duration_code':'E'}]
 
         for dict in cdec_param_ids_to_try:
         
-            url = f'http://cdec.water.ca.gov/dynamicapp/req/CSVDataServlet?Stations={self.gage_id}&SensorNums={dict['param_id']}&dur_code={dict['duration_code']}&Start=1800-10-01&End={today}'
+            url = f'http://cdec.water.ca.gov/dynamicapp/req/CSVDataServlet?Stations={self.gage_id}&SensorNums={dict["param_id"]}&dur_code={dict["duration_code"]}&Start=1800-10-01&End={today}'
             response = requests.get(url)
             if response.status_code == 200:
                 
@@ -84,6 +84,8 @@ class CDECGage(AbstractGage):
                 column_types = {'DATE TIME': str}
                 custom_converters = {'VALUE': try_float}
                 df = pd.read_csv(StringIO(csv_data), dtype = column_types, usecols=columns_to_read, converters=custom_converters)
+                if df.empty or len(df.index) < 367:
+                    continue
                 df = df.dropna(subset=['VALUE'])
                 df['DATE TIME'] = pd.to_datetime(df['DATE TIME'], format='%Y%m%d %H%M').dt.date
                 df = df.groupby('DATE TIME')['VALUE'].mean().reset_index()

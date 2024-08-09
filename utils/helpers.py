@@ -118,6 +118,7 @@ def replace_nan(flow_data):
 
 def get_max_consecutive_nan(flow_data):
     max_nan = 0
+    current_count = 0
     for flow in flow_data:
         if np.isnan(flow):
             current_count += 1
