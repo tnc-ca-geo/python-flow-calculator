@@ -172,7 +172,7 @@ if __name__ == '__main__':
                                 line_gage_obj.flow_class = CLASS_TO_NUMBER[line['class'].upper()]
                             if (line_gage_obj.flow_class is None) or (line_gage_obj.flow_class == ''):
                                 line_gage_obj.flow_class = CLASS_TO_NUMBER['NA']
-                                user_uploaded_parse_warning = user_uploaded_parse_warning + f'Could not auto populate stream class for file {line['path']} proceeding using default stream class\n'
+                                user_uploaded_parse_warning = user_uploaded_parse_warning + f'Could not auto populate stream class for file {line["path"]} proceeding using default stream class\n'
                             
                             gage_arr.append(line_gage_obj)
 
@@ -220,7 +220,7 @@ if __name__ == '__main__':
                     
                     try:
                         done = False
-                        usgs_string = f'Downloading and parsing USGS metadata for gage: {usgs_dict['id']}... '
+                        usgs_string = f'Downloading and parsing USGS metadata for gage: {usgs_dict["id"]}... '
                         usgs_dl_thread = threading.Thread(target=spinning_bar, args= (usgs_string,))
                         usgs_dl_thread.start()
                         new_gage = USGSGage(gage_id = usgs_dict['id'])
@@ -236,7 +236,7 @@ if __name__ == '__main__':
                             new_gage.flow_class = CLASS_TO_NUMBER[usgs_dict['class'].upper()]
                         if (new_gage.flow_class is None) or (new_gage.flow_class == ''):
                             new_gage.flow_class = CLASS_TO_NUMBER['NA']
-                            usgs_parse_warning = usgs_parse_warning + f'Could not auto populate stream class for gage: {usgs_dict['id']}, proceeding using the default stream class\n'
+                            usgs_parse_warning = usgs_parse_warning + f'Could not auto populate stream class for gage: {usgs_dict["id"]}, proceeding using the default stream class\n'
                             
                         gage_arr.append(new_gage)
                         time_elapsed =  time.time() - start
@@ -290,7 +290,7 @@ if __name__ == '__main__':
                     for cdec_dict in cdec_to_be_downloaded:
                         try:
                             done = False
-                            cdec_string = f'Downloading and parsing CDEC metadata for gage: {cdec_dict['id']}... '
+                            cdec_string = f'Downloading and parsing CDEC metadata for gage: {cdec_dict["id"]}... '
                             cdec_dl_thread = threading.Thread(target=spinning_bar, args= (cdec_string,))
                             cdec_dl_thread.start()
                             new_gage = CDECGage(gage_id = cdec_dict['id'])
@@ -306,7 +306,7 @@ if __name__ == '__main__':
                                 new_gage.flow_class = CLASS_TO_NUMBER[cdec_dict['class'].upper()]
                             if (new_gage.flow_class is None) or (new_gage.flow_class == ''):
                                 new_gage.flow_class = CLASS_TO_NUMBER['NA']
-                                cdec_parse_warning = cdec_parse_warning + f'Could not auto populate stream class for gage: {cdec_dict['id']} proceeding using the default stream class\n'
+                                cdec_parse_warning = cdec_parse_warning + f'Could not auto populate stream class for gage: {cdec_dict["id"]} proceeding using the default stream class\n'
                             
                             gage_arr.append(new_gage)
                             time_elapsed =  time.time() - start

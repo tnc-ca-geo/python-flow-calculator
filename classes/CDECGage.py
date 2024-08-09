@@ -75,7 +75,7 @@ class CDECGage(AbstractGage):
 
         for dict in cdec_param_ids_to_try:
         
-            url = f'http://cdec.water.ca.gov/dynamicapp/req/CSVDataServlet?Stations={self.gage_id}&SensorNums={dict['param_id']}&dur_code={dict['duration_code']}&Start=1800-10-01&End={today}'
+            url = f'http://cdec.water.ca.gov/dynamicapp/req/CSVDataServlet?Stations={self.gage_id}&SensorNums={dict["param_id"]}&dur_code={dict["duration_code"]}&Start=1800-10-01&End={today}'
             response = requests.get(url)
             if response.status_code == 200:
                 
