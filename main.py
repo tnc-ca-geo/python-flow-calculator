@@ -46,7 +46,7 @@ if __name__ == '__main__':
 
 
     clear_screen()
-    questionary.print(f"Functional Flows Calculator 🏞", style="fg:green")
+    questionary.print(f"Functional Flows Calculator", style="fg:green")
     questionary.print(f"Version: {VERSION}",style="fg:blue")
     questionary.press_any_key_to_continue().ask()
     
