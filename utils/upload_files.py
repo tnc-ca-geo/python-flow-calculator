@@ -59,7 +59,6 @@ def upload_files(start_date, gage_arr, output_files = 'user_output_files', batch
     
     if batched:
         for file_paths, base_name in zip(output_file_dirs, file_base_name):
-            print(f'FILE PATH: {file_paths}, FILE BASE_NAME: {file_base_name}')
             if not file_paths:
                 warning_message += f"There is no {base_name} files to batch together, all gages likely errored proceeding to the next file type...\n"
             else:
