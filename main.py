@@ -344,12 +344,10 @@ if __name__ == '__main__':
                             else:
                                 continue
 
-            done = True
-            if 'cdec_dl_thread' in locals():
-                cdec_dl_thread.join()
-                
-            if len(cdec_to_be_downloaded) > 0:
-                sys.stdout.write("\r" + " " * (len(cdec_string) + 1) + "\r")
+                    done = True
+                    if 'cdec_dl_thread' in locals():
+                        cdec_dl_thread.join()
+                    sys.stdout.write("\r" + " " * (len(cdec_string) + 1) + "\r")
 
             if cdec_parse_warning:
                 questionary.print('\nWarnings encountered while parsing CDEC data ⚠️', style='fg:#deda03')
