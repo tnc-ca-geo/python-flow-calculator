@@ -344,10 +344,10 @@ if __name__ == '__main__':
                             else:
                                 continue
 
-            done = True
-            if 'cdec_dl_thread' in locals():
-                cdec_dl_thread.join()
-            sys.stdout.write("\r" + " " * (len(cdec_string) + 1) + "\r")
+                    done = True
+                    if 'cdec_dl_thread' in locals():
+                        cdec_dl_thread.join()
+                    sys.stdout.write("\r" + " " * (len(cdec_string) + 1) + "\r")
 
             if cdec_parse_warning:
                 questionary.print('\nWarnings encountered while parsing CDEC data:', style='fg:#deda03')
@@ -729,7 +729,8 @@ if __name__ == '__main__':
     formatted_time = current_time.strftime("%Y-%m-%d-%H-%M")
     dir_name = ''
     if len(gage_arr) == 1:
-        dir_name = f'{gage_arr[0].gage_id}_{formatted_time}' 
+        dir_name = f'{gage_arr[0].gage_id}_{formatted_time}'
+        batch = False
     else:
         dir_name = f'Multiple_{formatted_time}'
     
