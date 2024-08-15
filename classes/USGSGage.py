@@ -1,8 +1,8 @@
 import csv
 import dataretrieval.nwis as nwis
 import os
-from pynhd import NLDI, WaterData, NHDPlusHR
 from classes.AbstractGage import AbstractGage
+from classes.Exceptions.not_enough_data import NotEnoughDataError
 
 class USGSGage(AbstractGage):
     def __init__(self, gage_id):
@@ -39,8 +39,11 @@ class USGSGage(AbstractGage):
         """
 
         df = nwis.get_record(sites = self.gage_id, service="dv", parameterCd = "00060", statCd="00003", start="1800-10-01")
-        if df.empty or len(df.index) < 367:
-            raise Exception(f"There was none or little data available for {self.gage_id}")
+        if df.empty:
+            raise Exception(f'No data found for {self.gage_id} is this a valid USGS gage? (ensure that gages less than 9 gigits long are front padded with 0)')
+        if len(df.index) < 367:
+            raise NotEnoughDataError(f"There was little data available for {self.gage_id}")
+            
         self.start_date = df.index[0]
         df = df.rename(columns={'00060_Mean': 'flow', 'datetime': 'date', 'site_no': 'gage', '00060_Mean_cd': 'flow_flag'})
         folder_path = os.path.join(os.getcwd(), 'gage_data')

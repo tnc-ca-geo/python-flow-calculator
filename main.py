@@ -3,6 +3,7 @@ from utils.constants import NUMBER_TO_CLASS, VERSION, WY_START_DATE, DELETE_INDI
 from utils.helpers import comid_to_class
 from utils.alteration_assessment import assess_alteration, assess_alteration_by_wyt
 from classes.USGSGage import USGSGage
+from classes.Exceptions.not_enough_data import NotEnoughDataError
 from classes.UserUploadedData import UserUploadedData
 from classes.CDECGage import CDECGage
 from datetime import datetime
@@ -382,6 +383,20 @@ if __name__ == '__main__':
                 
                 try:
                     gage.save_daily_data()
+                
+                except NotEnoughDataError as e:
+                    gages_without_data.append(gage)
+                    done = True
+                    if 'current_gage_dl_thread' in locals():
+                        current_gage_dl_thread.join()
+                    sys.stdout.write("\r" + " " * (len(gage_string) + 1) + "\r")
+                    questionary.print(f"{gage_string}ERROR: Not enough available data", style="bold fg:red")
+                    if QUIT_ON_ERROR:
+                        questionary.print(traceback.format_exc())
+                        sys.exit()
+                    else:
+                        continue
+
                 except Exception as e:
                     gages_without_data.append(gage)
                     done = True
@@ -477,6 +492,18 @@ if __name__ == '__main__':
                     new_gage.save_daily_data()
                     comid = new_gage.get_comid()
                     
+                except NotEnoughDataError as e:
+                    done = True
+                    
+                    if 'gage_thread' in locals():
+                        gage_thread.join()
+                    questionary.print(traceback.format_exc())
+                    sys.stdout.write("\r" + " " * (len("Downloading gage data... ") + 1) + "\r")
+                    sys.stdout.write("\033[F")
+                    sys.stdout.write("\r" + " " * (len("This may take a bit, CDEC's API can be slow") + 1) + "\r")
+                    questionary.print(f"Error: There was some data available for gage {gage_id} but not enough to proceed", style="bold fg:red")
+                    questionary.print("→ Restart the calculator by running \"python main.py\" ←")
+                    sys.exit()
 
                 except Exception as e:
                     done = True
@@ -541,12 +568,23 @@ if __name__ == '__main__':
                     new_gage.save_daily_data()   
                     comid = new_gage.get_comid()
 
+
+                except NotEnoughDataError as e:
+                    done = True
+                    
+                    if 'gage_thread' in locals():
+                        gage_thread.join()
+                    sys.stdout.write("\r" + " " * (len("Downloading gage data... ") + 1) + "\r")
+                    questionary.print(f"Error: The gage {new_gage} did not have enough data available to continue", style="bold fg:red")
+                    questionary.print("→ Restart the calculator by running \"python main.py\" ←")
+                    sys.exit()
+
                 except Exception as e:
                     done = True
                     
                     if 'gage_thread' in locals():
                         gage_thread.join()
-                    
+                    sys.stdout.write("\r" + " " * (len("Downloading gage data... ") + 1) + "\r")
                     questionary.print(f"Error downloading gage data for gage: {new_gage} please verify it is a valid USGS gage id and try again", style="bold fg:red")
                     questionary.print("→ Restart the calculator by running \"python main.py\" ←")
                     sys.exit()
@@ -622,6 +660,7 @@ if __name__ == '__main__':
                     new_gage = UserUploadedData(file_name=file_name, longitude = lng, latitude = lat, download_directory=file_path)
                     new_gage.get_comid()
                     gage_arr.append(new_gage)
+                    new_gage.save_daily_data()
 
                 else:
                     questionary.print("FATAL ERROR: No provided input type", style="bold fg:red")
