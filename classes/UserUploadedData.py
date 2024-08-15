@@ -1,6 +1,5 @@
 from classes.AbstractGage import AbstractGage
 import csv
-import os
 from classes.Exceptions.not_enough_data import NotEnoughDataError
 
 class UserUploadedData(AbstractGage):

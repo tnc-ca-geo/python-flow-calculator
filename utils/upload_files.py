@@ -128,7 +128,7 @@ def calc_results_reference(matrix, flow_class, start_date = '10/1', comid = None
 def get_results(matrix, flow_class, start_date = None, comid = None, desired_calculator = None):
     if flow_class is None or flow_class == 10:
         flow_class = 3
-
+    print(desired_calculator)
     if desired_calculator is None:
         # no specified calculator, determine which is better
     
@@ -154,13 +154,14 @@ def get_results(matrix, flow_class, start_date = None, comid = None, desired_cal
         return flashy_res, 'Flashy (User Specified)'
     
 def write_annual_flow_matrix(file_name, results, file_type):
-    year_ranges = 'Year,' + ",".join(str(year) for year in results['year_ranges'])
-    a = np.array(results['flow_matrix'])
-    julian_date = np.arange(1, 367)
-    a = np.c_[julian_date,a]
+    flow_matrix = np.array(results['flow_matrix']).T
+    year_column = np.array(results['year_ranges'])
+    flow_matrix = np.c_[year_column, flow_matrix]
+    days_header = 'Year,' + ','.join(str(day) for day in range(1, 367))
     output_dir = file_name + '_' + file_type + '.csv'
-    np.savetxt(output_dir, a, delimiter=',',
-                header=year_ranges, fmt='%s', comments='')
+    np.savetxt(output_dir, flow_matrix, delimiter=',',
+               header=days_header, fmt='%s', comments='')
+
     return output_dir
         
 def write_drh(file_name, results, file_type):  
@@ -176,7 +177,6 @@ def write_drh(file_name, results, file_type):
     return output_dir
 
 def write_annual_flow_result(file_name, results, file_type):
-    year_ranges = ",".join(str(year) for year in results['year_ranges'])
     # remove summer no_flow from main output but save it for supplementary outputs
     summer_no_flow = results['summer']['no_flow_counts']
     del results['summer']['no_flow_counts']
@@ -193,13 +193,16 @@ def write_annual_flow_result(file_name, results, file_type):
     results['year_ranges'].insert(0,'Year')
     df = pd.DataFrame(dataset)
     df.columns = results['year_ranges']
+    df = df.set_index(df.columns[0])
+    df = df.T
+    df.reset_index(inplace=True)
+    df.rename(columns={'index': 'Year'}, inplace=True)
     output_dir = file_name + '_' + file_type + '.csv'
-    df.to_csv(output_dir, index=False,na_rep='None')
-    output_dir = file_name + '_' + file_type + '.csv'
-    
+    df.to_csv(output_dir, index=False,na_rep='None')    
 
     """Create supplementary metrics file"""
     supplementary = []
+    supplementary.append(results['year_ranges'])
     supplementary.append(['Avg'] + results['all_year']
                             ['average_annual_flows'])
     supplementary.append(['Std'] + results['all_year']
@@ -207,9 +210,10 @@ def write_annual_flow_result(file_name, results, file_type):
     supplementary.append(['CV'] + results['all_year']
                             ['coefficient_variations'])
     supplementary.append(['DS_No_Flow'] + summer_no_flow)
+    supplementary_transposed = list(map(list, zip(*supplementary)))
     output_dir2 = file_name + '_supplementary_metrics.csv'
-    np.savetxt(output_dir2, supplementary, delimiter=',',
-                fmt='%s', header='Year, ' + year_ranges, comments='')
+    np.savetxt(output_dir2, supplementary_transposed, delimiter=',',
+                fmt='%s', comments='')
     return output_dir, output_dir2
 
 def write_parameters(file_name, flow_class, used_calculator, aa_start = None, aa_end = None, file_type = 'run_metadata'):
@@ -274,10 +278,7 @@ def batch_files(file_paths, base_file_name, file_identifier, output_dir, alterat
 
     for file_path, file_id in zip(file_paths, file_identifier):
 
-        current_data = pd.read_csv(file_path, header=None).T
-        current_data.columns = current_data.iloc[0]
-        
-        current_data.drop(0,inplace=True)
+        current_data = pd.read_csv(file_path, header=0)
         current_data['Source'] = file_id
         if combined_data.empty:
             combined_data = current_data
@@ -288,9 +289,9 @@ def batch_files(file_paths, base_file_name, file_identifier, output_dir, alterat
                 os.remove(file_path)
     
     column_order = ['Source'] + [col for col in combined_data.columns if col != 'Source']
-    combined_data = combined_data.astype({'Year':'int'})
+    #combined_data = combined_data.astype({'Year':'int'})
     combined_data = combined_data[column_order]
-    combined_data.to_csv(os.path.join(output_dir, "combined_" + base_file_name + ".csv"), index=False)
+    combined_data.to_csv(os.path.join(output_dir, "combined_" + base_file_name + ".csv"), index=False,na_rep='None')
 
 def read_csv_to_arrays(file_path):
     fields = ['date', 'flow']
