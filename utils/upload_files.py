@@ -7,7 +7,7 @@ from classes.FlashyMetricCalculator import FlashyCalculator
 from classes.matrix_convert import MatrixConversion
 from classes.MetricCalculator import Calculator
 from utils.helpers import calc_avg_nan_per_year, comid_to_wyt, dict_to_array
-from utils.constants import DELETE_INDIVIDUAL_FILES_WHEN_BATCH, QUIT_ON_ERROR, NUMBER_TO_CLASS
+from utils.constants import DELETE_INDIVIDUAL_FILES_WHEN_BATCH, QUIT_ON_ERROR, NUMBER_TO_CLASS, PRODUCE_DRH
 from params import summer_params
 from params import fall_params
 from params import spring_params
@@ -21,6 +21,7 @@ def upload_files(start_date, gage_arr, output_files = 'user_output_files', batch
 
     # these 3 are for storing file names and file types of files that will later need to be batched together 
     output_file_dirs = [[],[],[]]
+    metadata_files = []
     file_identifiers = []
     file_base_name = ['annual_flow_matrix', 'annual_flow_result', 'supplementary_metrics']
     
@@ -31,30 +32,30 @@ def upload_files(start_date, gage_arr, output_files = 'user_output_files', batch
             
             file = gage.download_directory
             file_name = os.path.join(output_files, os.path.splitext(os.path.basename(file))[0])
-            file_identifiers.append(os.path.splitext(os.path.basename(file))[0])
             dataset = read_csv_to_arrays(file)
             matrix = MatrixConversion(
                 dataset['date'], dataset['flow'], start_date)
-            
             results, used_calculator = get_results(matrix, int(gage.flow_class), start_date, gage.comid, gage.selected_calculator)
-            output_dir = write_annual_flow_matrix(file_name, results, file_base_name[0])
-            output_file_dirs[0].append(output_dir)
-            output_dir, output_dir2 = write_annual_flow_result(file_name, results, file_base_name[1])
-            output_file_dirs[1].append(output_dir)
-            output_file_dirs[2].append(output_dir2)
-            write_drh(file_name, results, 'drh')
-            
+            output_dir0 = write_annual_flow_matrix(file_name, results, file_base_name[0])
+            output_dir1, output_dir2 = write_annual_flow_result(file_name, results, file_base_name[1])
+            if PRODUCE_DRH:
+                write_drh(file_name, results, 'drh')
             formatted = f'{gage.gage_id}'
             param_path = os.path.join(output_files,formatted)
-            write_parameters(param_path, gage.flow_class, used_calculator, aa_start_year, aa_end_year)
+            metadata_file = write_parameters(param_path, gage.flow_class, used_calculator, aa_start_year, aa_end_year)
 
+            file_identifiers.append(os.path.splitext(os.path.basename(file))[0])
+            output_file_dirs[0].append(output_dir0)
+            output_file_dirs[1].append(output_dir1)
+            output_file_dirs[2].append(output_dir2)
+            metadata_files.append(metadata_file)
         except Exception as e:
             original_message = str(e)
             gage_message = f"ERROR PROCESSING GAGE: {gage}"
             if QUIT_ON_ERROR:
                 raise type(e)(f"{original_message}. \n{gage_message}")
             else:
-                warning_message += f"There was an error when processing metrics for gage {gage} proceeding to next gage\n"
+                warning_message += f"There was an error when calculating metrics for gage {gage} proceeding to next gage\n"
                 continue
     
     
@@ -64,7 +65,8 @@ def upload_files(start_date, gage_arr, output_files = 'user_output_files', batch
                 warning_message += f"There is no {base_name} files to batch together, all gages likely errored proceeding to the next file type...\n"
             else:
                 batch_files(file_paths, base_name, file_identifiers, output_files, alteration_needed)
-
+        # the format of these files is very different so they need to be batched separately, they could be done in the same function with a bunch of conditionals but I think thats less clean
+        batch_metadata_files(metadata_files, file_identifiers, output_files)
 
 
     return output_file_dirs[1], warning_message
@@ -249,6 +251,22 @@ def write_parameters(file_name, flow_class, used_calculator, aa_start = None, aa
     output_dir = file_name + '_' + file_type +'.csv'
     df.to_csv(output_dir, sep=',', header=False)
     return output_dir
+
+def batch_metadata_files(metadata_file_paths, file_identifier, output_dir):
+    column_names = ['Parameter Name/Section Name', 'Parameter Value']
+    combined_data = pd.DataFrame()
+    for file_path, file_id in zip(metadata_file_paths, file_identifier):
+        current_data = pd.read_csv(file_path, header=None, names = column_names)
+        current_data['Source'] = file_id
+        if combined_data.empty:
+            combined_data = current_data
+        else:
+            combined_data = pd.concat([combined_data,current_data])
+        if os.path.isfile(file_path) and DELETE_INDIVIDUAL_FILES_WHEN_BATCH:
+            os.remove(file_path)
+    column_order = ['Source'] + column_names
+    combined_data = combined_data[column_order]
+    combined_data.to_csv(os.path.join(output_dir, "combined_metadata.csv"), index=False)
 
 def batch_files(file_paths, base_file_name, file_identifier, output_dir, alteration_needed):
     
