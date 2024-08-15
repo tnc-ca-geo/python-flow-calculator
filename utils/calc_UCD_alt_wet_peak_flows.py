@@ -189,7 +189,7 @@ def calc_winter_highflow_annual_combined(flow_matrix, original_method=False):
                 peak_fre_10.append(ph_fre)
                 peak_tim_10.append(ph_tim)
     
-    # the names below are a bit weird because the original calculator used exceedance percentiles instead of recurrence intervals
+    # the names below are a bit weird because the reference calculator used exceedance percentiles instead of recurrence intervals
     high_flow_metrics = {
         "durations_ten": peak_dur_10,
         "durations_fifty": peak_dur_2,

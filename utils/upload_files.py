@@ -96,7 +96,7 @@ def calc_results_flashy(matrix, flow_class, start_date = '10/1', comid = None):
         results["classification"]["wyt"] = [comid_to_wyt(comid,i) for i in results["year_ranges"]]
     return results
 
-def calc_results_original(matrix, flow_class, start_date = '10/1', comid = None):
+def calc_results_reference(matrix, flow_class, start_date = '10/1', comid = None):
     results = {}
     results["year_ranges"] = [int(i) + 1 for i in matrix.year_array]
     results["flow_matrix"] = np.where(
@@ -136,25 +136,25 @@ def get_results(matrix, flow_class, start_date = None, comid = None, desired_cal
             flashy_res = calc_results_flashy(matrix, flow_class, start_date, comid)
             return flashy_res, 'Flashy (Class 7)'
         else:
-            original_res, rbfi, annual_nan = calc_results_original(copy.deepcopy(matrix), flow_class, start_date, comid)
+            reference_res, rbfi, annual_nan = calc_results_reference(copy.deepcopy(matrix), flow_class, start_date, comid)
             
             if(rbfi + annual_nan > 0.8):
                 flashy_res = calc_results_flashy(matrix, flow_class, start_date, comid)
                 return flashy_res, 'Flashy (RBFI + mean annual nan > 0.8)'
             else:
-                return original_res, 'Original (RBFI + mean annual nan <= 0.8)'
+                return reference_res, 'Reference (RBFI + mean annual nan <= 0.8)'
     
-    elif desired_calculator.lower() == 'original':
-        # use the original calculator
-        original_res, _, _ = calc_results_original(matrix, flow_class, start_date, comid)
-        return original_res, 'Original (User Specified)'
+    elif desired_calculator.lower() == 'reference':
+        # use the reference calculator
+        reference_res, _, _ = calc_results_reference(matrix, flow_class, start_date, comid)
+        return reference_res, 'Reference (User Specified)'
     elif desired_calculator.lower() == 'flashy':
         # use the ucdavis flashy calculator
         flashy_res = calc_results_flashy(matrix, flow_class, start_date, comid)
         return flashy_res, 'Flashy (User Specified)'
     
 def write_annual_flow_matrix(file_name, results, file_type):
-    year_ranges = 'Year,' +",".join(str(year) for year in results['year_ranges'])
+    year_ranges = 'Year,' + ",".join(str(year) for year in results['year_ranges'])
     a = np.array(results['flow_matrix'])
     julian_date = np.arange(1, 367)
     a = np.c_[julian_date,a]
@@ -215,8 +215,8 @@ def write_annual_flow_result(file_name, results, file_type):
 def write_parameters(file_name, flow_class, used_calculator, aa_start = None, aa_end = None, file_type = 'run_metadata'):
     # List of all the calculator used strings that want the flashy params outputted
     used_flashy  = ["Flashy (Class 7)","Flashy (User Specified)","Flashy (RBFI + mean annual nan > 0.8)"]
-    # list of all the calculator used strings that want the original calculator params outputted
-    used_original = ["Flashy (RBFI + mean annual nan > 0.8)", "Original (RBFI + mean annual nan <= 0.8)", "Original (User Specified)"]
+    # list of all the calculator used strings that want the reference calculator params outputted
+    used_reference = ["Flashy (RBFI + mean annual nan > 0.8)", "Reference (RBFI + mean annual nan <= 0.8)", "Reference (User Specified)"]
     now = datetime.now()
     timestamp = now.strftime("%m/%d/%Y, %H:%M")
     if aa_start and aa_end:
@@ -224,7 +224,7 @@ def write_parameters(file_name, flow_class, used_calculator, aa_start = None, aa
     else:
         cols = {'Date_time': timestamp, 'Stream_class': NUMBER_TO_CLASS[flow_class], 'Used_Calculator': used_calculator}
     df = pd.DataFrame(cols, index=[0])
-    if used_calculator in used_original:
+    if used_calculator in used_reference:
         df['Fall_params'] = '_'
         for key, value in fall_params.items():
             # modify all key names to make sure they are distinct from other dataframe entries (otherwise will not be added)
