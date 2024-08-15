@@ -19,7 +19,7 @@
 
 ## About
 
-This is a remastered functional flow calculator a majority of the logic has been left unchanged but lots of new functionality has been added. The repository has been refactored to be more maintainable and the dependencies have all been updated. Sourced from the [reference functional flows calculator](https://github.com/leogoesger/func-flow). Additional functionality has been implemented from [the ffc api client](https://github.com/ceff-tech/ffc_api_client) and [the alternate rule set functional flow calculator](https://github.com/camcarpenter6/Alternate-Ruleset-FFC-BETA). As well as some [new low flow metrics](https://agupubs.onlinelibrary.wiley.com/doi/pdf/10.1029/2023WR035768) which have an R implementation [here](https://github.com/jessayers20/Functional-Low-Flows). It is still in active development so please report any bugs you find!
+This is a remastered functional flow calculator a majority of the logic has been left unchanged but lots of new functionality has been added. The repository has been refactored to be more maintainable and the dependencies have all been updated. Sourced from the [original reference functional flows calculator](https://github.com/leogoesger/func-flow). Additional functionality has been implemented from [the ffc api client](https://github.com/ceff-tech/ffc_api_client) and [the flashy functional flow calculator](https://github.com/camcarpenter6/Alternate-Ruleset-FFC-BETA). As well as some [new low flow metrics](https://agupubs.onlinelibrary.wiley.com/doi/pdf/10.1029/2023WR035768) which have an R implementation [here](https://github.com/jessayers20/Functional-Low-Flows). It is still in active development so please report any bugs you find!
 
 ## Getting Started
 
