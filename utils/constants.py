@@ -3,6 +3,7 @@ WY_START_DATE = '10/1'
 DELETE_INDIVIDUAL_FILES_WHEN_BATCH = True
 QUIT_ON_ERROR = False # do you want the entire process to stop when an error occurs, True assumes you want more detailed messages as you are hopefully debugging it
 SKIP_PROMPTS_BATCH = True # do you want to skip the prompts confirming you want to continue?
+PRODUCE_DRH = False
 TYPES = {
     'all_year_average_annual_flows': "Avg",
     'all_year_standard_deviations': "Std",
