@@ -1,4 +1,7 @@
 from classes.AbstractGage import AbstractGage
+import csv
+import os
+from classes.Exceptions.not_enough_data import NotEnoughDataError
 
 class UserUploadedData(AbstractGage):
     def __init__(self, file_name, download_directory,measurement_unit='cfs', longitude = None, latitude = None, comid = None, selected_calculator = None):
@@ -8,7 +11,14 @@ class UserUploadedData(AbstractGage):
         pass
     
     def save_daily_data(self):
-        pass
+        # the data has already been saved but other objects do a quick check that there is enough data in here aswell
+        # will raise file not found if it does not exist as intended
+        with open(self.download_directory, mode='r', newline='') as file:
+            reader = csv.reader(file)
+            row_count = sum(1 for row in reader)  # Count each row
+        if row_count < 368:
+            raise NotEnoughDataError(f'user uploaded file at directory {self.download_directory} does not have enough data')
+
 
     def get_comid(self):
         if (self.comid is None) or (self.comid == ''):

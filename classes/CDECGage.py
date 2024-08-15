@@ -2,6 +2,7 @@ import pandas as pd
 import requests
 from io import StringIO
 import csv
+from classes.Exceptions.not_enough_data import NotEnoughDataError
 import os
 from datetime import datetime
 from utils.helpers import try_float
@@ -72,7 +73,7 @@ class CDECGage(AbstractGage):
         """
         today = datetime.today().strftime('%Y-%m-%d')
         cdec_param_ids_to_try = [{'param_id':'20', 'duration_code':'D'}, {'param_id':'20', 'duration_code':'H'}, {'param_id':'41','duration_code':'D'}, {'param_id':'20', 'duration_code':'E'}, {'param_id':'165', 'duration_code':'E'}]
-
+        had_data_not_enough = False
         for dict in cdec_param_ids_to_try:
         
             url = f'http://cdec.water.ca.gov/dynamicapp/req/CSVDataServlet?Stations={self.gage_id}&SensorNums={dict["param_id"]}&dur_code={dict["duration_code"]}&Start=1800-10-01&End={today}'
@@ -84,7 +85,10 @@ class CDECGage(AbstractGage):
                 column_types = {'DATE TIME': str}
                 custom_converters = {'VALUE': try_float}
                 df = pd.read_csv(StringIO(csv_data), dtype = column_types, usecols=columns_to_read, converters=custom_converters)
-                if df.empty or len(df.index) < 367:
+                if df.empty:
+                    continue
+                if len(df.index) < 367:
+                    had_data_not_enough = True
                     continue
                 df = df.dropna(subset=['VALUE'])
                 df['DATE TIME'] = pd.to_datetime(df['DATE TIME'], format='%Y%m%d %H%M').dt.date
@@ -99,7 +103,10 @@ class CDECGage(AbstractGage):
                 return
             else:
                 continue
-        raise Exception(f"Failed to fetch data from cdec with url: {url}. For parameters 20 and 41. Status code:{response.status_code}")
+        if had_data_not_enough:
+            raise NotEnoughDataError(f"Gage: {self.__str__} had some data available but not enough to proceed")
+        else:
+            raise Exception(f"Failed to fetch data from cdec with url: {url}. For parameters 20 and 41. Status code:{response.status_code}")
 
 
     def get_comid(self):
