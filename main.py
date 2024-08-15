@@ -1,8 +1,10 @@
 from utils.upload_files import upload_files
-from utils.constants import NUMBER_TO_CLASS, VERSION, WY_START_DATE, DELETE_INDIVIDUAL_FILES_WHEN_BATCH, CLASS_TO_NUMBER, QUIT_ON_ERROR, SKIP_PROMPTS_BATCH
+from utils.constants import NUMBER_TO_CLASS, VERSION, WY_START_DATE, DELETE_INDIVIDUAL_FILES_WHEN_BATCH, CLASS_TO_NUMBER, QUIT_ON_ERROR, SKIP_PROMPTS_BATCH, REQUIRED_BATCH_COLUMNS
 from utils.helpers import comid_to_class
 from utils.alteration_assessment import assess_alteration, assess_alteration_by_wyt
+from classes.Exceptions.missing_columns import MissingColumnsError
 from classes.USGSGage import USGSGage
+from classes.Exceptions.not_enough_data import NotEnoughDataError
 from classes.UserUploadedData import UserUploadedData
 from classes.CDECGage import CDECGage
 from datetime import datetime
@@ -46,14 +48,14 @@ if __name__ == '__main__':
 
 
     clear_screen()
-    questionary.print(f"Functional Flows Calculator 🏞", style="fg:green")
+    questionary.print(f"Functional Flows Calculator", style="fg:green")
     questionary.print(f"Version: {VERSION}",style="fg:blue")
     questionary.press_any_key_to_continue().ask()
     
     alterationNeeded = questionary.confirm("Would you like to perform an alteration assessment in addition to generating metrics?").ask()
     
     if alterationNeeded is None:
-        questionary.print("🛑 Please provide if you wish for an alteration assessment 🛑", style="bold fg:red")
+        questionary.print("FATAL ERROR: Please provide if you wish for an alteration assessment", style="bold fg:red")
         questionary.print("→ Restart the calculator by running \"python main.py\" ←")
         sys.exit()
 
@@ -69,7 +71,7 @@ if __name__ == '__main__':
             aa_end_year = questionary.text(f'Please enter the end year for alteration assessment',
                                         validate = lambda year: True if bool(re.match(r'^[12][0-9]{3}$', year)) else "Please enter a valid end year (YYYY)").ask()
             if int(aa_start_year) > int(aa_end_year):
-                questionary.print("🛑 Start year must become before end year 🛑", style="bold fg:red")
+                questionary.print("FATAL ERROR: Start year must become before end year", style="bold fg:red")
                 questionary.print("→ Restart the calculator by running \"python main.py\" ←")
                 sys.exit()
             
@@ -87,7 +89,7 @@ if __name__ == '__main__':
                 ]).ask()
     
     if input_method is None:
-        questionary.print("🛑 Please provide what input method you wish to use 🛑", style="bold fg:red")
+        questionary.print("FATAL ERROR: Please provide what input method you wish to use", style="bold fg:red")
         questionary.print("→ Restart the calculator by running \"python main.py\" ←")
         sys.exit()
     elif input_method == 'Batch CSV':
@@ -98,7 +100,7 @@ if __name__ == '__main__':
             usgs_parse_warning = ''
             cdec_parse_warning = ''
             if not csv_files:
-                questionary.print("🛑 No CSV files found 🛑", style="bold fg:red")
+                questionary.print("FATAL ERROR: No CSV files found", style="bold fg:red")
                 questionary.print("→ Restart the calculator by running \"python main.py\" ←")
                 sys.exit(f"Please ensure your batch processing CSV is in {input_files} and has the .csv file extension then try again")
 
@@ -109,7 +111,7 @@ if __name__ == '__main__':
                 choices=csv_files).ask()
             
             if selected_file is None:
-                questionary.print("🛑 Please select a file you would like to use 🛑", style="bold fg:red")
+                questionary.print("FATAL ERROR: Please select a file you would like to use", style="bold fg:red")
                 questionary.print("→ Restart the calculator by running \"python main.py\" ←")
                 sys.exit()
             
@@ -122,6 +124,10 @@ if __name__ == '__main__':
             try:
                 with open(file_path, 'r') as file:
                     reader = csv.DictReader(file)
+                    csv_columns = reader.fieldnames
+                    missing_columns = [col for col in REQUIRED_BATCH_COLUMNS if col not in csv_columns]
+                    if missing_columns:
+                        raise MissingColumnsError('batch csv missing columns', missing_columns)
                     for line in reader:
                         line_gage_obj = ''
 
@@ -131,19 +137,19 @@ if __name__ == '__main__':
                                 if 'csv_thread' in locals():
                                     csv_thread.join()
                                 sys.stdout.write("\r" + " " * (len("Processing CSV... ") + 1) + "\r")
-                                questionary.print(f"❌ Please only include one of usgs, path or cdec ❌\n The line that failed looks like: \n\tusgs: {line['usgs']}\n\tcdec: {line['cdec']}\n\tpath: {line['path']}\n\tcalculator: {line['calculator']}", style="bold fg:red")
+                                questionary.print(f"Error: Please only include one of usgs, path or cdec \n The line that failed looks like: \n\tusgs: {line['usgs']}\n\tcdec: {line['cdec']}\n\tpath: {line['path']}\n\tcalculator: {line['calculator']}", style="bold fg:red")
                                 questionary.print("→ Restart the calculator by running \"python main.py\" ←")
                                 sys.exit()
                         
                         selected_calculator = line['calculator'].lower()
                         if selected_calculator == '':
                             selected_calculator = None
-                        if not (selected_calculator == 'flashy' or selected_calculator == 'original' or selected_calculator == '' or selected_calculator == None):
+                        if not (selected_calculator == 'flashy' or selected_calculator == 'reference' or selected_calculator == '' or selected_calculator == None):
                             done = True
                             if 'csv_thread' in locals():
                                 csv_thread.join()
                             sys.stdout.write("\r" + " " * (len("Processing CSV... ") + 1) + "\r")
-                            questionary.print(f"❌ 'calculator' field must be Flashy, Original or blank for all rows ❌\n The line that failed looks like: \n\tusgs: {line['usgs']}\n\tcdec: {line['cdec']}\n\tpath: {line['path']}\n\tcalculator: {line['calculator']}", style="bold fg:red")
+                            questionary.print(f"Error: 'calculator' field must be Flashy, Reference or blank for all rows\n The line that failed looks like: \n\tusgs: {line['usgs']}\n\tcdec: {line['cdec']}\n\tpath: {line['path']}\n\tcalculator: {line['calculator']}", style="bold fg:red")
                             questionary.print("→ Restart the calculator by running \"python main.py\" ←")
                             sys.exit()
                         
@@ -181,17 +187,43 @@ if __name__ == '__main__':
                             if 'csv_thread' in locals():
                                 csv_thread.join()
                             sys.stdout.write("\r" + " " * (len("Processing CSV... ") + 1) + "\r")
-                            questionary.print("❌ all batch csv lines must have a path, USGS ID or a CDEC ID ❌", style="bold fg:red")
+                            questionary.print("FATAL ERROR: all batch csv lines must have a path, USGS ID or a CDEC ID provided", style="bold fg:red")
                             questionary.print("→ Restart the calculator by running \"python main.py\" ←")
                             sys.exit()
+            except MissingColumnsError as e:
+                done = True
+                if 'csv_thread' in locals():
+                    csv_thread.join()
+                sys.stdout.write("\r" + " " * (len("Processing CSV... ") + 1) + "\r")
+                questionary.print(f"FATAL ERROR: Supplied batch csv: {file_path} is malformed, expected: {REQUIRED_BATCH_COLUMNS} columns but was missing: {e.missing_columns}", style="bold fg:red")
+                questionary.print("→ Restart the calculator by running \"python main.py\" ←")
+                sys.exit()
+            
+            except PermissionError:
+                done = True
+                if 'csv_thread' in locals():
+                    csv_thread.join()
+                sys.stdout.write("\r" + " " * (len("Processing CSV... ") + 1) + "\r")
+                questionary.print(f"FATAL ERROR: No permissions to read from file: {file_path}, please supply read access and run again", style="bold fg:red")
+                questionary.print("→ Restart the calculator by running \"python main.py\" ←")
+                sys.exit()
+
+            except FileNotFoundError:
+                done = True
+                if 'csv_thread' in locals():
+                    csv_thread.join()
+                sys.stdout.write("\r" + " " * (len("Processing CSV... ") + 1) + "\r")
+                questionary.print(f"FATAL ERROR: Unable to find file {file_path}", style="bold fg:red")
+                questionary.print("→ Restart the calculator by running \"python main.py\" ←")
+                sys.exit()
+
             except KeyError:    
                 done = True
                 if 'csv_thread' in locals():
                     csv_thread.join()
                 sys.stdout.write("\r" + " " * (len("Processing CSV... ") + 1) + "\r")
-                questionary.print(traceback.format_exc())
                 keys_str = ', '.join(CLASS_TO_NUMBER.keys())
-                questionary.print(f"🛑 Error parsing file {line['path']}'s stream class: {line['class']} is not a valid class, please supply one of {keys_str} 🛑", style="bold fg:red")
+                questionary.print(f"FATAL ERROR: while parsing file {line['path']}'s stream class: {line['class']} is not a valid class, please supply one of {keys_str} or leave it blank", style="bold fg:red")
                 questionary.print("→ Restart the calculator by running \"python main.py\" ←")
                 sys.exit()
              
@@ -201,7 +233,7 @@ if __name__ == '__main__':
                     csv_thread.join()
                 sys.stdout.write("\r" + " " * (len("Processing CSV... ") + 1) + "\r")
                 questionary.print(traceback.format_exc())
-                questionary.print("🛑 Error parsing selected csv, please ensure it is formatted correctly see error message above 🛑", style="bold fg:red")
+                questionary.print("FATAL ERROR parsing selected csv, please ensure it is formatted correctly see error message above", style="bold fg:red")
                 questionary.print("→ Restart the calculator by running \"python main.py\" ←")
                 sys.exit()
                 
@@ -209,10 +241,10 @@ if __name__ == '__main__':
             if 'csv_thread' in locals():
                     csv_thread.join()
             sys.stdout.write("\r" + " " * (len("Processing CSV... ") + 1) + "\r")
-            questionary.print("Processing CSV... ✔️", style="bold fg:green")
+            questionary.print("Processing CSV... Complete", style="bold fg:green")
 
             if user_uploaded_parse_warning:
-                questionary.print('\nWarnings encountered while parsing user supplied timeseries data ⚠️', style='fg:#deda03')
+                questionary.print('\nWarnings encountered while parsing user supplied timeseries data:', style='fg:#deda03')
                 questionary.print(user_uploaded_parse_warning)
             if len(usgs_to_be_downloaded) > 0:
 
@@ -245,14 +277,14 @@ if __name__ == '__main__':
                         if 'usgs_dl_thread' in locals():
                             usgs_dl_thread.join()
                         sys.stdout.write("\r" + " " * (len(usgs_string) + 1) + "\r")
-                        questionary.print(f"{usgs_string}✔️ , took {time_elapsed} seconds", style="bold fg:green")
+                        questionary.print(f"{usgs_string}Complete, took {time_elapsed} seconds", style="bold fg:green")
                     
                     except KeyError:    
                         done = True
                         if 'usgs_dl_thread' in locals():
                             usgs_dl_thread.join()
                         sys.stdout.write("\r" + " " * (len(usgs_string) + 1) + "\r")
-                        questionary.print(f"{usgs_string}❌", style="bold fg:red")
+                        questionary.print(f"{usgs_string}Error", style="bold fg:red")
                         keys_str = ', '.join(CLASS_TO_NUMBER.keys())
                         usgs_parse_warning = usgs_parse_warning + f"Error parsing supplied USGS class for gage id: {usgs_dict['id']}, {usgs_dict['class']} is not a valid class, please supply one of {keys_str}\n"
                         if QUIT_ON_ERROR:
@@ -266,7 +298,7 @@ if __name__ == '__main__':
                         if 'usgs_dl_thread' in locals():
                             usgs_dl_thread.join()
                         sys.stdout.write("\r" + " " * (len(usgs_string) + 1) + "\r")
-                        questionary.print(f"{usgs_string}❌", style="bold fg:red")
+                        questionary.print(f"{usgs_string}Error", style="bold fg:red")
                         usgs_parse_warning = usgs_parse_warning + f"Error parsing USGS metadata for gage: {usgs_dict['id']} please ensure it is a real USGS gage, proceeding without it\n"
                         if QUIT_ON_ERROR:
                             questionary.print(traceback.format_exc())
@@ -280,7 +312,7 @@ if __name__ == '__main__':
                 sys.stdout.write("\r" + " " * (len(usgs_string) + 1) + "\r")
 
             if usgs_parse_warning:
-                questionary.print('\nWarnings encountered while parsing USGS data ⚠️', style='fg:#deda03')
+                questionary.print('\nWarnings encountered while parsing USGS data:', style='fg:#deda03')
                 questionary.print(usgs_parse_warning)
             
             asyncio.set_event_loop(asyncio.new_event_loop())
@@ -315,14 +347,14 @@ if __name__ == '__main__':
                             if 'cdec_dl_thread' in locals():
                                 cdec_dl_thread.join()
                             sys.stdout.write("\r" + " " * (len(cdec_string) + 1) + "\r")
-                            questionary.print(f"{cdec_string} ✔️ , took {time_elapsed} seconds", style="bold fg:green")
+                            questionary.print(f"{cdec_string}Complete, took {time_elapsed} seconds", style="bold fg:green")
 
                         except KeyError:    
                             done = True
                             if 'cdec_dl_thread' in locals():
                                 cdec_dl_thread.join()
                             sys.stdout.write("\r" + " " * (len(usgs_string) + 1) + "\r")
-                            questionary.print(f"{usgs_string}❌", style="bold fg:red")
+                            questionary.print(f"{usgs_string}Error", style="bold fg:red")
                             keys_str = ', '.join(CLASS_TO_NUMBER.keys())
                             cdec_parse_warning = cdec_parse_warning + f"Error parsing supplied USGS class for gage id: {cdec_dict['id']}, {cdec_dict['class']} is not a valid class, please supply one of {keys_str}\n"
                             if QUIT_ON_ERROR:
@@ -336,7 +368,7 @@ if __name__ == '__main__':
                             if 'cdec_dl_thread' in locals():
                                 cdec_dl_thread.join()
                             sys.stdout.write("\r" + " " * (len(cdec_string) + 1) + "\r")
-                            questionary.print(f"{cdec_string}❌", style="bold fg:red")
+                            questionary.print(f"{cdec_string}Error", style="bold fg:red")
                             cdec_parse_warning = cdec_parse_warning + f"Error scraping CDEC metadata for gage: {cdec_dict['id']} please ensure it is a real CDEC gage, proceeding without it\n"
                             if QUIT_ON_ERROR:
                                 questionary.print(traceback.format_exc())
@@ -350,7 +382,7 @@ if __name__ == '__main__':
                     sys.stdout.write("\r" + " " * (len(cdec_string) + 1) + "\r")
 
             if cdec_parse_warning:
-                questionary.print('\nWarnings encountered while parsing CDEC data ⚠️', style='fg:#deda03')
+                questionary.print('\nWarnings encountered while parsing CDEC data:', style='fg:#deda03')
                 questionary.print(cdec_parse_warning)
             
             if (cdec_parse_warning != "" or usgs_parse_warning != "" or user_uploaded_parse_warning != "") and not SKIP_PROMPTS_BATCH:
@@ -367,7 +399,7 @@ if __name__ == '__main__':
                     questionary.print("\n".join(warnings_list), style='fg:#deda03')
                 proceed = questionary.confirm("The above warnings ocurred when fetching & processing the required metadata would you like to proceed to downloading the data?").ask()
                 if not proceed:
-                    questionary.print(f"🛑 Please review the batch csv to address the warnings🛑", style="bold fg:red")
+                    questionary.print(f"Please review the batch csv to address the warnings", style="bold fg:red")
                     questionary.print("→ Restart the calculator by running \"python main.py\" ←")
                     sys.exit()
 
@@ -382,13 +414,27 @@ if __name__ == '__main__':
                 
                 try:
                     gage.save_daily_data()
+                
+                except NotEnoughDataError as e:
+                    gages_without_data.append(gage)
+                    done = True
+                    if 'current_gage_dl_thread' in locals():
+                        current_gage_dl_thread.join()
+                    sys.stdout.write("\r" + " " * (len(gage_string) + 1) + "\r")
+                    questionary.print(f"{gage_string}ERROR: Not enough available data", style="bold fg:red")
+                    if QUIT_ON_ERROR:
+                        questionary.print(traceback.format_exc())
+                        sys.exit()
+                    else:
+                        continue
+
                 except Exception as e:
                     gages_without_data.append(gage)
                     done = True
                     if 'current_gage_dl_thread' in locals():
                         current_gage_dl_thread.join()
                     sys.stdout.write("\r" + " " * (len(gage_string) + 1) + "\r")
-                    questionary.print(f"{gage_string}❌", style="bold fg:red")
+                    questionary.print(f"{gage_string}Error", style="bold fg:red")
                     if QUIT_ON_ERROR:
                         questionary.print(traceback.format_exc())
                         sys.exit()
@@ -402,14 +448,14 @@ if __name__ == '__main__':
                 if 'current_gage_dl_thread' in locals():
                     current_gage_dl_thread.join()
                 sys.stdout.write("\r" + " " * (len(gage_string) + 1) + "\r")
-                questionary.print(f"{gage_string}✔️ , took {time_elapsed} seconds", style="bold fg:green")
+                questionary.print(f"{gage_string}Complete, took {time_elapsed} seconds", style="bold fg:green")
             
             gage_arr = gages_with_data
             if gages_without_data and not SKIP_PROMPTS_BATCH:
                 gages_without_data_string = ', '.join([gage.gage_id for gage in gages_without_data])
                 proceed = questionary.confirm(f"The following gages had no data or less than a year of data and will not be included in metric calculation in addition to any gages that were excluded earlier:\n{gages_without_data_string}\n Would you like to proceed?").ask()
                 if not proceed:
-                    questionary.print(f"🛑 Please review the above gages that failed to address the missing data🛑", style="bold fg:red")
+                    questionary.print(f"Please review the above gages that failed to address the missing data", style="bold fg:red")
                     questionary.print("→ Restart the calculator by running \"python main.py\" ←")
                     sys.exit()
             # skip over the prompts at the end as users that took the time to make a batch csv probably are computing a lot of data and just want to be able to set it and not worry about it until its done 
@@ -433,7 +479,7 @@ if __name__ == '__main__':
             ]).ask()
 
         if not data_type:
-            questionary.print("🛑 No Data type selected 🛑", style="bold fg:red")
+            questionary.print("FATAL ERROR: No Data type selected", style="bold fg:red")
             questionary.print("→ Restart the calculator by running \"python main.py\" ←")
             sys.exit()
         
@@ -449,7 +495,7 @@ if __name__ == '__main__':
                 
                 
                 if not gage_id:
-                    questionary.print("🛑 No CDEC Gage ID provided 🛑", style="bold fg:red")
+                    questionary.print("FATAL ERROR No CDEC Gage ID provided", style="bold fg:red")
                     questionary.print("→ Restart the calculator by running \"python main.py\" ←")
                     sys.exit()
                 gage_id = gage_id.upper()
@@ -477,6 +523,18 @@ if __name__ == '__main__':
                     new_gage.save_daily_data()
                     comid = new_gage.get_comid()
                     
+                except NotEnoughDataError as e:
+                    done = True
+                    
+                    if 'gage_thread' in locals():
+                        gage_thread.join()
+                    questionary.print(traceback.format_exc())
+                    sys.stdout.write("\r" + " " * (len("Downloading gage data... ") + 1) + "\r")
+                    sys.stdout.write("\033[F")
+                    sys.stdout.write("\r" + " " * (len("This may take a bit, CDEC's API can be slow") + 1) + "\r")
+                    questionary.print(f"Error: There was some data available for gage {gage_id} but not enough to proceed", style="bold fg:red")
+                    questionary.print("→ Restart the calculator by running \"python main.py\" ←")
+                    sys.exit()
 
                 except Exception as e:
                     done = True
@@ -487,7 +545,7 @@ if __name__ == '__main__':
                     sys.stdout.write("\r" + " " * (len("Downloading gage data... ") + 1) + "\r")
                     sys.stdout.write("\033[F")
                     sys.stdout.write("\r" + " " * (len("This may take a bit, CDEC's API can be slow") + 1) + "\r")
-                    questionary.print(f"🛑 Error downloading gage data for gage: {new_gage} please verify it is a valid CDEC gage id with flow variable availability and try again 🛑", style="bold fg:red")
+                    questionary.print(f"Error downloading gage data for gage: {new_gage} please verify it is a valid CDEC gage id with flow variable availability and try again", style="bold fg:red")
                     questionary.print("→ Restart the calculator by running \"python main.py\" ←")
                     sys.exit()
             
@@ -498,9 +556,9 @@ if __name__ == '__main__':
             sys.stdout.write("\r" + " " * (len("Downloading gage data... ") + 1) + "\r")
             sys.stdout.write("\033[F")
             sys.stdout.write("\r" + " " * (len("This may take a bit, CDEC's API can be slow") + 1) + "\r")
-            questionary.print("Downloading gage data... ✔️", style="bold fg:green")
+            questionary.print("Downloading gage data... Complete", style="bold fg:green")
             
-            # pynhd package kills the asyncio event loop for some reason so need to recreate it before we do more asynchronous questions
+            # pynhd package kills the asyncio event loop so we need to recreate it before we do more asynchronous questions
             asyncio.set_event_loop(asyncio.new_event_loop())
 
 
@@ -515,7 +573,7 @@ if __name__ == '__main__':
                                         validate = lambda id: True if bool(re.match(r'^[0-9]{8,}$', id)) else "Please enter a valid USGS Gage id").ask()
                 
                 if not gage_id:
-                    questionary.print("🛑 No USGS Gage ID provided 🛑", style="bold fg:red")
+                    questionary.print("FATAL ERROR: No USGS Gage ID provided", style="bold fg:red")
                     questionary.print("→ Restart the calculator by running \"python main.py\" ←")
                     sys.exit()
                 gages_to_be_downloaded.append(gage_id)
@@ -541,13 +599,24 @@ if __name__ == '__main__':
                     new_gage.save_daily_data()   
                     comid = new_gage.get_comid()
 
+
+                except NotEnoughDataError as e:
+                    done = True
+                    
+                    if 'gage_thread' in locals():
+                        gage_thread.join()
+                    sys.stdout.write("\r" + " " * (len("Downloading gage data... ") + 1) + "\r")
+                    questionary.print(f"Error: The gage {new_gage} did not have enough data available to continue", style="bold fg:red")
+                    questionary.print("→ Restart the calculator by running \"python main.py\" ←")
+                    sys.exit()
+
                 except Exception as e:
                     done = True
                     
                     if 'gage_thread' in locals():
                         gage_thread.join()
-                    
-                    questionary.print(f"🛑 Error downloading gage data for gage: {new_gage} please verify it is a valid USGS gage id and try again 🛑", style="bold fg:red")
+                    sys.stdout.write("\r" + " " * (len("Downloading gage data... ") + 1) + "\r")
+                    questionary.print(f"Error downloading gage data for gage: {new_gage} please verify it is a valid USGS gage id and try again", style="bold fg:red")
                     questionary.print("→ Restart the calculator by running \"python main.py\" ←")
                     sys.exit()
             
@@ -557,9 +626,9 @@ if __name__ == '__main__':
                     gage_thread.join()
             sys.stdout.write("\r" + " " * (len("Downloading gage data... ") + 1) + "\r")
             
-            questionary.print("Downloading gage data... ✔️", style="bold fg:green")
+            questionary.print("Downloading gage data... Complete", style="bold fg:green")
             
-            # pynhd package kills the asyncio event loop so need to recreate it before we do more asynchronous questions with questionary
+            # pynhd package kills the asyncio event loop so we need to recreate it before we do more asynchronous questions with questionary
             asyncio.set_event_loop(asyncio.new_event_loop())
 
         elif data_type == "Timeseries data":
@@ -567,7 +636,7 @@ if __name__ == '__main__':
             questionary.press_any_key_to_continue().ask()
             csv_files = glob.glob1(input_files, '*.csv')
             if not csv_files:
-                questionary.print("🛑 No CSV files found 🛑", style="bold fg:red")
+                questionary.print("FATAL ERROR: No CSV files found", style="bold fg:red")
                 questionary.print("→ Restart the calculator by running \"python main.py\" ←")
                 sys.exit(f"Please ensure your files are all in {input_files} and have the .csv file extension then run again.")
             
@@ -578,7 +647,7 @@ if __name__ == '__main__':
                 file_name = questionary.select("Please select a file you would like to use", choices = csv_files).ask()
                 
                 if not file_name:
-                    questionary.print("🛑 No file provided 🛑", style="bold fg:red")
+                    questionary.print("FATAL ERROR: No file provided", style="bold fg:red")
                     questionary.print("→ Restart the calculator by running \"python main.py\" ←")
                     sys.exit()
                 selected_files.append(file_name)
@@ -591,7 +660,7 @@ if __name__ == '__main__':
                 entering = questionary.confirm(f"Current files: {formatted_files}\n Would you like to add more files?").ask()
 
             if not selected_files:
-                questionary.print("🛑 No CSV files selected 🛑", style="bold fg:red")
+                questionary.print("FATAL ERROR: No CSV files selected", style="bold fg:red")
                 questionary.print("→ Restart the calculator by running \"python main.py\" ←")
                 sys.exit()
             
@@ -622,9 +691,10 @@ if __name__ == '__main__':
                     new_gage = UserUploadedData(file_name=file_name, longitude = lng, latitude = lat, download_directory=file_path)
                     new_gage.get_comid()
                     gage_arr.append(new_gage)
+                    new_gage.save_daily_data()
 
                 else:
-                    questionary.print("🛑 No provided 🛑", style="bold fg:red")
+                    questionary.print("FATAL ERROR: No provided input type", style="bold fg:red")
                     questionary.print("→ Restart the calculator by running \"python main.py\" ←")
                     sys.exit() 
 
@@ -684,12 +754,12 @@ if __name__ == '__main__':
 
                         "Recommended calculator based on the supplied/downloaded data",
 
-                        "Original calculator",
+                        "Reference calculator",
 
                         "Flashy calculator"
                     ]).ask()
-            if selected_calc == "Original calculator":
-                gage.selected_calculator = "Original"
+            if selected_calc == "Reference calculator":
+                gage.selected_calculator = "Reference"
             elif selected_calc == "Flashy calculator":
                  gage.selected_calculator = "Flashy"
             else:
@@ -718,7 +788,7 @@ if __name__ == '__main__':
         ready = questionary.confirm(f"Calculate metrics with the following general parameters?\nFiles:\n    {formatted_files}\nStream Class & Calculator per File:\n{formatted_stream_classes}\nStart Date:\n    {start_date}\nBatched:\n    {batch}\nAlteration Assessment:\n    {alterationNeeded}\n").ask()
         
         if not ready:
-            questionary.print("🛑 User parameters declined 🛑", style="bold fg:red")
+            questionary.print("User parameters declined, please review and rerun calculator", style="bold fg:red")
             questionary.print("→ Restart the calculator by running \"python main.py\" ←")
             sys.exit() 
     else:
@@ -729,7 +799,8 @@ if __name__ == '__main__':
     formatted_time = current_time.strftime("%Y-%m-%d-%H-%M")
     dir_name = ''
     if len(gage_arr) == 1:
-        dir_name = f'{gage_arr[0].gage_id}_{formatted_time}' 
+        dir_name = f'{gage_arr[0].gage_id}_{formatted_time}'
+        batch = False
     else:
         dir_name = f'Multiple_{formatted_time}'
     
@@ -743,7 +814,7 @@ if __name__ == '__main__':
         spinner_thread = threading.Thread(target=spinning_bar, args = ('Calculating Metrics... ',))
         spinner_thread.start()
         
-        # The original flow calculator depends on the way certain functions behave when given all nan which causes many warnings
+        # The reference flow calculator depends on the way certain functions behave when given all nan which causes many warnings
         # Ignoring warnings for now as they are expected eventually these warnings should be addressed by writing wrapper functions
         # These wrapper functions should not change the functionality of the original numpy functions but rather handle the all nan case that is currently throwing warnings more gracefully
         with warnings.catch_warnings():
@@ -757,7 +828,7 @@ if __name__ == '__main__':
 
         sys.stdout.write("\r" + " " * (len("Calculating Metrics... ") + 1) + "\r")
         questionary.print(traceback.format_exc())
-        questionary.print("Metric calculation failed ❌\nSee above error ❌", style="bold fg:red")
+        questionary.print("Error: Metric calculation failed \nSee above error", style="bold fg:red")
         questionary.print("→ Restart the calculator by running \"python main.py\" ←")
         sys.exit()
     
@@ -767,9 +838,9 @@ if __name__ == '__main__':
             spinner_thread.join()
 
     if upload_warning:
-        questionary.print('\nWarnings encountered while computing metrics ⚠️', style='fg:#deda03')
+        questionary.print('\nWarnings encountered while computing metrics:', style='fg:#deda03')
         questionary.print(upload_warning)
-    questionary.print("Calculating Metrics... ✔️", style="bold fg:green")
+    questionary.print("Calculating Metrics... Complete", style="bold fg:green")
     output_path = os.path.join(output_files_dir, '')
     questionary.print(f"Calculated metrics can be found in {output_path}", style="bold fg:green")
     
@@ -802,7 +873,7 @@ if __name__ == '__main__':
 
         sys.stdout.write("\r" + " " * (len("Performing Alteration Assessment... ") + 1) + "\r")
         questionary.print(traceback.format_exc())
-        questionary.print("Alteration Assessment failed ❌\nSee above error ❌", style="bold fg:red")
+        questionary.print("Error: Alteration Assessment failed \nSee above error", style="bold fg:red")
         questionary.print("→ Restart the calculator by running \"python main.py\" ←")
         sys.exit()
     
@@ -811,9 +882,9 @@ if __name__ == '__main__':
         if 'alteration_thread' in locals():
             alteration_thread.join()
     if warning_message:
-        questionary.print('\nWarnings encountered while computing alteration assessment ⚠️', style='fg:#deda03')
+        questionary.print('\nWarnings encountered while computing alteration assessment:', style='fg:#deda03')
         questionary.print(warning_message)
 
-    questionary.print("Performing Alteration Assessment... ✔️", style="bold fg:green")
+    questionary.print("Performing Alteration Assessment... Complete", style="bold fg:green")
     questionary.print(f"Alteration Assessment results and associated percentiles can be found in {output_files_dir}/", style="bold fg:green")
     questionary.print("→ Restart the calculator by running \"python main.py\" ←")

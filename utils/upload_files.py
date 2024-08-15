@@ -7,7 +7,7 @@ from classes.FlashyMetricCalculator import FlashyCalculator
 from classes.matrix_convert import MatrixConversion
 from classes.MetricCalculator import Calculator
 from utils.helpers import calc_avg_nan_per_year, comid_to_wyt, dict_to_array
-from utils.constants import DELETE_INDIVIDUAL_FILES_WHEN_BATCH, QUIT_ON_ERROR, NUMBER_TO_CLASS
+from utils.constants import DELETE_INDIVIDUAL_FILES_WHEN_BATCH, QUIT_ON_ERROR, NUMBER_TO_CLASS, PRODUCE_DRH
 from params import summer_params
 from params import fall_params
 from params import spring_params
@@ -21,6 +21,7 @@ def upload_files(start_date, gage_arr, output_files = 'user_output_files', batch
 
     # these 3 are for storing file names and file types of files that will later need to be batched together 
     output_file_dirs = [[],[],[]]
+    metadata_files = []
     file_identifiers = []
     file_base_name = ['annual_flow_matrix', 'annual_flow_result', 'supplementary_metrics']
     
@@ -31,30 +32,30 @@ def upload_files(start_date, gage_arr, output_files = 'user_output_files', batch
             
             file = gage.download_directory
             file_name = os.path.join(output_files, os.path.splitext(os.path.basename(file))[0])
-            file_identifiers.append(os.path.splitext(os.path.basename(file))[0])
             dataset = read_csv_to_arrays(file)
             matrix = MatrixConversion(
                 dataset['date'], dataset['flow'], start_date)
-            
             results, used_calculator = get_results(matrix, int(gage.flow_class), start_date, gage.comid, gage.selected_calculator)
-            output_dir = write_annual_flow_matrix(file_name, results, file_base_name[0])
-            output_file_dirs[0].append(output_dir)
-            output_dir, output_dir2 = write_annual_flow_result(file_name, results, file_base_name[1])
-            output_file_dirs[1].append(output_dir)
-            output_file_dirs[2].append(output_dir2)
-            write_drh(file_name, results, 'drh')
-            
+            output_dir0 = write_annual_flow_matrix(file_name, results, file_base_name[0])
+            output_dir1, output_dir2 = write_annual_flow_result(file_name, results, file_base_name[1])
+            if PRODUCE_DRH:
+                write_drh(file_name, results, 'drh')
             formatted = f'{gage.gage_id}'
             param_path = os.path.join(output_files,formatted)
-            write_parameters(param_path, gage.flow_class, used_calculator, aa_start_year, aa_end_year)
+            metadata_file = write_parameters(param_path, gage.flow_class, used_calculator, aa_start_year, aa_end_year)
 
+            file_identifiers.append(os.path.splitext(os.path.basename(file))[0])
+            output_file_dirs[0].append(output_dir0)
+            output_file_dirs[1].append(output_dir1)
+            output_file_dirs[2].append(output_dir2)
+            metadata_files.append(metadata_file)
         except Exception as e:
             original_message = str(e)
             gage_message = f"ERROR PROCESSING GAGE: {gage}"
             if QUIT_ON_ERROR:
                 raise type(e)(f"{original_message}. \n{gage_message}")
             else:
-                warning_message += f"There was an error when processing metrics for gage {gage} proceeding to next gage\n"
+                warning_message += f"There was an error when calculating metrics for gage {gage} proceeding to next gage\n"
                 continue
     
     
@@ -64,7 +65,8 @@ def upload_files(start_date, gage_arr, output_files = 'user_output_files', batch
                 warning_message += f"There is no {base_name} files to batch together, all gages likely errored proceeding to the next file type...\n"
             else:
                 batch_files(file_paths, base_name, file_identifiers, output_files, alteration_needed)
-
+        # the format of these files is very different so they need to be batched separately, they could be done in the same function with a bunch of conditionals but I think thats less clean
+        batch_metadata_files(metadata_files, file_identifiers, output_files)
 
 
     return output_file_dirs[1], warning_message
@@ -94,7 +96,7 @@ def calc_results_flashy(matrix, flow_class, start_date = '10/1', comid = None):
         results["classification"]["wyt"] = [comid_to_wyt(comid,i) for i in results["year_ranges"]]
     return results
 
-def calc_results_original(matrix, flow_class, start_date = '10/1', comid = None):
+def calc_results_reference(matrix, flow_class, start_date = '10/1', comid = None):
     results = {}
     results["year_ranges"] = [int(i) + 1 for i in matrix.year_array]
     results["flow_matrix"] = np.where(
@@ -134,25 +136,25 @@ def get_results(matrix, flow_class, start_date = None, comid = None, desired_cal
             flashy_res = calc_results_flashy(matrix, flow_class, start_date, comid)
             return flashy_res, 'Flashy (Class 7)'
         else:
-            original_res, rbfi, annual_nan = calc_results_original(copy.deepcopy(matrix), flow_class, start_date, comid)
+            reference_res, rbfi, annual_nan = calc_results_reference(copy.deepcopy(matrix), flow_class, start_date, comid)
             
             if(rbfi + annual_nan > 0.8):
                 flashy_res = calc_results_flashy(matrix, flow_class, start_date, comid)
                 return flashy_res, 'Flashy (RBFI + mean annual nan > 0.8)'
             else:
-                return original_res, 'Original (RBFI + mean annual nan <= 0.8)'
+                return reference_res, 'Reference (RBFI + mean annual nan <= 0.8)'
     
-    elif desired_calculator.lower() == 'original':
-        # use the original calculator
-        original_res, _, _ = calc_results_original(matrix, flow_class, start_date, comid)
-        return original_res, 'Original (User Specified)'
+    elif desired_calculator.lower() == 'reference':
+        # use the reference calculator
+        reference_res, _, _ = calc_results_reference(matrix, flow_class, start_date, comid)
+        return reference_res, 'Reference (User Specified)'
     elif desired_calculator.lower() == 'flashy':
         # use the ucdavis flashy calculator
         flashy_res = calc_results_flashy(matrix, flow_class, start_date, comid)
         return flashy_res, 'Flashy (User Specified)'
     
 def write_annual_flow_matrix(file_name, results, file_type):
-    year_ranges = 'Year,' +",".join(str(year) for year in results['year_ranges'])
+    year_ranges = 'Year,' + ",".join(str(year) for year in results['year_ranges'])
     a = np.array(results['flow_matrix'])
     julian_date = np.arange(1, 367)
     a = np.c_[julian_date,a]
@@ -213,8 +215,8 @@ def write_annual_flow_result(file_name, results, file_type):
 def write_parameters(file_name, flow_class, used_calculator, aa_start = None, aa_end = None, file_type = 'run_metadata'):
     # List of all the calculator used strings that want the flashy params outputted
     used_flashy  = ["Flashy (Class 7)","Flashy (User Specified)","Flashy (RBFI + mean annual nan > 0.8)"]
-    # list of all the calculator used strings that want the original calculator params outputted
-    used_original = ["Flashy (RBFI + mean annual nan > 0.8)", "Original (RBFI + mean annual nan <= 0.8)", "Original (User Specified)"]
+    # list of all the calculator used strings that want the reference calculator params outputted
+    used_reference = ["Flashy (RBFI + mean annual nan > 0.8)", "Reference (RBFI + mean annual nan <= 0.8)", "Reference (User Specified)"]
     now = datetime.now()
     timestamp = now.strftime("%m/%d/%Y, %H:%M")
     if aa_start and aa_end:
@@ -222,7 +224,7 @@ def write_parameters(file_name, flow_class, used_calculator, aa_start = None, aa
     else:
         cols = {'Date_time': timestamp, 'Stream_class': NUMBER_TO_CLASS[flow_class], 'Used_Calculator': used_calculator}
     df = pd.DataFrame(cols, index=[0])
-    if used_calculator in used_original:
+    if used_calculator in used_reference:
         df['Fall_params'] = '_'
         for key, value in fall_params.items():
             # modify all key names to make sure they are distinct from other dataframe entries (otherwise will not be added)
@@ -249,6 +251,22 @@ def write_parameters(file_name, flow_class, used_calculator, aa_start = None, aa
     output_dir = file_name + '_' + file_type +'.csv'
     df.to_csv(output_dir, sep=',', header=False)
     return output_dir
+
+def batch_metadata_files(metadata_file_paths, file_identifier, output_dir):
+    column_names = ['Parameter Name/Section Name', 'Parameter Value']
+    combined_data = pd.DataFrame()
+    for file_path, file_id in zip(metadata_file_paths, file_identifier):
+        current_data = pd.read_csv(file_path, header=None, names = column_names)
+        current_data['Source'] = file_id
+        if combined_data.empty:
+            combined_data = current_data
+        else:
+            combined_data = pd.concat([combined_data,current_data])
+        if os.path.isfile(file_path) and DELETE_INDIVIDUAL_FILES_WHEN_BATCH:
+            os.remove(file_path)
+    column_order = ['Source'] + column_names
+    combined_data = combined_data[column_order]
+    combined_data.to_csv(os.path.join(output_dir, "combined_metadata.csv"), index=False)
 
 def batch_files(file_paths, base_file_name, file_identifier, output_dir, alteration_needed):
     

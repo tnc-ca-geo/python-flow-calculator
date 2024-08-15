@@ -17,7 +17,7 @@ This directory contains several csv's that are used by the functional flows calc
         Contains a cut down version of the data set found [here](https://gispublic.waterboards.ca.gov/portal/home/item.html?id=a1aaba4d6cff44dea5dca8e3d4fd0238#overview) to lookup comid from gage id's for both usgs and CDEC
 
 4. ReadMe.csv:
-        A read me from the original functional flows calculator that contains additional metadata about the calculator, output info metric info and more!
+        A read me from the reference functional flows calculator that contains additional metadata about the calculator, output info metric info and more!
 
 5. comid_to_stream_class.csv:
         A simple lookup table to convert from comid to flow class. Originally sourced from [this file in the ffc_api_client repository](https://github.com/ceff-tech/ffc_api_client/blob/release/ffcAPIClient/data/stream_class_data.rda)

@@ -7,7 +7,7 @@ class FlashyCalculator(Calculator):
     # To be in line with python documentation https://docs.python.org/3/library/exceptions.html#NotImplementedError
     # "Note: It should not be used to indicate that an operator or method is not meant to be supported at all – in that case either leave the operator / method undefined or, if a subclass, set it to None."
     # We will set methods that do not be planned to be implemented to none
-    # This is because the flashy calculator implements several functionalities from the original calculator in a single function.
+    # This is because the flashy calculator implements several functionalities from the reference calculator in a single function.
     # realistically this means there likely should have been a abstract super class that only includes implementations of the functions that all calculators use the same thing for and abstract definitions of the others or no definition at all for the below ones that needed to be set to none.
     # however due to the fact that there are no plans as far as I am aware to make a third calculator this more simple structure will probably be fine and more maintainable for individuals not familiar with abstract classes. Despite the weirdness of assigning functions to None
     spring_transition_duration = None
@@ -31,7 +31,7 @@ class FlashyCalculator(Calculator):
 
 
     def dry_spring_timings(self):
-        # combines the functionality of start_of_summer, spring_transition_timing_magnitude, spring_transition_duration and spring_transition_roc from the original calculator
+        # combines the functionality of start_of_summer, spring_transition_timing_magnitude, spring_transition_duration and spring_transition_roc from the reference calculator
         output_dict = Altered_Spring_Recession(self.flow_matrix)
         self._summer_timings = output_dict.get("DS_Tim")
         self._spring_timings = output_dict.get("timings_water")
