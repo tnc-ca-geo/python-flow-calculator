@@ -148,11 +148,11 @@ See below for more information on what data you might want to give it.
 
    1. Data filtering:
 
-      The updated calculator requires no more then 18 days of missing data and allows up to 7 days of consecutive missing data. The previous recommendation was to require 358 days of data to run a year. These differences may result in slight changes in metrics that are summarized over multiple years, including peak flow metrics.
+      The updated calculator requires no more then 18 days of missing data per water year and allows up to 7 days of consecutive missing data. The previous recommendation was to require 358 days of data to run a year. These differences may result in slight changes in metrics that are summarized over multiple years, including peak flow metrics.
 
    2. Peak detection:
 
-      Within the adaptation of the UCDavis flashy flows calculator the peak detection algorithm is slightly different and includes more peaks then the original version. This may cause many of the metrics that are based off a peak or pulse to be different in cases where a different peak is used than the one that the original UCDavis flashy flows calculator uses.
+      Within the adaptation of the UCDavis flashy flows calculator the peak detection algorithm is slightly different and includes more peaks then the original version. This may cause many of the metrics that are based off a peak or pulse to be slightly different from the UCDavis flashy flows calculator.
 
 ## Questions and Comments
 
