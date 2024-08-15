@@ -1,7 +1,8 @@
 from utils.upload_files import upload_files
-from utils.constants import NUMBER_TO_CLASS, VERSION, WY_START_DATE, DELETE_INDIVIDUAL_FILES_WHEN_BATCH, CLASS_TO_NUMBER, QUIT_ON_ERROR, SKIP_PROMPTS_BATCH
+from utils.constants import NUMBER_TO_CLASS, VERSION, WY_START_DATE, DELETE_INDIVIDUAL_FILES_WHEN_BATCH, CLASS_TO_NUMBER, QUIT_ON_ERROR, SKIP_PROMPTS_BATCH, REQUIRED_BATCH_COLUMNS
 from utils.helpers import comid_to_class
 from utils.alteration_assessment import assess_alteration, assess_alteration_by_wyt
+from classes.Exceptions.missing_columns import MissingColumnsError
 from classes.USGSGage import USGSGage
 from classes.UserUploadedData import UserUploadedData
 from classes.CDECGage import CDECGage
@@ -122,6 +123,10 @@ if __name__ == '__main__':
             try:
                 with open(file_path, 'r') as file:
                     reader = csv.DictReader(file)
+                    csv_columns = reader.fieldnames
+                    missing_columns = [col for col in REQUIRED_BATCH_COLUMNS if col not in csv_columns]
+                    if missing_columns:
+                        raise MissingColumnsError('batch csv missing columns', missing_columns)
                     for line in reader:
                         line_gage_obj = ''
 
@@ -138,12 +143,12 @@ if __name__ == '__main__':
                         selected_calculator = line['calculator'].lower()
                         if selected_calculator == '':
                             selected_calculator = None
-                        if not (selected_calculator == 'flashy' or selected_calculator == 'original' or selected_calculator == '' or selected_calculator == None):
+                        if not (selected_calculator == 'flashy' or selected_calculator == 'reference' or selected_calculator == '' or selected_calculator == None):
                             done = True
                             if 'csv_thread' in locals():
                                 csv_thread.join()
                             sys.stdout.write("\r" + " " * (len("Processing CSV... ") + 1) + "\r")
-                            questionary.print(f"Error: 'calculator' field must be Flashy, Original or blank for all rows\n The line that failed looks like: \n\tusgs: {line['usgs']}\n\tcdec: {line['cdec']}\n\tpath: {line['path']}\n\tcalculator: {line['calculator']}", style="bold fg:red")
+                            questionary.print(f"Error: 'calculator' field must be Flashy, Reference or blank for all rows\n The line that failed looks like: \n\tusgs: {line['usgs']}\n\tcdec: {line['cdec']}\n\tpath: {line['path']}\n\tcalculator: {line['calculator']}", style="bold fg:red")
                             questionary.print("→ Restart the calculator by running \"python main.py\" ←")
                             sys.exit()
                         
@@ -181,15 +186,41 @@ if __name__ == '__main__':
                             if 'csv_thread' in locals():
                                 csv_thread.join()
                             sys.stdout.write("\r" + " " * (len("Processing CSV... ") + 1) + "\r")
-                            questionary.print("Error: all batch csv lines must have a path, USGS ID or a CDEC ID provided", style="bold fg:red")
+                            questionary.print("FATAL ERROR: all batch csv lines must have a path, USGS ID or a CDEC ID provided", style="bold fg:red")
                             questionary.print("→ Restart the calculator by running \"python main.py\" ←")
                             sys.exit()
+            except MissingColumnsError as e:
+                done = True
+                if 'csv_thread' in locals():
+                    csv_thread.join()
+                sys.stdout.write("\r" + " " * (len("Processing CSV... ") + 1) + "\r")
+                questionary.print(f"FATAL ERROR: Supplied batch csv: {file_path} is malformed, expected: {REQUIRED_BATCH_COLUMNS} columns but was missing: {e.missing_columns}", style="bold fg:red")
+                questionary.print("→ Restart the calculator by running \"python main.py\" ←")
+                sys.exit()
+            
+            except PermissionError:
+                done = True
+                if 'csv_thread' in locals():
+                    csv_thread.join()
+                sys.stdout.write("\r" + " " * (len("Processing CSV... ") + 1) + "\r")
+                questionary.print(f"FATAL ERROR: No permissions to read from file: {file_path}, please supply read access and run again", style="bold fg:red")
+                questionary.print("→ Restart the calculator by running \"python main.py\" ←")
+                sys.exit()
+
+            except FileNotFoundError:
+                done = True
+                if 'csv_thread' in locals():
+                    csv_thread.join()
+                sys.stdout.write("\r" + " " * (len("Processing CSV... ") + 1) + "\r")
+                questionary.print(f"FATAL ERROR: Unable to find file {file_path}", style="bold fg:red")
+                questionary.print("→ Restart the calculator by running \"python main.py\" ←")
+                sys.exit()
+
             except KeyError:    
                 done = True
                 if 'csv_thread' in locals():
                     csv_thread.join()
                 sys.stdout.write("\r" + " " * (len("Processing CSV... ") + 1) + "\r")
-                questionary.print(traceback.format_exc())
                 keys_str = ', '.join(CLASS_TO_NUMBER.keys())
                 questionary.print(f"FATAL ERROR: while parsing file {line['path']}'s stream class: {line['class']} is not a valid class, please supply one of {keys_str} or leave it blank", style="bold fg:red")
                 questionary.print("→ Restart the calculator by running \"python main.py\" ←")
@@ -500,7 +531,7 @@ if __name__ == '__main__':
             sys.stdout.write("\r" + " " * (len("This may take a bit, CDEC's API can be slow") + 1) + "\r")
             questionary.print("Downloading gage data... Complete", style="bold fg:green")
             
-            # pynhd package kills the asyncio event loop for some reason so need to recreate it before we do more asynchronous questions
+            # pynhd package kills the asyncio event loop so we need to recreate it before we do more asynchronous questions
             asyncio.set_event_loop(asyncio.new_event_loop())
 
 
@@ -559,7 +590,7 @@ if __name__ == '__main__':
             
             questionary.print("Downloading gage data... Complete", style="bold fg:green")
             
-            # pynhd package kills the asyncio event loop so need to recreate it before we do more asynchronous questions with questionary
+            # pynhd package kills the asyncio event loop so we need to recreate it before we do more asynchronous questions with questionary
             asyncio.set_event_loop(asyncio.new_event_loop())
 
         elif data_type == "Timeseries data":
@@ -684,12 +715,12 @@ if __name__ == '__main__':
 
                         "Recommended calculator based on the supplied/downloaded data",
 
-                        "Original calculator",
+                        "Reference calculator",
 
                         "Flashy calculator"
                     ]).ask()
-            if selected_calc == "Original calculator":
-                gage.selected_calculator = "Original"
+            if selected_calc == "Reference calculator":
+                gage.selected_calculator = "Reference"
             elif selected_calc == "Flashy calculator":
                  gage.selected_calculator = "Flashy"
             else:
@@ -744,7 +775,7 @@ if __name__ == '__main__':
         spinner_thread = threading.Thread(target=spinning_bar, args = ('Calculating Metrics... ',))
         spinner_thread.start()
         
-        # The original flow calculator depends on the way certain functions behave when given all nan which causes many warnings
+        # The reference flow calculator depends on the way certain functions behave when given all nan which causes many warnings
         # Ignoring warnings for now as they are expected eventually these warnings should be addressed by writing wrapper functions
         # These wrapper functions should not change the functionality of the original numpy functions but rather handle the all nan case that is currently throwing warnings more gracefully
         with warnings.catch_warnings():

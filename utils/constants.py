@@ -84,3 +84,4 @@ TYPES = {
 }
 NUMBER_TO_CLASS = {1: 'SM', 2: 'HSR', 3: 'LSR', 4: 'WS', 5: 'GW', 6: 'PGR', 7: 'FER', 8: 'RGW', 9: 'HLP', 10: 'NA'}
 CLASS_TO_NUMBER = {value: key for key, value in NUMBER_TO_CLASS.items()}
+REQUIRED_BATCH_COLUMNS = ['usgs', 'cdec', 'path', 'comid', 'class', 'lat', 'lng', 'calculator']

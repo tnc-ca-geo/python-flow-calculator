@@ -16,7 +16,10 @@ def assess_alteration(gages, metrics_paths, output_files = 'user_output_files', 
             
         predicted_metrics = get_predicted_flow_metrics(comid)
         if predicted_metrics.empty:
-            return_message = return_message + f"Predicted metrics could not be generated for comid {comid}. Is it outside the study area? Skipping it...\n"
+            if comid is None:
+                return_message = return_message + f"Gage/user uploaded file: {gage_id} is missing a comid, Skipping it...\n"
+            else:
+                return_message = return_message + f"Predicted metrics could not be generated for Gage/user uploaded file: {gage_id} (comid: {comid}). Is it outside the study area? Skipping it...\n"
             continue
         
         formatted_percentiles, formatted_raw, count = format_metrics(metrics,aa_start_year=aa_start_year, aa_end_year= aa_end_year)
