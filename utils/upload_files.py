@@ -128,7 +128,6 @@ def calc_results_reference(matrix, flow_class, start_date = '10/1', comid = None
 def get_results(matrix, flow_class, start_date = None, comid = None, desired_calculator = None):
     if flow_class is None or flow_class == 10:
         flow_class = 3
-    print(desired_calculator)
     if desired_calculator is None:
         # no specified calculator, determine which is better
     
@@ -198,7 +197,7 @@ def write_annual_flow_result(file_name, results, file_type):
     df.reset_index(inplace=True)
     df.rename(columns={'index': 'Year'}, inplace=True)
     output_dir = file_name + '_' + file_type + '.csv'
-    df.to_csv(output_dir, index=False,na_rep='None')    
+    df.to_csv(output_dir, index=False)    
 
     """Create supplementary metrics file"""
     supplementary = []
@@ -278,7 +277,7 @@ def batch_files(file_paths, base_file_name, file_identifier, output_dir, alterat
 
     for file_path, file_id in zip(file_paths, file_identifier):
 
-        current_data = pd.read_csv(file_path, header=0)
+        current_data = pd.read_csv(file_path, header=0, dtype=str)
         current_data['Source'] = file_id
         if combined_data.empty:
             combined_data = current_data
@@ -289,9 +288,8 @@ def batch_files(file_paths, base_file_name, file_identifier, output_dir, alterat
                 os.remove(file_path)
     
     column_order = ['Source'] + [col for col in combined_data.columns if col != 'Source']
-    #combined_data = combined_data.astype({'Year':'int'})
     combined_data = combined_data[column_order]
-    combined_data.to_csv(os.path.join(output_dir, "combined_" + base_file_name + ".csv"), index=False,na_rep='None')
+    combined_data.to_csv(os.path.join(output_dir, "combined_" + base_file_name + ".csv"), index=False)
 
 def read_csv_to_arrays(file_path):
     fields = ['date', 'flow']
