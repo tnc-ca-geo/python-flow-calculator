@@ -75,16 +75,16 @@ general_params = {
 flashy_params = {
     'max_nan_allowed_per_year': 100, # max nan days allowed in a year for metrics to still attempt to be calculated (missing or bad data eg: -99999)
     'max_zero_allowed_per_year': 360, # max no flow days (< 0.1 cfs) allowed in a year for metrics to still attempt to be calculated
-    'rel_height': 0.99, # relative height compared to the top of the peak for surrounding data do be considered a plateau rather then no longer part of the peak
+    'rel_height': 1, # relative height compared to the top of the peak for surrounding data do be considered a plateau rather then no longer part of the peak
     'dry_min_flow_percent': 0.125, # a min flow threshold for the dry season to start based on the spring and min dry season baseflow
     'dry_max_plateau_size': 3, # max number of days a peak can have a flat top and still be considered a peak
-    'dry_filter_sigma': 1.3, # sigma value to use in the gaussian filtering step fro calculating the spring recession timing, higher value = more aggressively smoothed
+    'dry_filter_sigma': 1.3, # sigma value to use in the gaussian filtering step for calculating the spring recession timing, higher value = more aggressively smoothed
     'dry_min_peak_height': 15, # minimum peak height for a peak to be considered eligible for dry season recession (next param also affects this)
     'dry_min_peak_scaling_factor': 0.15, # factor to multiply the water year median by when calculating the min size of an elidible peak the min of min_peak_height_dry (above param) and Median*min_peak_scaling_factor_dry is used
     'wet_min_peak_height': 10, # same as "dry_min_peak_height" but for peaks used by the wet timing metric 
     'wet_min_peak_scaling_factor': 0.1, # same as "dry_min_peak_scaling_factor" but for peaks used by the wet timing metric 
     'wet_prominence': 1, # how prominent a peak must be to be used when calculating wet timing
     'fall_min_height': 1, # min height for a peak to be considered for fall pulse flow
-    'fall_min_prominence': 1.1, # min peak prominence from surrounding data for a peak to be considered for fall pulse flow (very sensitive)
+    'fall_min_prominence': 0.1, # min peak prominence from surrounding data for a peak to be considered for fall pulse flow (very sensitive)
     'fall_median_scaling_factor': 1.5 # within the peak detection for fall pulse flow and wet timings the median is regularly multiplied by this factor for eligibility of peaks
 }

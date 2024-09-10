@@ -4,7 +4,7 @@ from scipy.signal import find_peaks, peak_widths
 from params import flashy_params
 
 def Altered_Fall_Wet_Timing(flow_matrix, DS_Tim):
-    
+    np.set_printoptions(suppress=True)
     # Setup the output vectors
     FA_Tim = []
     Wet_Tim = []
@@ -74,7 +74,7 @@ def Altered_Fall_Wet_Timing(flow_matrix, DS_Tim):
         current_year = flow_matrix[:, column_number].T
         
         previous_year = flow_matrix[:, column_number-1].T
-        WY_start = len(previous_year) - 1
+        WY_start = len(previous_year) + 1
 
         flow_data = np.concatenate((previous_year, current_year), axis=0)
         flow_data = replace_nan(flow_data.copy())
@@ -84,6 +84,7 @@ def Altered_Fall_Wet_Timing(flow_matrix, DS_Tim):
 
         flow_window = flow_data[WY_start-1:(WY_start + 75)]
 
+        min_height = min((0.15*WY_median),min_height)
         peak_indecies, _ = find_peaks(flow_window, height = min_height, prominence = min_prominence)
         _, _, left, right = peak_widths(flow_window, peak_indecies, rel_height=rel_height)
         left = np.rint(left)
@@ -91,6 +92,9 @@ def Altered_Fall_Wet_Timing(flow_matrix, DS_Tim):
         values_at_peaks = flow_window[peak_indecies]
         # Check if there are any peaks
         FA_peaks = np.column_stack((values_at_peaks, peak_indecies, left, right))
+        if column_number == 4:
+            print(flow_data)
+            print(FA_peaks)
 
         if len(FA_peaks) > 0:
             # Loop through the peaks
@@ -107,7 +111,7 @@ def Altered_Fall_Wet_Timing(flow_matrix, DS_Tim):
                 elif np.isnan(DS_Tim[column_number-1]) or DS_Tim[column_number-1] < 0:
                     Temp_DS_flow = flow_data[0:(FA_peaks[j, 1] + WY_start).astype(int)]
                     Temp_DS_Mag = np.median(Temp_DS_flow)
-    
+
                 # To check if the fall pulse meets certain criteria
                 if FA_peaks[j, 0] > median_scaling_factor * Temp_DS_Mag and FA_peaks[j, 0] >= 1:
 
@@ -117,15 +121,20 @@ def Altered_Fall_Wet_Timing(flow_matrix, DS_Tim):
                     FA_Mag_Temp = FA_peaks[j, 0]
 
                     # Look for the start of the wet season to check if the fall peak actually qualifies
-                    post_fall_flow = flow_data[(FA_Tim_Temp + FA_Dur_Temp + WY_start).astype(int):]
+                    post_fall_flow = flow_data[(FA_Tim_Temp + FA_Dur_Temp + WY_start-2).astype(int):]
                     # Calculate the rolling median of flows post fall
                     median_array = np.array([np.median(post_fall_flow[:i+1]) for i in range(len(post_fall_flow))])
                     # Find the index of the first flow that is 1.5 times the median
                     wet_tim = np.where(post_fall_flow > median_scaling_factor * median_array)
+                    if column_number == 4:
+                        print('posdt_fall_flow')
+                        print(post_fall_flow)
+                        print('median_scaling_factor')
+                        print(median_scaling_factor * median_array)
                     if not (wet_tim[0].size == 0):
                         Temp_Wet_Tim = np.where(post_fall_flow > median_scaling_factor * median_array)[0][0]
                     else:
-                        continue
+                        Temp_Wet_Tim = None
                     # To get the dry season median, make sure there was a dry season timing next year
                     if not np.isnan(DS_Tim[column_number-1]) and DS_Tim[column_number-1] < 0 and Temp_Wet_Tim is not None:
 
@@ -137,11 +146,17 @@ def Altered_Fall_Wet_Timing(flow_matrix, DS_Tim):
 
                         # Calculate the potential dry season 50th percentile flow
                         Temp_DS_Mag = np.median(flow_data[0:(FA_Tim_Temp + FA_Dur_Temp + Temp_Wet_Tim + WY_start).astype(int)])
-
                     # Check if the fall pulse is still 1.5 times the dry season 50th percentile flow
                     if FA_Mag_Temp > median_scaling_factor * Temp_DS_Mag:
                         FA_Tim.append(FA_peaks[j, 1])
-                        Wet_Tim.append(FA_peaks[j, 1] + FA_Dur_Temp + Temp_Wet_Tim - 2)
+                        if column_number == 4:
+                            print(FA_peaks[j, 1])
+                            print(FA_Dur_Temp)
+                            print(Temp_Wet_Tim)
+                        if Temp_Wet_Tim is None:
+                            Wet_Tim.append(None)
+                        else:
+                            Wet_Tim.append(FA_peaks[j, 1] + FA_Dur_Temp + Temp_Wet_Tim-2)
                         FA_Mag.append(FA_peaks[j,0])
                         FA_Dif_num.append(FA_peaks[j,0]-Temp_DS_Mag)
                         FA_Dur.append(FA_peaks[j,1] - FA_peaks[j,2])
