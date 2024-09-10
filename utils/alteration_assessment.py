@@ -171,10 +171,7 @@ def observations_altered(observations, metric, low_bound, high_bound, median):
 
 def format_metrics(file_path, wyt = None, aa_start_year = None, aa_end_year = None):
     
-    metric_data = pd.read_csv(file_path, header=None).T
-    metric_data.columns = metric_data.iloc[0]    
-    metric_data.drop(0,inplace=True)
-    metric_data = metric_data.astype({'Year':'int'})
+    metric_data = pd.read_csv(file_path, header=0)
     if aa_start_year is not None:
         metric_data.drop(metric_data[metric_data.Year < aa_start_year].index, inplace=True)
     if aa_end_year is not None:
