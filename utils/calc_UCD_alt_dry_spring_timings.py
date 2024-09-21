@@ -1,11 +1,10 @@
 import numpy as np
-from utils.helpers import replace_nan
-from scipy.signal import find_peaks
+from utils.helpers import replace_nan, regex_peak_detection
 from scipy.ndimage import gaussian_filter1d
 from params import flashy_params
 
 def Altered_Summer_Dry_Season_Tim_Varied(flow, flow_thresh, day_thresh=5, roc_thresh=0.02):
-    
+
     roc = np.diff(flow) / flow[:-1]
     roc = np.insert(roc,0,np.nan)
     dif = np.diff(flow, prepend=np.nan)
@@ -70,6 +69,7 @@ def Altered_Summer_Dry_Season_Tim_Varied(flow, flow_thresh, day_thresh=5, roc_th
 
 
 def Altered_Spring_Recession(flow_matrix):
+    np.set_printoptions(suppress=True)
     
     min_dry_flow_percent = flashy_params["dry_min_flow_percent"]
     max_plateau_size = flashy_params["dry_max_plateau_size"]
@@ -136,18 +136,24 @@ def Altered_Spring_Recession(flow_matrix):
             # Returns array with indices for each peak and valley
             # do not add prominence here, better matches the R code without it
             # max of 3 flat top points to match R code
-            peaks, valleys = find_peaks(filter_flow, height= min((min_peak_scaling_factor*WY_median),min_peak_height), plateau_size=[0,max_plateau_size])
 
-            values_at_peaks = filter_flow[peaks]
+            peaks = regex_peak_detection(filter_flow, threshold = min((min_peak_scaling_factor*WY_median),min_peak_height), peakpat = "[+]{1,}[-]{1,}")
+            peaks_2 = regex_peak_detection(filter_flow, peakpat = "[+]{1,}[0]{1,30}[-]{1,}",threshold = min((min_peak_scaling_factor*WY_median),min_peak_height))
             # Combine the two data sets of peaks
-            peaks_all = np.vstack((peaks, values_at_peaks)).T
+            if peaks_2 is not None and peaks_2.any():
+                peaks_all = np.vstack((peaks, peaks_2))
+            else:
+                peaks_all = peaks
 
             # Check to make sure there is data in the peaks
             if len(peaks_all) > 1:
                 # If there is data in the data frame, then make sure it is more than just the titles
                 if peaks_all.shape[0] > 0:
                     # Filter out peaks that are not above the 90th percentile and peaks that are in September
-                    peaks_90 = peaks_all[(peaks_all[:, 1] > quants[1]) & (peaks_all[:, 0] < 345)]
+                    
+                    peaks_all = peaks_all[peaks_all[:, 1].argsort()]
+                   
+                    peaks_90 = peaks_all[(peaks_all[:, 0] > quants[1]) & (peaks_all[:, 1] < 344)]
 
                 else:
                     peaks_90 = None
@@ -158,11 +164,11 @@ def Altered_Spring_Recession(flow_matrix):
             # Check to make sure that there are qualified peaks
             if peaks_90 is not None and peaks_90.shape[0] > 0:
                 # Assign the last peak of the year as the first potential spring timing
-                PH1_start = peaks_90[-1,0]
+                PH1_start = peaks_90[-1,1]
                 PH1_poten = np.arange(PH1_start - 2, PH1_start + 3).astype(np.int64)
                 max_flow_check = np.argmax(flow_data[PH1_poten])
                 
-                springindex_PH1 = int(peaks_90[-1, 0]) - 4 + max_flow_check
+                springindex_PH1 = int(peaks_90[-1, 1]) - 4 + max_flow_check
                 # Check to see if this peak is also the fall pulse
                 if (springindex_PH1 <= 75) and (len(peaks_90) < 2):
                     springindex_PH1 = None
@@ -185,7 +191,7 @@ def Altered_Spring_Recession(flow_matrix):
                 springindex = springindex_PH1 + 2
 
             # Set the spring timing to the index identified
-            SP_Tim.append(springindex)
+            SP_Tim.append(springindex + 1)
             SP_Mag.append(flow_data[springindex])
 
         # Make a new data frame with just the flows after the top of the spring recession
@@ -212,8 +218,7 @@ def Altered_Spring_Recession(flow_matrix):
         if PH_DS_Tim is not None and PH_DS_Tim == 0:
             PH_DS_Tim = 1
         
-        
-        DS_Tim.append(PH_DS_Tim + springindex)
+        DS_Tim.append(PH_DS_Tim + springindex + 1)
         SP_Dur.append(PH_DS_Tim)
         SP_recs_temp = roc[1: 1 + SP_Dur[column_number]]
         SP_ROC.append( np.abs(np.median(SP_recs_temp[SP_recs_temp < 0])))
