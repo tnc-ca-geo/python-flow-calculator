@@ -1,6 +1,5 @@
 import numpy as np
-from utils.helpers import replace_nan
-from scipy.signal import find_peaks, peak_widths
+from utils.helpers import replace_nan, regex_peak_detection
 from params import flashy_params
 
 def Altered_Fall_Wet_Timing(flow_matrix, DS_Tim):
@@ -15,11 +14,8 @@ def Altered_Fall_Wet_Timing(flow_matrix, DS_Tim):
     Temp_DS_flow = []
     # fall peak
     min_height = flashy_params['fall_min_height']
-    min_prominence = flashy_params['fall_min_prominence']
-    rel_height = flashy_params['rel_height']
     
     # wet peak
-    wet_prominence = flashy_params['wet_prominence']
     min_peak_height = flashy_params['wet_min_peak_height']
     min_peak_scaling_factor = flashy_params['wet_min_peak_scaling_factor']
 
@@ -85,16 +81,7 @@ def Altered_Fall_Wet_Timing(flow_matrix, DS_Tim):
         flow_window = flow_data[WY_start-1:(WY_start + 75)]
 
         min_height = min((0.15*WY_median),min_height)
-        peak_indecies, _ = find_peaks(flow_window, height = min_height, prominence = min_prominence)
-        _, _, left, right = peak_widths(flow_window, peak_indecies, rel_height=rel_height)
-        left = np.rint(left)
-        right = np.rint(right)
-        values_at_peaks = flow_window[peak_indecies]
-        # Check if there are any peaks
-        FA_peaks = np.column_stack((values_at_peaks, peak_indecies, left, right))
-        if column_number == 4:
-            print(flow_data)
-            print(FA_peaks)
+        FA_peaks = regex_peak_detection(flow_window, peakpat = "[+]{1,}[0]{,40}[-]{1,}", threshold = min_height)
 
         if len(FA_peaks) > 0:
             # Loop through the peaks
@@ -121,16 +108,12 @@ def Altered_Fall_Wet_Timing(flow_matrix, DS_Tim):
                     FA_Mag_Temp = FA_peaks[j, 0]
 
                     # Look for the start of the wet season to check if the fall peak actually qualifies
-                    post_fall_flow = flow_data[(FA_Tim_Temp + FA_Dur_Temp + WY_start-2).astype(int):]
+                    post_fall_flow = flow_data[(FA_Tim_Temp + FA_Dur_Temp + WY_start).astype(int):]
                     # Calculate the rolling median of flows post fall
                     median_array = np.array([np.median(post_fall_flow[:i+1]) for i in range(len(post_fall_flow))])
                     # Find the index of the first flow that is 1.5 times the median
                     wet_tim = np.where(post_fall_flow > median_scaling_factor * median_array)
-                    if column_number == 4:
-                        print('posdt_fall_flow')
-                        print(post_fall_flow)
-                        print('median_scaling_factor')
-                        print(median_scaling_factor * median_array)
+
                     if not (wet_tim[0].size == 0):
                         Temp_Wet_Tim = np.where(post_fall_flow > median_scaling_factor * median_array)[0][0]
                     else:
@@ -148,15 +131,11 @@ def Altered_Fall_Wet_Timing(flow_matrix, DS_Tim):
                         Temp_DS_Mag = np.median(flow_data[0:(FA_Tim_Temp + FA_Dur_Temp + Temp_Wet_Tim + WY_start).astype(int)])
                     # Check if the fall pulse is still 1.5 times the dry season 50th percentile flow
                     if FA_Mag_Temp > median_scaling_factor * Temp_DS_Mag:
-                        FA_Tim.append(FA_peaks[j, 1])
-                        if column_number == 4:
-                            print(FA_peaks[j, 1])
-                            print(FA_Dur_Temp)
-                            print(Temp_Wet_Tim)
+                        FA_Tim.append(FA_peaks[j, 1] +1)
                         if Temp_Wet_Tim is None:
                             Wet_Tim.append(None)
                         else:
-                            Wet_Tim.append(FA_peaks[j, 1] + FA_Dur_Temp + Temp_Wet_Tim-2)
+                            Wet_Tim.append(FA_peaks[j, 1] + FA_Dur_Temp + Temp_Wet_Tim)
                         FA_Mag.append(FA_peaks[j,0])
                         FA_Dif_num.append(FA_peaks[j,0]-Temp_DS_Mag)
                         FA_Dur.append(FA_peaks[j,1] - FA_peaks[j,2])
@@ -182,13 +161,8 @@ def Altered_Fall_Wet_Timing(flow_matrix, DS_Tim):
             # first get the flow data from after the fall pulse window
             Wet_Peaks_flow = flow_data[WY_start + 75:]
             # Now find the peaks after in the post fall window
-            peak_indecies, _ = find_peaks(Wet_Peaks_flow, height = min((min_peak_scaling_factor*WY_median),min_peak_height), prominence=wet_prominence)
-            _, _, left, right = peak_widths(Wet_Peaks_flow, peak_indecies, rel_height=rel_height)
-            left = np.rint(left)
-            right = np.rint(right)
-            values_at_peaks = Wet_Peaks_flow[peak_indecies]
-            # Check if there are any peaks
-            WS_peaks = np.column_stack((values_at_peaks, peak_indecies, left, right))
+
+            WS_peaks = regex_peak_detection(Wet_Peaks_flow, peakpat = "[+]{1,}[0]{,5}[-]{1,}",threshold =min((min_peak_scaling_factor*WY_median),min_peak_height))
             # Check to make sure there is data in the output from the peaks analysis
             if len(WS_peaks) > 0:
                 # Loop through the peaks to see if there is a qualifying peak

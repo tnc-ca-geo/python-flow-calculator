@@ -784,6 +784,10 @@ if __name__ == '__main__':
         batch = False
         if len(gage_arr) > 1:
             batch = questionary.confirm('Would you like to batch all your processed metrics into a single file?').ask()
+        elif len(gage_arr) <= 0:
+            questionary.print("FATAL ERROR: No remaining gages, address the above warnings!", style="bold fg:red")
+            questionary.print("→ Restart the calculator by running \"python main.py\" ←")
+            sys.exit() 
 
         ready = questionary.confirm(f"Calculate metrics with the following general parameters?\nFiles:\n    {formatted_files}\nStream Class & Calculator per File:\n{formatted_stream_classes}\nStart Date:\n    {start_date}\nBatched:\n    {batch}\nAlteration Assessment:\n    {alterationNeeded}\n").ask()
         

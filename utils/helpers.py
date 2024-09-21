@@ -2,6 +2,7 @@ import pandas as pd
 import os
 from datetime import datetime, timedelta
 import numpy as np
+import re
 from numpy import NaN, Inf, arange, isscalar, asarray, array
 from utils.constants import TYPES
 
@@ -260,3 +261,116 @@ def dict_to_array(data, field_type, dataset):
             data = value
             data.insert(0, TYPES[field_type+'_'+key])
             dataset.append(data)
+
+def regex_peak_detection(x, nups=1, ndowns=1, zero='0', peakpat=None,
+               minpeakheight=float('-inf'), minpeakdistance=1,
+               threshold=0, npeaks=0, sortstr=False):
+    """
+    Identifies peaks in a numeric vector x based on specified criteria.
+    Made to mimic https://www.rdocumentation.org/packages/pracma/versions/1.9.9/topics/findpeaks within python
+    Parameters:
+        x (array-like): Numeric input vector.
+        nups (int): Minimum number of consecutive increases.
+        ndowns (int): Minimum number of consecutive decreases.
+        zero (str): How to handle zeros in the diff sequence ('0', '+', or '-').
+        peakpat (str): Custom regex pattern for peak detection.
+        minpeakheight (float): Minimum height of peaks.
+        minpeakdistance (int): Minimum distance between peaks.
+        threshold (float): Minimum difference between peak and its surroundings.
+        npeaks (int): Maximum number of peaks to return.
+        sortstr (bool): Whether to sort peaks in descending order.
+
+    Returns:
+        numpy.ndarray: Array containing peak values and their positions, start and end.
+    """
+    x = np.asarray(x)
+    if not np.issubdtype(x.dtype, np.number) or np.isnan(x).any():
+        raise ValueError("Input 'x' must be a numeric vector without NaNs.")
+
+    if zero not in ('0', '+', '-'):
+        raise ValueError("Argument 'zero' can only be '0', '+', or '-'.")
+
+    if ndowns is None:
+        ndowns = nups
+
+    # Compute the sign of the differences
+    diffs = np.diff(x)
+    signs = np.sign(diffs)
+    signs_str_list = []
+    for s in signs:
+        if s > 0:
+            signs_str_list.append('+')
+        elif s < 0:
+            signs_str_list.append('-')
+        else:
+            signs_str_list.append('0')
+    sign_str = ''.join(signs_str_list)
+    
+    # Replace zeros if necessary
+    if zero != '0':
+        sign_str = sign_str.replace('0', zero)
+    
+          
+    # Define the peak pattern
+    if peakpat is None:
+        peakpat = r'[+]{%d,}[-]{%d,}' % (nups, ndowns)
+
+    # Find matches using regular expressions
+    matches = list(re.finditer(peakpat, sign_str))
+    if not matches:
+        return None
+
+    x1 = np.array([m.start() for m in matches])
+    
+    x2 = np.array([m.end() for m in matches])
+
+    n = len(x1)
+    xv = np.zeros(n)
+    xp = np.zeros(n, dtype=int)
+
+    # Find peak positions and values
+    for i in range(n):
+        xi = x1[i] + 1
+        xj = x2[i] + 1
+        segment = x[xi:xj]
+        idx = np.argmax(segment)
+        xp[i] = xi + idx
+        xv[i] = x[xp[i]]
+
+    # Apply height and threshold criteria
+    x1_values = x[x1]
+
+    x2_values = x[x2]
+    pmax = np.maximum(x1_values, x2_values)
+
+    condition = (xv >= minpeakheight) & ((xv - pmax) >= threshold)
+    inds = np.where(condition)[-1]
+    X = np.column_stack((xv[inds], xp[inds], x1[inds], x2[inds]))
+    if minpeakdistance < 1:
+        raise ValueError('Handling \'minpeakdistance < 1\' is logically not possible.')
+
+    # Sort peaks if necessary
+    if sortstr or minpeakdistance > 1:
+        sl = np.argsort(-X[:, 0])
+        X = X[sl]
+
+    if X.size == 0:
+        return np.array([])
+
+    # Enforce minimum peak distance
+    if minpeakdistance > 1:
+        no_peaks = X.shape[0]
+        badpeaks = np.zeros(no_peaks, dtype=bool)
+        for i in range(no_peaks):
+            ipos = X[i, 1]
+            if not badpeaks[i]:
+                dpos = np.abs(ipos - X[:, 1])
+                mask = (dpos > 0) & (dpos < minpeakdistance)
+                badpeaks = badpeaks | mask
+        X = X[~badpeaks]
+
+    # Limit the number of peaks if necessary
+    if npeaks > 0 and npeaks < X.shape[0]:
+        X = X[:npeaks]
+
+    return X
