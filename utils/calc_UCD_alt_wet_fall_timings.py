@@ -83,7 +83,7 @@ def Altered_Fall_Wet_Timing(flow_matrix, DS_Tim):
         min_height = min((0.15*WY_median),min_height)
         FA_peaks = regex_peak_detection(flow_window, peakpat = "[+]{1,}[0]{,40}[-]{1,}", threshold = min_height)
 
-        if len(FA_peaks) > 0:
+        if FA_peaks is not None and len(FA_peaks) > 0:
             # Loop through the peaks
 
             for j in range(len(FA_peaks)):
@@ -131,11 +131,11 @@ def Altered_Fall_Wet_Timing(flow_matrix, DS_Tim):
                         Temp_DS_Mag = np.median(flow_data[0:(FA_Tim_Temp + FA_Dur_Temp + Temp_Wet_Tim + WY_start).astype(int)])
                     # Check if the fall pulse is still 1.5 times the dry season 50th percentile flow
                     if FA_Mag_Temp > median_scaling_factor * Temp_DS_Mag:
-                        FA_Tim.append(FA_peaks[j, 1] +1)
+                        FA_Tim.append((FA_peaks[j, 1] +1).astype('int'))
                         if Temp_Wet_Tim is None:
                             Wet_Tim.append(None)
                         else:
-                            Wet_Tim.append(FA_peaks[j, 1] + FA_Dur_Temp + Temp_Wet_Tim)
+                            Wet_Tim.append((FA_peaks[j, 1] + FA_Dur_Temp + Temp_Wet_Tim).astype('int'))
                         FA_Mag.append(FA_peaks[j,0])
                         FA_Dif_num.append(FA_peaks[j,0]-Temp_DS_Mag)
                         FA_Dur.append(FA_peaks[j,1] - FA_peaks[j,2])
