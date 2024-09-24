@@ -164,7 +164,7 @@ def Altered_Fall_Wet_Timing(flow_matrix, DS_Tim):
 
             WS_peaks = regex_peak_detection(Wet_Peaks_flow, peakpat = "[+]{1,}[0]{,5}[-]{1,}",threshold =min((min_peak_scaling_factor*WY_median),min_peak_height))
             # Check to make sure there is data in the output from the peaks analysis
-            if len(WS_peaks) > 0:
+            if WS_peaks.any():
                 # Loop through the peaks to see if there is a qualifying peak
                 for j in range(len(WS_peaks)):
                     # Check to see if the peaks meet 1.5 times the baseline threshold
@@ -199,11 +199,14 @@ def Altered_Fall_Wet_Timing(flow_matrix, DS_Tim):
                             flow_90th = Wet_Peaks_flow[ Wet_Peaks_flow >= threshold_90]
 
                         # find the first day that is at or above the 90th percentile of flow and the last date to check
-                        Wet_start_index_1 = np.where(Wet_Peaks_flow >= max(threshold_90, 1))[0][0]
-                        index_1_check = np.where(Wet_Peaks_flow >= max(threshold_90, 1))[0][-1]
-
-                        # Then get the index of the start of the qualified peak
                         Wet_start_index_2 = int(WS_peaks[j, 2])
+                        check = np.where(Wet_Peaks_flow >= max(threshold_90, 1))
+                        if len(check[0]) < 1:
+                            Wet_Tim.append(75 + Wet_start_index_2)
+                            break
+                        Wet_start_index_1 = check[0][0]
+                        index_1_check = check[0][-1]
+
 
                         # Check to see which potential timing
                         if index_1_check < Wet_start_index_2:
@@ -222,7 +225,7 @@ def Altered_Fall_Wet_Timing(flow_matrix, DS_Tim):
                 Temp_dry_flow = replace_nan(Temp_dry_flow)
                 threshold_90 = np.quantile(Temp_dry_flow, 0.9)
 
-                if all(WS_peaks[:, 0] < median_scaling_factor * Temp_DS_Mag) or len(WS_peaks) <= 0:
+                if not WS_peaks.any() or all(WS_peaks[:, 0] < median_scaling_factor * Temp_DS_Mag):
                     # Find subset of data above the 90th percentile
                     flow_90th = Temp_dry_flow[Temp_dry_flow >= threshold_90]
                     # find the first day that is at or above the 90th percentile of flow
@@ -253,7 +256,7 @@ def Altered_Fall_Wet_Timing(flow_matrix, DS_Tim):
                     Temp_DS_Mag = np.median(Temp_DS_flow)
 
                 threshold_90 = np.quantile(Temp_dry_flow, 0.9)
-                if all(WS_peaks[:, 0] < median_scaling_factor * Temp_DS_Mag) or len(WS_peaks) <= 0:
+                if not WS_peaks.any() or all(WS_peaks[:, 0] < median_scaling_factor * Temp_DS_Mag):
                     # Find subset of data above the 90th percentile
                     flow_90th = Temp_dry_flow[(Temp_dry_flow >= threshold_90 ) & (Temp_dry_flow > 0)]
                     # find the first day that is at or above the 90th percentile of flow

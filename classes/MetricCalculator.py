@@ -9,7 +9,7 @@ from utils.calc_fall_flush import calc_fall_flush_timings_durations
 from utils.calc_spring_transition import calc_spring_transition_timing_magnitude, calc_spring_transition_roc, calc_spring_transition_duration
 from utils.calc_fall_winter_baseflow import calc_fall_winter_baseflow
 from utils.calc_new_low_flow_metrics import calc_new_low_flow_metrics
-from utils.helpers import remove_offset_from_julian_date, get_date_from_offset_julian_date, fill_year_array, replace_nan
+from utils.helpers import remove_offset_from_julian_date, fill_year_array, replace_nan
 from params import general_params, winter_params, spring_params, summer_params, fall_params
 
 
@@ -30,26 +30,21 @@ class Calculator:
 
 
     def new_low_flow_metrics(self):
-        low_min_avgs, low_min_indices, classification, zeros_per_year, first_zero, classification_per_year = calc_new_low_flow_metrics(self.flow_matrix, self.first_year, self.start_date)
+        if not self._summer_timings:
+            self.start_of_summer()
+        low_min_avgs, low_min_indices, classification, zeros_per_year, first_zero, classification_per_year = calc_new_low_flow_metrics(self.flow_matrix, self.first_year, self._summer_timings)
         return self._format_low_flow(low_min_avgs, low_min_indices, classification, zeros_per_year, first_zero, classification_per_year)
 
     def _format_low_flow(self, low_min_avgs, low_min_indices, classification, zeros_per_year, first_zero, classification_per_year):
             results = {}
             results_general = {}
-            results["low_min_avgs"] = np.where(np.isnan(low_min_avgs), None, low_min_avgs).tolist()
-            
-            
-            june_1 = datetime.strptime('2023/06/01','%Y/%m/%d')
-            current_start_time = datetime.strptime('2023/' + self.start_date, '%Y/%m/%d')
-            if current_start_time > june_1:
-                june_1 = datetime.strptime('2024/06/01','%Y/%m/%d')
-            delta =  (june_1 - current_start_time).days
+            results["low_min_avgs"] = low_min_avgs
 
-            results["low_min_date"] = [int(x) + delta if not np.isnan(x) else None for x in low_min_indices]
-            results["first_zero"] = [int(x) + delta if not np.isnan(x) else None for x in first_zero]
-            results["zeros_per_year"] = zeros_per_year.astype(int).tolist()
+            results["low_min_date"] = low_min_indices
+            results["first_zero"] = first_zero
+            results["zeros_per_year"] = zeros_per_year
             results_general["Overall_Int_Class"] = np.full_like(classification_per_year, classification).tolist()
-            results_general["Int_Class"] = classification_per_year.tolist()
+            results_general["Int_Class"] = classification_per_year
             return results, results_general
     
     def get_DRH(self):
