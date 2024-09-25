@@ -318,7 +318,7 @@ def regex_peak_detection(x, nups=1, ndowns=1, zero='0', peakpat=None,
     # Find matches using regular expressions
     matches = list(re.finditer(peakpat, sign_str))
     if not matches:
-        return None
+        return np.array([])
 
     x1 = np.array([m.start() for m in matches])
     

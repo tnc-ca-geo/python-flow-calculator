@@ -10,7 +10,7 @@ class USGSGage(AbstractGage):
         Initialize a USGS Gage instance.
 
         Parameters:
-        - gage_id (str): The unique identifier for the USGS Gage.
+        - gage_id (str): The unique identifier for the USGS Gage. Expected to be 8 or more characters and prepended with 0's for id's with less characters such as '9424050'
         - measurement_unit (str, optional): The measurement unit for the gage readings (default is 'cfs').
         """
         super().__init__(gage_id)
