@@ -146,7 +146,7 @@ def Altered_Spring_Recession(flow_matrix):
                 peaks_all = peaks
 
             # Check to make sure there is data in the peaks
-            if len(peaks_all) > 1:
+            if peaks_all.any():
                 # If there is data in the data frame, then make sure it is more than just the titles
                 if peaks_all.shape[0] > 0:
                     # Filter out peaks that are not above the 90th percentile and peaks that are in September

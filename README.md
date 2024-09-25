@@ -150,9 +150,9 @@ See below for more information on what data you might want to give it.
 
       The updated calculator requires no more then 18 days of missing data per water year and allows up to 7 days of consecutive missing data. The previous recommendation was to require 358 days of data to run a year. These differences may result in slight changes in metrics that are summarized over multiple years, including peak flow metrics.
 
-   2. Peak detection:
+   2. New low flow metrics:
 
-      Within the adaptation of the UCDavis flashy flows calculator the peak detection algorithm is slightly different and includes more peaks then the original version. This may cause many of the metrics that are based off a peak or pulse to be slightly different from the UCDavis flashy flows calculator.
+      After talking with the original author the low flow metrics have been adapted to fit in with the existing calculator(s) better, most notably this includes: the calculated DS_Tim is used as the start date whenever it is available and June 1st is used otherwise. The end date is always December 31st. For years classified as perennial the number of low flow days is not calculated to draw more attention to the minimum 7 day average metrics and vise versa for years classified as intermittent.
 
 ## Questions and Comments
 
