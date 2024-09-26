@@ -1,4 +1,4 @@
-VERSION = '0.9.5'
+VERSION = '0.9.7'
 WY_START_DATE = '10/1'
 DELETE_INDIVIDUAL_FILES_WHEN_BATCH = True
 QUIT_ON_ERROR = False # do you want the entire process to stop when an error occurs, True assumes you want more detailed messages as you are hopefully debugging it
