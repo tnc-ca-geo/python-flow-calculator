@@ -307,7 +307,7 @@ def read_csv_to_arrays(file_path):
     # Some gages use very large negative numbers to represent their missing values, turning them into nan which is how the calculator expects missing values
     df.loc[df[flow_column] < 0, flow_column] = np.nan
     
-    dates = df[date_column]
+    dates = pd.to_datetime(df[date_column],errors='coerce')
     flow = df[flow_column]
 
     return {date_column: dates, flow_column: flow}
