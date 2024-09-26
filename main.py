@@ -258,7 +258,7 @@ if __name__ == '__main__':
                         if len(usgs_dict['id']) < 8:
                             original_id = usgs_dict['id'] 
                             usgs_dict['id'] = usgs_dict['id'].zfill(8)
-                            usgs_parse_warning = usgs_parse_warning + f'USGS id: {original_id} was less than 8 characters and has been buffered with zeroes to make it 8 characters: {usgs_dict['id']} \n'
+                            usgs_parse_warning = usgs_parse_warning + f'USGS id: {original_id} was less than 8 characters and has been buffered with zeroes to make it 8 characters: {usgs_dict["id"]} \n'
                         new_gage = USGSGage(gage_id = usgs_dict['id'])
                         start = time.time()
                         new_gage.download_metadata()
