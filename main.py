@@ -255,6 +255,10 @@ if __name__ == '__main__':
                         usgs_string = f'Downloading and parsing USGS metadata for gage: {usgs_dict["id"]}... '
                         usgs_dl_thread = threading.Thread(target=spinning_bar, args= (usgs_string,))
                         usgs_dl_thread.start()
+                        if len(usgs_dict['id']) < 8:
+                            original_id = usgs_dict['id'] 
+                            usgs_dict['id'] = usgs_dict['id'].zfill(8)
+                            usgs_parse_warning = usgs_parse_warning + f'USGS id: {original_id} was less than 8 characters and has been buffered with zeroes to make it 8 characters: {usgs_dict['id']} \n'
                         new_gage = USGSGage(gage_id = usgs_dict['id'])
                         start = time.time()
                         new_gage.download_metadata()
@@ -570,7 +574,7 @@ if __name__ == '__main__':
 
             while entering:
                 gage_id = questionary.text('Please enter a USGS Gage ID you would like to analyze:',
-                                        validate = lambda id: True if bool(re.match(r'^[0-9]{8,}$', id)) else "Please enter a valid USGS Gage id").ask()
+                                        validate = lambda id: True if bool(re.match(r'^[0-9]{7,}$', id)) else "Please enter a valid USGS Gage id").ask()
                 
                 if not gage_id:
                     questionary.print("FATAL ERROR: No USGS Gage ID provided", style="bold fg:red")
@@ -592,8 +596,7 @@ if __name__ == '__main__':
             for gage_id in gages_to_be_downloaded:
                 
                 try:
-                    
-                    new_gage = USGSGage(gage_id = gage_id)
+                    new_gage = USGSGage(gage_id = gage_id.zfill(8))
                     gage_arr.append(new_gage)
                     new_gage.download_metadata()
                     new_gage.save_daily_data()   
