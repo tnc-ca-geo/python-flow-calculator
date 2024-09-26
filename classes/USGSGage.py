@@ -32,20 +32,22 @@ class USGSGage(AbstractGage):
         Save daily flow data for the USGS Gage to a CSV file.
 
         Uses the nwis package to retrieve daily flow data, transforms the data, and saves it
-        to a CSV file named '{gage_id}_data.csv' in the 'gage_data' folder.
+        to a CSV file named '{gage_id}_data.csv' in the 'gage_data' folder. If tidally filtered data is availble that will be used instead of normal discharge
 
         Returns:
         - csv_file_path (str): The path to the saved CSV file.
         """
-
-        df = nwis.get_record(sites = self.gage_id, service="dv", parameterCd = "00060", statCd="00003", start="1800-10-01")
+        df = nwis.get_record(sites = self.gage_id, service="dv", parameterCd = "72137", statCd="00003", start="1800-10-01")
+        if df.empty or len(df.index) < 367:
+            df = nwis.get_record(sites = self.gage_id, service="dv", parameterCd = "00060", statCd="00003", start="1800-10-01")
         if df.empty:
             raise Exception(f'No data found for {self.gage_id} is this a valid USGS gage? (ensure that gages less than 9 gigits long are front padded with 0)')
         if len(df.index) < 367:
             raise NotEnoughDataError(f"There was little data available for {self.gage_id}")
             
         self.start_date = df.index[0]
-        df = df.rename(columns={'00060_Mean': 'flow', 'datetime': 'date', 'site_no': 'gage', '00060_Mean_cd': 'flow_flag'})
+        # mapping both 72137_Mean and 00060_Mean to flow because we know there will only be 1 or the other
+        df = df.rename(columns={'72137_Mean': 'flow', '00060_Mean': 'flow', 'datetime': 'date', 'site_no': 'gage', '00060_Mean_cd': 'flow_flag', '72137_Mean_cd': 'flow_flag'})
         folder_path = os.path.join(os.getcwd(), 'gage_data')
         csv_file_path = os.path.join(folder_path, f'{self.gage_id}_data.csv')
         df.to_csv(csv_file_path, index_label='date', date_format='%m/%d/%Y')
