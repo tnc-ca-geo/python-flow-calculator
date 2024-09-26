@@ -21,7 +21,7 @@ class MatrixConversion:
         for index, date in enumerate(self.date_array):
             if date == '2/29/1900': # skip date that does not exist
                 continue
-            current_date = datetime.strptime(date, "%m/%d/%Y")
+            current_date = date
             self.julian_array.append(current_date.timetuple().tm_yday)
             self.years_array.append(current_date.year)
 
