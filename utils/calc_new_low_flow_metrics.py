@@ -111,8 +111,12 @@ def calc_new_low_flow_metrics(flow_matrix, start_year, start_indices_array):
     # Metric 6: Overall classification
     num_intermittent = sum(1 for c in classification_list if c == 'Intermittent')
     num_perennial = sum(1 for c in classification_list if c == 'Perennial')
-    percentage_intermittent = (num_intermittent / (num_intermittent + num_perennial)) * 100
-    classification_overall = 'Intermittent' if percentage_intermittent > 15 else 'Perennial'
+    total_sum = num_intermittent + num_perennial
+    if total_sum == 0:
+        classification_overall = ''
+    else:
+        percentage_intermittent = (num_intermittent / total_sum) * 100
+        classification_overall = 'Intermittent' if percentage_intermittent > 15 else 'Perennial'
     
 
     return min_values, min_indices, classification_overall, zeros_per_year, first_zero_indices, classification_list

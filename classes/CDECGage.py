@@ -87,7 +87,7 @@ class CDECGage(AbstractGage):
                 df = pd.read_csv(StringIO(csv_data), dtype = column_types, usecols=columns_to_read, converters=custom_converters)
                 if df.empty:
                     continue
-                if len(df.index) < 367:
+                if len(df.index) < 365:
                     had_data_not_enough = True
                     continue
                 df = df.dropna(subset=['VALUE'])
