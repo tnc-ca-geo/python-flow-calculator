@@ -127,7 +127,7 @@ if __name__ == '__main__':
                     csv_columns = reader.fieldnames
                     missing_columns = [col for col in REQUIRED_BATCH_COLUMNS if col not in csv_columns]
                     if not (set(csv_columns) & set(LONGITUDE_COLUMNS)):
-                        #ensuring that these have a set intersection
+                        # ensuring that these have a set intersection (there is atleast one of 'lon' or 'lat' in the columns)
                         missing_columns.append('lng')
                     if missing_columns:
                         raise MissingColumnsError('batch csv missing columns', missing_columns)
