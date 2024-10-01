@@ -24,10 +24,10 @@ def calc_start_of_summer(matrix, class_number, summer_params=def_summer_params):
         if get_max_consecutive_nan(matrix[:, column_number]) > max_consecutive_nan_allowed_per_year:
             continue
         
-        """Append each column with 30 more days from next column, except the last column"""
+        """Append each column with 100 more days from next column, except the last column"""
         if column_number != len(matrix[0])-1:
             flow_data = list(matrix[:, column_number]) + \
-                list(matrix[:30, column_number+1])
+                list(matrix[:100, column_number+1])
         else:
             flow_data = matrix[:, column_number]
 
