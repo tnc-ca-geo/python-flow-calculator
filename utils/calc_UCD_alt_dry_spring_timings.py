@@ -63,7 +63,7 @@ def Altered_Summer_Dry_Season_Tim_Varied(flow, flow_thresh, day_thresh=5, roc_th
 
     if DS_Tim is not None:
         if DS_Tim <= 0 and not np.isnan(DS_Tim):
-            DS_Tim = 1
+            DS_Tim = 0 # 1 in the original code but accounts for indexing difference between R and python
 
     return int(DS_Tim) if DS_Tim is not None else None
 
@@ -221,10 +221,7 @@ def Altered_Spring_Recession(flow_matrix):
             SP_ROC_Max.append(np.nan)
             SP_Dur.append(np.nan)
             continue
-            
-        if PH_DS_Tim is not None and PH_DS_Tim == 0:
-            PH_DS_Tim = 1
-        
+
         DS_Tim.append(PH_DS_Tim + springindex + 1)
         SP_Dur.append(PH_DS_Tim)
         SP_recs_temp = roc[1: 1 + SP_Dur[column_number]]
