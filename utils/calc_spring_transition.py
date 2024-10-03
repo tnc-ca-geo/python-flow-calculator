@@ -153,9 +153,9 @@ def calc_spring_transition_timing_magnitude(flow_matrix, class_number, summer_ti
                 timings[-1] = timings[-1] - 4 + new_timings + lag_time
                 magnitudes[-1] = max_flow_window_new
             
-            """Fix From Bronwen"""
+            """Fix From Bronwen & Cam"""
             if class_number == 4 or class_number == 6 or class_number == 7 or class_number == 8:
-                magnitudes[-1] = flow_data[timings[-1]] 
+                magnitudes[-1] = flow_data[timings[-1] - 1] 
 
             if summer_timings[column_number] is not None and timings[-1] > summer_timings[column_number]:
                 timings[-1] = None
