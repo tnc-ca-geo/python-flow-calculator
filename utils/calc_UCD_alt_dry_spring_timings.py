@@ -1,5 +1,5 @@
 import numpy as np
-from utils.helpers import replace_nan, regex_peak_detection
+from utils.helpers import replace_nan, regex_peak_detection, smth_gaussian
 from scipy.ndimage import gaussian_filter1d
 from params import flashy_params
 
@@ -72,13 +72,13 @@ def Altered_Spring_Recession(flow_matrix):
     np.set_printoptions(suppress=True)
     
     min_dry_flow_percent = flashy_params["dry_min_flow_percent"]
-    max_plateau_size = flashy_params["dry_max_plateau_size"]
     max_nan_per_year = flashy_params["max_nan_allowed_per_year"]
     max_zero_per_year = flashy_params["max_zero_allowed_per_year"]
-    filter_sigma = flashy_params["dry_filter_sigma"]
     min_peak_height = flashy_params["dry_min_peak_height"]
     min_peak_scaling_factor = flashy_params["dry_min_peak_scaling_factor"]
-    
+    window = flashy_params["dry_season_smoothing_window"]
+    alpha = flashy_params["dry_season_smoothing_alpha"]
+
     # Setup the output vectors
     SP_Mag = []
     SP_Tim = []
@@ -131,18 +131,21 @@ def Altered_Spring_Recession(flow_matrix):
 
             WY_median = np.median(flow_data)
             # Filter the flow to remove the noise on the rising limb
-            filter_flow = gaussian_filter1d(flow_data, filter_sigma)
-
+            filter_flow = smth_gaussian(flow_data, window=window, alpha= alpha, tails=True)
             # Returns array with indices for each peak and valley
             # do not add prominence here, better matches the R code without it
             # max of 3 flat top points to match R code
-
-            peaks = regex_peak_detection(filter_flow, threshold = min((min_peak_scaling_factor*WY_median),min_peak_height), peakpat = "[+]{1,}[-]{1,}")
-            peaks_2 = regex_peak_detection(filter_flow, peakpat = "[+]{1,}[0]{1,30}[-]{1,}",threshold = min((min_peak_scaling_factor*WY_median),min_peak_height))
+            threshold = min((min_peak_scaling_factor*WY_median),min_peak_height)
+            peaks = regex_peak_detection(filter_flow, peakpat = "[+]{1,}[-]{1,}")
+            peaks_2 = regex_peak_detection(filter_flow, peakpat = "[+]{1,}[0]{1,30}[-]{1,}")
             # Combine the two data sets of peaks
-            if peaks_2 is not None and peaks_2.any():
+            if peaks_2.any() and peaks.any():
                 peaks_all = np.vstack((peaks, peaks_2))
+            elif peaks_2.any():
+                # above failed but this did not so peaks_2 has data but peaks does not
+                peaks_all = peaks_2
             else:
+                # both above cases failed so default to peaks, if it is empty that will be handled later
                 peaks_all = peaks
 
             # Check to make sure there is data in the peaks
@@ -154,7 +157,6 @@ def Altered_Spring_Recession(flow_matrix):
                     peaks_all = peaks_all[peaks_all[:, 1].argsort()]
                    
                     peaks_90 = peaks_all[(peaks_all[:, 0] > quants[1]) & (peaks_all[:, 1] < 344)]
-
                 else:
                     peaks_90 = None
 
@@ -166,18 +168,18 @@ def Altered_Spring_Recession(flow_matrix):
                 # Assign the last peak of the year as the first potential spring timing
                 PH1_start = peaks_90[-1,1]
                 PH1_poten = np.arange(PH1_start - 2, PH1_start + 3).astype(np.int64)
-                max_flow_check = np.argmax(flow_data[PH1_poten])
-                
-                springindex_PH1 = int(peaks_90[-1, 1]) - 4 + max_flow_check
-                # Check to see if this peak is also the fall pulse
+                max_flow = np.max(flow_data[PH1_poten])
+                max_flow_check = np.where(flow_data[PH1_poten] == max_flow)[0][-1]
+                springindex_PH1 = int(peaks_90[-1, 1]) - 3 + max_flow_check
                 if (springindex_PH1 <= 75) and (len(peaks_90) < 2):
-                    springindex_PH1 = None
-
+                    # springindex_PH1 = None
+                    # this line is commented out in the original code and this block is empty
+                    pass
             else:
                 springindex_PH1 = None
 
             # Find the index of flows at or above the 90th percentile
-            highflows = np.where(flow_data >= quants[1])[0]
+            highflows = np.where(flow_data >= quants[1])
 
             # Assign the last index above 90th percentile flow as the second potential spring recession index
             springindex_PH2 = np.max(highflows)
@@ -188,11 +190,16 @@ def Altered_Spring_Recession(flow_matrix):
                 springindex = springindex_PH2
             else:
                 # Otherwise, set the spring index to the first placement
-                springindex = springindex_PH1 + 2
+                springindex = springindex_PH1 + 1
 
-            # Set the spring timing to the index identified
-            SP_Tim.append(springindex + 1)
-            SP_Mag.append(flow_data[springindex])
+            if springindex > 364:
+                # dont allow spring to start past the end of the water year but still add their magnitude?
+                SP_Tim.append(None)
+                SP_Mag.append(flow_data[springindex])
+            else:
+                springIndexAdjusted = springindex + 1
+                SP_Tim.append(springIndexAdjusted)
+                SP_Mag.append(flow_data[springindex])
 
         # Make a new data frame with just the flows after the top of the spring recession
         flow_post_SP = flow_data[springindex:]

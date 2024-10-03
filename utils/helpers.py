@@ -374,3 +374,62 @@ def regex_peak_detection(x, nups=1, ndowns=1, zero='0', peakpat=None,
         X = X[:npeaks]
 
     return X
+
+def normalize(w):
+    return w / np.sum(w)
+
+def determine_window_length(x, window):
+    if isinstance(window, (float, int)):
+        if window < 1:
+            return int(len(x) * window)
+        else:
+            return int(window)
+    else:
+        raise ValueError("window must be a numeric value")
+
+def make_window(w, a):
+    hw = abs(w / 2)
+    e = np.exp(1)
+    a = abs(a)
+    ret = np.array([e ** (-0.5 * (a * (n - int(hw)) / hw) ** 2) for n in range(w)])
+    return ret
+
+def smth_gaussian(x, window=None, alpha=None, tails=False):
+    """
+    Apply Gaussian smoothing to a numeric vector x. That copys R's smth.gaussian
+    """
+    if x is None:
+        raise ValueError("Numeric vector 'x' is required")
+    if not isinstance(x, (list, np.ndarray)):
+        raise ValueError("'x' must be a numeric vector")
+    x = np.asarray(x, dtype=float)
+    if alpha is None:
+        raise ValueError("Parameter 'alpha' is required")
+    if not isinstance(alpha, (float, int)):
+        raise ValueError("'alpha' must be numeric")
+    if window is None:
+        raise ValueError("Parameter 'window' is required")
+
+    window_length = determine_window_length(x, window)
+    w = make_window(window_length, alpha)
+    size_w = len(w)
+    size_d = len(x)
+    w = normalize(w)
+    hkw_l = int(size_w / 2)
+    hkw_r = size_w - hkw_l
+    ret = np.zeros(size_d)
+    
+    for i in range(size_d):
+        ix_d = np.arange(i - hkw_l, i + hkw_r)
+        ix_w = (ix_d >= 0) & (ix_d < size_d)
+        ix_d = ix_d[ix_w]
+        W_nm = w[ix_w]
+        if np.sum(ix_w) != size_w:
+            W_nm = normalize(W_nm)
+        D_nm = x[ix_d]
+        ret[i] = np.dot(D_nm, W_nm)
+    
+    if not tails:
+        ret[:hkw_l] = np.nan
+        ret[-hkw_r:] = np.nan
+    return ret
