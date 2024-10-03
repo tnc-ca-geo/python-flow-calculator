@@ -38,11 +38,11 @@ class USGSGage(AbstractGage):
         - csv_file_path (str): The path to the saved CSV file.
         """
         df = nwis.get_record(sites = self.gage_id, service="dv", parameterCd = "72137", statCd="00003", start="1800-10-01")
-        if df.empty or len(df.index) < 367:
+        if df.empty or len(df.index) < 365:
             df = nwis.get_record(sites = self.gage_id, service="dv", parameterCd = "00060", statCd="00003", start="1800-10-01")
         if df.empty:
             raise Exception(f'No data found for {self.gage_id} is this a valid USGS gage? (ensure that gages less than 9 gigits long are front padded with 0)')
-        if len(df.index) < 367:
+        if len(df.index) < 365:
             raise NotEnoughDataError(f"There was little data available for {self.gage_id}")
             
         self.start_date = df.index[0]

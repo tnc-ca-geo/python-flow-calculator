@@ -15,7 +15,7 @@ class UserUploadedData(AbstractGage):
         with open(self.download_directory, mode='r', newline='') as file:
             reader = csv.reader(file)
             row_count = sum(1 for row in reader)  # Count each row
-        if row_count < 368:
+        if row_count < 365:
             raise NotEnoughDataError(f'user uploaded file at directory {self.download_directory} does not have enough data')
 
 
