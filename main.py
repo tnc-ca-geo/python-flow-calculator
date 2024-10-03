@@ -1,5 +1,5 @@
 from utils.upload_files import upload_files
-from utils.constants import NUMBER_TO_CLASS, VERSION, WY_START_DATE, DELETE_INDIVIDUAL_FILES_WHEN_BATCH, CLASS_TO_NUMBER, QUIT_ON_ERROR, SKIP_PROMPTS_BATCH, REQUIRED_BATCH_COLUMNS
+from utils.constants import NUMBER_TO_CLASS, VERSION, WY_START_DATE, DELETE_INDIVIDUAL_FILES_WHEN_BATCH, CLASS_TO_NUMBER, QUIT_ON_ERROR, SKIP_PROMPTS_BATCH, REQUIRED_BATCH_COLUMNS, LONGITUDE_COLUMNS
 from utils.helpers import comid_to_class
 from utils.alteration_assessment import assess_alteration, assess_alteration_by_wyt
 from classes.Exceptions.missing_columns import MissingColumnsError
@@ -126,11 +126,17 @@ if __name__ == '__main__':
                     reader = csv.DictReader(file)
                     csv_columns = reader.fieldnames
                     missing_columns = [col for col in REQUIRED_BATCH_COLUMNS if col not in csv_columns]
+                    if not (set(csv_columns) & set(LONGITUDE_COLUMNS)):
+                        # ensuring that these have a set intersection (there is atleast one of 'lon' or 'lat' in the columns)
+                        missing_columns.append('lng')
                     if missing_columns:
                         raise MissingColumnsError('batch csv missing columns', missing_columns)
                     for line in reader:
                         line_gage_obj = ''
-
+                        if 'lng' in line.keys():
+                            longitude_column = 'lng'
+                        else:
+                            longitude_column = 'lon'
                         # if any pair of 2 exist error out (also captures the all 3 case)
                         if ((line['usgs'] != '') and (line['cdec'] != '')) or ((line['usgs'] != '') and (line['path'] != '')) or ((line['cdec'] != '') and (line['path'] != '')):
                                 done = True
@@ -163,9 +169,9 @@ if __name__ == '__main__':
                             if line['comid'] != '':
                                 line_gage_obj = UserUploadedData(file_name=file_name, comid = line['comid'], download_directory=line['path'], selected_calculator=selected_calculator)
 
-                            elif (line['lat'] != '') and (line['lng'] != ''):
+                            elif (line['lat'] != '') and (line[longitude_column] != ''):
                                 
-                                line_gage_obj = UserUploadedData(file_name=file_name, longitude = line['lng'], latitude = line['lat'], download_directory=line['path'],  selected_calculator=selected_calculator)
+                                line_gage_obj = UserUploadedData(file_name=file_name, longitude = line[longitude_column], latitude = line['lat'], download_directory=line['path'],  selected_calculator=selected_calculator)
                                 line_gage_obj.get_comid()
 
                             else:
@@ -195,6 +201,7 @@ if __name__ == '__main__':
                 if 'csv_thread' in locals():
                     csv_thread.join()
                 sys.stdout.write("\r" + " " * (len("Processing CSV... ") + 1) + "\r")
+                REQUIRED_BATCH_COLUMNS.insert(6,'lng')
                 questionary.print(f"FATAL ERROR: Supplied batch csv: {file_path} is malformed, expected: {REQUIRED_BATCH_COLUMNS} columns but was missing: {e.missing_columns}", style="bold fg:red")
                 questionary.print("→ Restart the calculator by running \"python main.py\" ←")
                 sys.exit()
