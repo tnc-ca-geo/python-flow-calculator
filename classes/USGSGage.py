@@ -49,7 +49,7 @@ class USGSGage(AbstractGage):
         # mapping both 72137_Mean and 00060_Mean to flow because we know there will only be 1 or the other
         df = df.rename(columns={'72137_Mean': 'flow', '00060_Mean': 'flow', 'datetime': 'date', 'site_no': 'gage', '00060_Mean_cd': 'flow_flag', '72137_Mean_cd': 'flow_flag'})
         folder_path = os.path.join(os.getcwd(), 'gage_data')
-        csv_file_path = os.path.join(folder_path, f'{self.gage_id}_data.csv')
+        csv_file_path = os.path.join(folder_path, f'{self.gage_id}.csv')
         df.to_csv(csv_file_path, index_label='date', date_format='%m/%d/%Y')
         self.download_directory = csv_file_path
 
