@@ -97,7 +97,7 @@ class CDECGage(AbstractGage):
                 df['date'] = pd.to_datetime(df['date'])
 
                 folder_path = os.path.join(os.getcwd(), 'gage_data')
-                csv_file_path = os.path.join(folder_path, f'{self.gage_id}_data.csv')
+                csv_file_path = os.path.join(folder_path, f'{self.gage_id}.csv')
                 df.to_csv(csv_file_path, index=False, date_format='%m/%d/%Y')
                 self.download_directory = csv_file_path
                 return
