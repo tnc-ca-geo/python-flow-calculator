@@ -135,14 +135,12 @@ def Altered_Fall_Wet_Timing(flow_matrix, DS_Tim):
                     else:
                         Temp_Wet_Tim = None
                     # To get the dry season median, make sure there was a dry season timing next year
-                    if not np.isnan(DS_Tim[column_number-1]) and DS_Tim[column_number-1] < 0 and Temp_Wet_Tim is not None:
-
+                    if not np.isnan(DS_Tim[column_number-1]) and DS_Tim[column_number-1] > 0 and Temp_Wet_Tim is not None:
                         # Calculate the potential dry season 50th percentile flow
-                        Temp_DS_Mag = np.median(flow_data[DS_Tim[column_number-1]:(FA_Tim_Temp + FA_Dur_Temp + Temp_Wet_Tim + WY_start).astype(int)])
+                        Temp_DS_Mag = np.median(flow_data[DS_Tim[column_number-1] - 1:(FA_Tim_Temp + FA_Dur_Temp + Temp_Wet_Tim + WY_start + 2).astype(int)])
 
                     # If there wasn't a dry season timing, then look at the entire flow array
                     elif (np.isnan(DS_Tim[column_number-1]) or DS_Tim[column_number-1] < 0) and Temp_Wet_Tim is not None:
-
                         # Calculate the potential dry season 50th percentile flow
                         Temp_DS_Mag = np.median(flow_data[0:(FA_Tim_Temp + FA_Dur_Temp + Temp_Wet_Tim + WY_start).astype(int)])
                     # Check if the fall pulse is still 1.5 times the dry season 50th percentile flow

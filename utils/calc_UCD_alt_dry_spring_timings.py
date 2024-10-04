@@ -127,7 +127,7 @@ def Altered_Spring_Recession(flow_matrix):
             flow_data = replace_nan(flow_data.copy())
 
             # Calculate the 50th and 90th percentile for the flows
-            quants = np.percentile(flow_data, q=[50, 90], interpolation='nearest')
+            quants = np.quantile(flow_data, q=[0.5, 0.9])
 
             WY_median = np.median(flow_data)
             # Filter the flow to remove the noise on the rising limb
