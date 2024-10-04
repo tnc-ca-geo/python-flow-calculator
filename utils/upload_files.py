@@ -196,6 +196,7 @@ def write_annual_flow_result(file_name, results, file_type):
     df = df.T
     df.reset_index(inplace=True)
     df.rename(columns={'index': 'Year'}, inplace=True)
+    df = df[~df[['DS_Tim', 'SP_Tim', 'Wet_Tim', 'FA_Tim']].isnull().all(axis=1)]
     output_dir = file_name + '_' + file_type + '.csv'
     df.to_csv(output_dir, index=False)    
 
