@@ -433,3 +433,11 @@ def smth_gaussian(x, window=None, alpha=None, tails=False):
         ret[:hkw_l] = np.nan
         ret[-hkw_r:] = np.nan
     return ret
+
+def drop_last_nan_columns(arr):
+    columns = []
+    for col in arr.T:
+        if np.isnan(col[-1]):
+            col = col[:-1]
+        columns.append(col)
+    return columns

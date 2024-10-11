@@ -1,5 +1,5 @@
 import numpy as np
-from utils.helpers import replace_nan, regex_peak_detection
+from utils.helpers import drop_last_nan_columns, replace_nan, regex_peak_detection
 from params import flashy_params
 
 def Altered_Fall_Wet_Timing(flow_matrix, DS_Tim):
@@ -23,13 +23,25 @@ def Altered_Fall_Wet_Timing(flow_matrix, DS_Tim):
     median_scaling_factor = flashy_params['fall_median_scaling_factor']
     max_nan_per_year = flashy_params['max_nan_allowed_per_year']
     max_zero_per_year = flashy_params['max_zero_allowed_per_year']
-
+    # done to deal with the way the reference calculators deal with leap years while maintaining a square matrix
+    flow_list = drop_last_nan_columns(flow_matrix)
+    
+    if len(flow_list) > 0:
+        non_nan_mask = ~np.isnan(flow_list[0])
+    
+        # Find indices of non-NaN values
+        non_nan_indices = np.where(non_nan_mask)[0]
+        if non_nan_indices.size == 0:
+            first_non_nan_idx = 0
+        else:
+            first_non_nan_idx = non_nan_indices[0]
+            flow_list[0] = flow_list[0][first_non_nan_idx:]
+    
     # Loop through all of the water years
-    for column_number in range(flow_matrix.shape[1]):
+    for column_number, flow_data_raw in enumerate(flow_list):
         wet_tim_len = len(Wet_Tim)
         # Filter the flow data to the individual water year
-        flow_data = flow_matrix[:, column_number]
-        
+        flow_data = flow_data_raw
         if column_number == 0:
             FA_Tim.append(np.nan)
             FA_Mag.append(np.nan)
@@ -67,7 +79,7 @@ def Altered_Fall_Wet_Timing(flow_matrix, DS_Tim):
             Wet_Tim.append(np.nan)
             continue
         
-        current_year = flow_matrix[:, column_number].T
+        current_year = flow_data_raw
 
         previous_year_index = column_number - 1
 
@@ -75,7 +87,7 @@ def Altered_Fall_Wet_Timing(flow_matrix, DS_Tim):
 
         # Loop backward to find the last year with data
         while previous_year_index >= 0 and not found_data:
-            previous_year_data = flow_matrix[:, previous_year_index]
+            previous_year_data = flow_list[previous_year_index]
             if not np.all(np.isnan(previous_year_data)):
                 # Found a year with data
                 found_data = True
@@ -85,13 +97,15 @@ def Altered_Fall_Wet_Timing(flow_matrix, DS_Tim):
 
         if not found_data:
             flow_data = current_year
+            WY_median = np.nanmedian(current_year)
             WY_start = 0
         else:
             WY_start = len(previous_year) + 1
             flow_data = np.concatenate((previous_year, current_year), axis=0)
+            WY_median = np.nanmedian(flow_data)
             flow_data = replace_nan(flow_data.copy())
 
-        WY_median = np.median(flow_data)
+        
         FA_Check = False
 
         flow_window = flow_data[WY_start-1:(WY_start + 75)]
@@ -109,10 +123,10 @@ def Altered_Fall_Wet_Timing(flow_matrix, DS_Tim):
                     break
                 
                 if (not np.isnan(DS_Tim[column_number-1])) and DS_Tim[column_number-1] > 0:
-                    Temp_DS_flow = flow_data[DS_Tim[column_number-1]:(FA_peaks[j, 1].astype(int) + WY_start)]
+                    Temp_DS_flow = flow_data[DS_Tim[column_number-1] - 1:(FA_peaks[j, 1].astype(int) + WY_start) + 1]
                     Temp_DS_Mag = np.median(Temp_DS_flow)
                 elif np.isnan(DS_Tim[column_number-1]) or DS_Tim[column_number-1] < 0:
-                    Temp_DS_flow = flow_data[0:(FA_peaks[j, 1] + WY_start).astype(int)]
+                    Temp_DS_flow = flow_data[0:(FA_peaks[j, 1] + WY_start).astype(int) + 1]
                     Temp_DS_Mag = np.median(Temp_DS_flow)
 
                 # To check if the fall pulse meets certain criteria
@@ -142,7 +156,7 @@ def Altered_Fall_Wet_Timing(flow_matrix, DS_Tim):
                     # If there wasn't a dry season timing, then look at the entire flow array
                     elif (np.isnan(DS_Tim[column_number-1]) or DS_Tim[column_number-1] < 0) and Temp_Wet_Tim is not None:
                         # Calculate the potential dry season 50th percentile flow
-                        Temp_DS_Mag = np.median(flow_data[0:(FA_Tim_Temp + FA_Dur_Temp + Temp_Wet_Tim + WY_start).astype(int)])
+                        Temp_DS_Mag = np.median(flow_data[0:(FA_Tim_Temp + FA_Dur_Temp + Temp_Wet_Tim + WY_start + 2).astype(int)])
                     # Check if the fall pulse is still 1.5 times the dry season 50th percentile flow
                     if FA_Mag_Temp > median_scaling_factor * Temp_DS_Mag:
                         FA_Tim.append((FA_peaks[j, 1] +1).astype('int'))
@@ -195,7 +209,7 @@ def Altered_Fall_Wet_Timing(flow_matrix, DS_Tim):
                 
                     elif np.isnan(DS_Tim[column_number - 1]) or DS_Tim[column_number - 1] < 0:
                         # Calculate the potential dry season 50th percentile flow
-                        Temp_DS_flow = flow_data[0:(WS_peaks[j, 2] + WY_start).astype(int)]
+                        Temp_DS_flow = flow_data[0:(WS_peaks[j, 1] + WY_start + 1).astype(int)]
                         Temp_DS_Mag = np.median(Temp_DS_flow)
                     scaled_median = median_scaling_factor * Temp_DS_Mag 
                     # Check to see if the peak is larger than the estimated dry season baseflow
@@ -237,7 +251,7 @@ def Altered_Fall_Wet_Timing(flow_matrix, DS_Tim):
                 # If all peaks are below the 90th flow percentile then we will just choose the day before the 1st day of 90th flow
                 # If none of the post fall pulse peaks meet the criteria it is likely a peak prior to a hat scenario
                 # and we want to find the last day before the 90th percentile flow of that flow year
-                Temp_dry_flow = flow_matrix[:, column_number]
+                Temp_dry_flow = flow_list[column_number]
                 Temp_dry_flow = replace_nan(Temp_dry_flow)
                 threshold_90 = np.quantile(Temp_dry_flow, 0.9)
 
@@ -255,7 +269,7 @@ def Altered_Fall_Wet_Timing(flow_matrix, DS_Tim):
             else:
                 # If there aren't any peaks then it is likely a hat scenario
                 # and we want to find the last day before the 90th percentile flow of that flow year
-                Temp_dry_flow = flow_matrix[:, column_number]
+                Temp_dry_flow = flow_list[column_number]
                 Temp_dry_flow = replace_nan(Temp_dry_flow)
 
                 if (not np.isnan(DS_Tim[column_number - 1])) and DS_Tim[column_number - 1] > 0:
@@ -299,6 +313,6 @@ def Altered_Fall_Wet_Timing(flow_matrix, DS_Tim):
     #"FA_Dif_num": FA_Dif_num,
     "Wet_Tim": Wet_Tim
     }
-    
+
     # Return all of the metrics
     return Fall_Metrics_and_Wet_tim

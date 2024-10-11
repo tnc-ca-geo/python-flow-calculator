@@ -1,6 +1,5 @@
 import numpy as np
-from utils.helpers import replace_nan, regex_peak_detection, smth_gaussian
-from scipy.ndimage import gaussian_filter1d
+from utils.helpers import drop_last_nan_columns, replace_nan, regex_peak_detection, smth_gaussian
 from params import flashy_params
 
 def Altered_Summer_Dry_Season_Tim_Varied(flow, flow_thresh, day_thresh=5, roc_thresh=0.02):
@@ -86,11 +85,12 @@ def Altered_Spring_Recession(flow_matrix):
     SP_ROC_Max = []
     SP_Dur = []
     DS_Tim = []
+    flow_list = drop_last_nan_columns(flow_matrix)
 
     # Loop through all of the water years
-    for column_number in range(flow_matrix.shape[1]):
+    for column_number, flow_data_raw in enumerate(flow_list):
         # Filter the flow data to the individual water year
-        flow_data = flow_matrix[:, column_number]
+        flow_data = flow_data_raw
 
         # Skip the year if there are more than 100 NA flow data points
         if np.isnan(flow_data).sum() > max_nan_per_year:
