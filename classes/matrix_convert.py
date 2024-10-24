@@ -65,7 +65,7 @@ class MatrixConversion:
         flow_matrix.fill(None)
 
         for index, julian_date in enumerate(self.julian_array):
-            if(self.years_array[index] % 4 == 0):
+            if(self.years_array[index] % 4 == 0 and (self.years_array[index] % 100 != 0 or self.years_array[index] % 400 == 0)):  
                 days_in_year = 366
             else:
                 days_in_year = 365
