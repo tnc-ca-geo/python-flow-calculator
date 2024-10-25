@@ -32,7 +32,8 @@ def upload_files(start_date, gage_arr, output_files = 'user_output_files', batch
             
             file = gage.download_directory
             file_name = os.path.join(output_files, os.path.splitext(os.path.basename(file))[0])
-            dataset = read_csv_to_arrays(file)
+            dataset, csv_warning_message = read_csv_to_arrays(file)
+            warning_message += csv_warning_message
             matrix = MatrixConversion(
                 dataset['date'], dataset['flow'], start_date)
             results, used_calculator = get_results(matrix, int(gage.flow_class), start_date, gage.comid, gage.selected_calculator)
@@ -293,6 +294,7 @@ def batch_files(file_paths, base_file_name, file_identifier, output_dir, alterat
     combined_data.to_csv(os.path.join(output_dir, "combined_" + base_file_name + ".csv"), index=False)
 
 def read_csv_to_arrays(file_path):
+    warning_message = ''
 
     df = pd.read_csv(file_path, skipinitialspace=True)
     df.columns = df.columns.str.lower()
@@ -304,11 +306,27 @@ def read_csv_to_arrays(file_path):
         raise ValueError("Neither 'flow' nor 'discharge' column found in the CSV.")
     
     df = df[[date_column, flow_column]]
+    try:
+        df[flow_column] = pd.to_numeric(df[flow_column],errors='raise')
+    except Exception as e:
+        warning_message += f'The provided "{flow_column}" column within {file_path} is not strictly numeric (contains some non numeric characters in some entries), these rows will be ignored and treated as missing. Please review your csv file if this is unexpected.\n'
+        df[flow_column] = pd.to_numeric(df[flow_column], errors='coerce')
     
-    # Some gages use very large negative numbers to represent their missing values, turning them into nan which is how the calculator expects missing values
+    # Count negative values in the flow_column
+    num_negative_values = (df[flow_column] < 0).sum()
+
+    if num_negative_values > 0:
+        warning_message += f"Found {num_negative_values} negative values in the provided '{flow_column}' column within {file_path}. Some gages use large negative values to represent missing values and others naturally observe them when influenced by the tide. If this count seems higher then expected please review the data. These rows will be ignored and treated as missing.\n"
+
+    # Replace negative values with NaN
     df.loc[df[flow_column] < 0, flow_column] = np.nan
     
-    dates = pd.to_datetime(df[date_column],errors='coerce')
+    try:
+        dates = pd.to_datetime(df[date_column], errors='raise')
+    except Exception as e:
+        warning_message += f'The provided "{date_column}" column within {file_path} has entries that are unparsable as dates, please ensure the "{date_column}" column has one consistent date format and all entries are dates. This data will likely crash the calculator in one of the next steps.\n'
+        dates = pd.to_datetime(df[date_column], errors='coerce')
+
     flow = df[flow_column]
 
-    return {date_column: dates, flow_column: flow}
+    return {date_column: dates, flow_column: flow}, warning_message
