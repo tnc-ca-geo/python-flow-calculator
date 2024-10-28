@@ -841,6 +841,9 @@ if __name__ == '__main__':
             spinner_thread.join()
 
         sys.stdout.write("\r" + " " * (len("Calculating Metrics... ") + 1) + "\r")
+        if upload_warning:
+            questionary.print('\nWarnings encountered while computing metrics:', style='fg:#deda03')
+            questionary.print(upload_warning)
         questionary.print(traceback.format_exc())
         questionary.print("Error: Metric calculation failed \nSee above error", style="bold fg:red")
         questionary.print("→ Restart the calculator by running \"python main.py\" ←")
