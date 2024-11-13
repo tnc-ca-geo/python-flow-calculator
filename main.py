@@ -364,8 +364,8 @@ if __name__ == '__main__':
                             done = True
                             if 'cdec_dl_thread' in locals():
                                 cdec_dl_thread.join()
-                            sys.stdout.write("\r" + " " * (len(usgs_string) + 1) + "\r")
-                            questionary.print(f"{usgs_string}Error", style="bold fg:red")
+                            sys.stdout.write("\r" + " " * (len(cdec_string) + 1) + "\r")
+                            questionary.print(f"{cdec_string}Error", style="bold fg:red")
                             keys_str = ', '.join(CLASS_TO_NUMBER.keys())
                             cdec_parse_warning = cdec_parse_warning + f"Error parsing supplied USGS class for gage id: {cdec_dict['id']}, {cdec_dict['class']} is not a valid class, please supply one of {keys_str}\n"
                             if QUIT_ON_ERROR:
@@ -815,6 +815,10 @@ if __name__ == '__main__':
     if len(gage_arr) == 1:
         dir_name = f'{gage_arr[0].gage_id}_{formatted_time}'
         batch = False
+    elif len(gage_arr) == 0:
+        questionary.print("All gages failed to be populated, no gages left to run metrics on, exiting...", style="bold fg:red")
+        questionary.print("→ Restart the calculator by running \"python main.py\" ←")
+        sys.exit()
     else:
         dir_name = f'Multiple_{formatted_time}'
     
@@ -825,6 +829,7 @@ if __name__ == '__main__':
     
     try:
         done = False
+        upload_warning = ''
         spinner_thread = threading.Thread(target=spinning_bar, args = ('Calculating Metrics... ',))
         spinner_thread.start()
         
