@@ -1,7 +1,7 @@
 from utils.upload_files import upload_files
 from utils.constants import NUMBER_TO_CLASS, VERSION, WY_START_DATE, DELETE_INDIVIDUAL_FILES_WHEN_BATCH, CLASS_TO_NUMBER, QUIT_ON_ERROR, SKIP_PROMPTS_BATCH, REQUIRED_BATCH_COLUMNS, LONGITUDE_COLUMNS
 from utils.helpers import comid_to_class
-from utils.alteration_assessment import assess_alteration, assess_alteration_by_wyt
+from utils.alteration_assessment import assess_alteration
 from classes.Exceptions.missing_columns import MissingColumnsError
 from classes.USGSGage import USGSGage
 from classes.Exceptions.not_enough_data import NotEnoughDataError
@@ -871,11 +871,10 @@ if __name__ == '__main__':
         done = False
         alteration_thread= threading.Thread(target=spinning_bar, args = ('Performing Alteration Assessment... ',))
         alteration_thread.start()
-        warning_message = assess_alteration(gage_arr, alteration_files, output_files = output_files_dir, aa_start_year=aa_start_year, aa_end_year=aa_end_year)
+        alteration_list = ['any']        
         if wyt_analysis:
-            wyt_warning_message = assess_alteration_by_wyt(gage_arr, alteration_files, output_files = output_files_dir, aa_start_year=aa_start_year, aa_end_year=aa_end_year)
-            warning_message =  warning_message + wyt_warning_message
-        
+           alteration_list = alteration_list + ['wet', 'dry', 'moderate']
+        warning_message = assess_alteration(gage_arr, alteration_files, output_files = output_files_dir, aa_start_year=aa_start_year, aa_end_year=aa_end_year, wyt_list = alteration_list)
         for alteration_file in alteration_files:
             if DELETE_INDIVIDUAL_FILES_WHEN_BATCH and batch and os.path.isfile(alteration_file):
                os.remove(alteration_file)
