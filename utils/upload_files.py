@@ -20,10 +20,10 @@ def upload_files(start_date, gage_arr, output_files = 'user_output_files', batch
     warning_message = ''
 
     # these 3 are for storing file names and file types of files that will later need to be batched together 
-    output_file_dirs = [[],[],[]]
+    output_file_dirs = [[],[]]
     metadata_files = []
     file_identifiers = []
-    file_base_name = ['annual_flow_matrix', 'annual_flow_result', 'supplementary_metrics']
+    file_base_name = ['annual_flow_matrix', 'annual_flow_result']
     
     
     for gage in gage_arr:
@@ -38,7 +38,7 @@ def upload_files(start_date, gage_arr, output_files = 'user_output_files', batch
                 dataset['date'], dataset['flow'], start_date)
             results, used_calculator = get_results(matrix, int(gage.flow_class), start_date, gage.comid, gage.selected_calculator)
             output_dir0 = write_annual_flow_matrix(file_name, results, file_base_name[0])
-            output_dir1, output_dir2 = write_annual_flow_result(file_name, results, file_base_name[1])
+            output_dir1 = write_annual_flow_result(file_name, results, file_base_name[1])
             if PRODUCE_DRH:
                 write_drh(file_name, results, 'drh')
             formatted = f'{gage.gage_id}'
@@ -48,7 +48,6 @@ def upload_files(start_date, gage_arr, output_files = 'user_output_files', batch
             file_identifiers.append(os.path.splitext(os.path.basename(file))[0])
             output_file_dirs[0].append(output_dir0)
             output_file_dirs[1].append(output_dir1)
-            output_file_dirs[2].append(output_dir2)
             metadata_files.append(metadata_file)
         except Exception as e:
             original_message = str(e)
@@ -190,6 +189,13 @@ def write_annual_flow_result(file_name, results, file_type):
     dict_to_array(results['summer'], 'summer', dataset)
     dict_to_array(results['new_low'], 'ds', dataset)
     dict_to_array(results['classification'], '', dataset)
+    dataset.append(['Avg'] + results['all_year']
+                            ['average_annual_flows'])
+    dataset.append(['Std'] + results['all_year']
+                            ['standard_deviations'])
+    dataset.append(['CV'] + results['all_year']
+                            ['coefficient_variations'])
+    dataset.append(['DS_No_Flow'] + summer_no_flow)
     results['year_ranges'].insert(0,'Year')
     df = pd.DataFrame(dataset)
     df.columns = results['year_ranges']
@@ -200,22 +206,7 @@ def write_annual_flow_result(file_name, results, file_type):
     df = df[~df[['DS_Tim', 'SP_Tim', 'Wet_Tim', 'FA_Tim']].isnull().all(axis=1)]
     output_dir = file_name + '_' + file_type + '.csv'
     df.to_csv(output_dir, index=False)    
-
-    """Create supplementary metrics file"""
-    supplementary = []
-    supplementary.append(results['year_ranges'])
-    supplementary.append(['Avg'] + results['all_year']
-                            ['average_annual_flows'])
-    supplementary.append(['Std'] + results['all_year']
-                            ['standard_deviations'])
-    supplementary.append(['CV'] + results['all_year']
-                            ['coefficient_variations'])
-    supplementary.append(['DS_No_Flow'] + summer_no_flow)
-    supplementary_transposed = list(map(list, zip(*supplementary)))
-    output_dir2 = file_name + '_supplementary_metrics.csv'
-    np.savetxt(output_dir2, supplementary_transposed, delimiter=',',
-                fmt='%s', comments='')
-    return output_dir, output_dir2
+    return output_dir
 
 def write_parameters(file_name, flow_class, used_calculator, aa_start = None, aa_end = None, file_type = 'run_metadata'):
     # List of all the calculator used strings that want the flashy params outputted
