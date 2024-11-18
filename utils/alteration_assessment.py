@@ -2,44 +2,10 @@ import pandas as pd
 import numpy as np
 import requests
 import os
+from utils.helpers import comid_to_class
 from io import StringIO
 
-def assess_alteration(gages, metrics_paths, output_files = 'user_output_files', aa_start_year = None, aa_end_year = None):
-    
-    return_message = ''
-    alteration_assessment_list = []
-    if not metrics_paths:
-        return_message += 'No metric data entered alteration assessment, it is likely all metric calculation failed\n'
-    for (gage, metrics) in zip(gages, metrics_paths):
-        comid = gage.comid
-        gage_id = gage.gage_id
-            
-        predicted_metrics = get_predicted_flow_metrics(comid)
-        if predicted_metrics.empty:
-            if comid is None:
-                return_message = return_message + f"Gage/user uploaded file: {gage_id} is missing a comid, Skipping it...\n"
-            else:
-                return_message = return_message + f"Predicted metrics could not be generated for Gage/user uploaded file: {gage_id} (comid: {comid}). Is it outside the study area? Skipping it...\n"
-            continue
-        
-        formatted_percentiles, formatted_raw, count = format_metrics(metrics,aa_start_year=aa_start_year, aa_end_year= aa_end_year)
-
-        if formatted_raw.empty:
-            return_message = return_message + f"The time range you selected {aa_start_year}-{aa_end_year} leaves the gage {gage_id} with no data. Skipping it...\n"
-            continue
-
-        output_df = compare_data_frames(formatted_raw, predicted_metrics, formatted_percentiles,count)
-        
-        aa_dict = {}
-        aa_dict['aa'] = output_df.copy(deep = True)
-        aa_dict['gage_id'] = gage_id
-        alteration_assessment_list.append(aa_dict)
-    
-    if len(alteration_assessment_list) > 0:
-        write_alteration_assessment(alteration_assessment_list, output_files)
-    return return_message
-
-def assess_alteration_by_wyt(gages, metrics_paths, output_files = 'user_output_files', aa_start_year = None, aa_end_year = None):
+def assess_alteration(gages, metrics_paths, output_files = 'user_output_files', aa_start_year = None, aa_end_year = None, wyt_list = ['any']):
     
     return_message = ''
 
@@ -50,10 +16,14 @@ def assess_alteration_by_wyt(gages, metrics_paths, output_files = 'user_output_f
     for (gage, metrics) in zip(gages, metrics_paths):
         comid = gage.comid
         gage_id = gage.gage_id
-            
-        for wyt in ('dry', 'wet', 'moderate'):
+        has_wyt = comid_to_class(comid)    
+        for wyt in wyt_list:
+            if not has_wyt and wyt is not "any":
+                return_message = return_message + f"The selected comid: {comid} for the gage: {gage_id} has no water year types associated with it skipping it for water year type {wyt}...\n"
+                continue
+
             predicted_metrics = get_predicted_flow_metrics(comid, wyt=wyt)
-            
+
             if predicted_metrics.empty:
                 return_message = return_message + f"Predicted metrics could not be generated for comid {comid} and water year type {wyt}. Is this comid outside the study area? Skipping it...\n"
                 continue
@@ -141,7 +111,7 @@ def write_alteration_assessment(aa_list, output_dir, wyt = False):
         list_to_add = []
 
     if wyt:
-        out_path = os.path.join(output_dir,f'{file_string}_wyt_alteration_assessment.csv')
+        out_path = os.path.join(output_dir,f'{file_string}_alteration_assessment.csv')
         alteration_results = out_df[list_to_add + ['WYT' ,'metric','alteration_type', 'status', 'status_code', 'median_in_iqr', 'years_used', 'sufficient_data']]
     else:
         out_path = os.path.join(output_dir,f'{file_string}_alteration_assessment.csv')
@@ -150,7 +120,7 @@ def write_alteration_assessment(aa_list, output_dir, wyt = False):
     alteration_results.to_csv(out_path, index = False)
     
     if wyt:
-        out_path = os.path.join(output_dir,f'{file_string}_wyt_predicted_observed_percentiles.csv')
+        out_path = os.path.join(output_dir,f'{file_string}_predicted_observed_percentiles.csv')
         percentiles = out_df[list_to_add + ['WYT', 'metric', 'p10', 'p25', 'p50', 'p75', 'p90', 'p10_predicted', 'p25_predicted', 'p50_predicted', 'p75_predicted', 'p90_predicted']]
     else:
         out_path = os.path.join(output_dir,f'{file_string}_predicted_observed_percentiles.csv')
@@ -176,7 +146,7 @@ def format_metrics(file_path, wyt = None, aa_start_year = None, aa_end_year = No
         metric_data.drop(metric_data[metric_data.Year < aa_start_year].index, inplace=True)
     if aa_end_year is not None:
         metric_data.drop(metric_data[metric_data.Year > aa_end_year].index, inplace=True)
-    if wyt is not None:
+    if wyt is not None and wyt is not "any":
         metric_data = metric_data.loc[metric_data['WYT'] == wyt]
     if metric_data.empty:
         return None, metric_data, None
@@ -190,7 +160,7 @@ def format_metrics(file_path, wyt = None, aa_start_year = None, aa_end_year = No
     return percentiles_df, metric_data, count
 
 
-def get_predicted_flow_metrics(comid, wyt="all"):
+def get_predicted_flow_metrics(comid, wyt="any"):
     url = f"https://flow-api.codefornature.org/v2/ffm/?comids={comid}"
     response = requests.get(url)
     if response.status_code == 200:
