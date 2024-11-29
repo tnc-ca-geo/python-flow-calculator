@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import requests
 import os
-from utils.helpers import comid_to_class
+from utils.helpers import comid_to_wyt
 from io import StringIO
 
 def assess_alteration(gages, metrics_paths, output_files = 'user_output_files', aa_start_year = None, aa_end_year = None, wyt_list = ['any']):
@@ -16,9 +16,9 @@ def assess_alteration(gages, metrics_paths, output_files = 'user_output_files', 
     for (gage, metrics) in zip(gages, metrics_paths):
         comid = gage.comid
         gage_id = gage.gage_id
-        has_wyt = comid_to_class(comid)    
+        has_wyt = comid_to_wyt(comid, 2022)    
         for wyt in wyt_list:
-            if not has_wyt and wyt is not "any":
+            if has_wyt == 'unknown' and wyt != "any":
                 return_message = return_message + f"The selected comid: {comid} for the gage: {gage_id} has no water year types associated with it skipping it for water year type {wyt}...\n"
                 continue
 
@@ -31,7 +31,10 @@ def assess_alteration(gages, metrics_paths, output_files = 'user_output_files', 
             formatted_percentiles, formatted_raw, count = format_metrics(metrics, wyt = wyt, aa_start_year = aa_start_year, aa_end_year = aa_end_year)
             
             if formatted_raw.empty:
-                return_message = return_message + f"The year range selected {aa_start_year}-{aa_end_year} leaves the gage {gage_id} with no data for water year type {wyt}. Skipping it...\n"
+                if aa_start_year and aa_start_year:
+                    return_message = return_message + f"The year range selected {aa_start_year}-{aa_end_year} leaves the gage {gage_id} with no data for water year type {wyt}. Skipping it...\n"
+                else:
+                    return_message = return_message + f"The gage {gage_id} has no data for water year type {wyt}. Skipping it...\n"
                 continue
 
             output_df = compare_data_frames(formatted_raw, predicted_metrics, formatted_percentiles, count)
@@ -106,7 +109,7 @@ def write_alteration_assessment(aa_list, output_dir, wyt = False):
     file_string = 'combined'
     list_to_add = ['Source']
     # case when we are not batching
-    if (len(aa_list) == 1) or (wyt and len(aa_list) <= 3):
+    if (len(aa_list) == 1) or (wyt and len(aa_list) <= 4):
         file_string = gage_id
         list_to_add = []
 
@@ -146,7 +149,7 @@ def format_metrics(file_path, wyt = None, aa_start_year = None, aa_end_year = No
         metric_data.drop(metric_data[metric_data.Year < aa_start_year].index, inplace=True)
     if aa_end_year is not None:
         metric_data.drop(metric_data[metric_data.Year > aa_end_year].index, inplace=True)
-    if wyt is not None and wyt is not "any":
+    if wyt is not None and wyt != "any":
         metric_data = metric_data.loc[metric_data['WYT'] == wyt]
     if metric_data.empty:
         return None, metric_data, None
@@ -171,7 +174,7 @@ def get_predicted_flow_metrics(comid, wyt="any"):
             metrics_filtered = metrics_filtered.drop(columns=['wyt'])
             deduplicated = metrics_filtered[metrics_filtered['source'].isin(['model', 'inferred'])]
         else:
-            metrics_filtered = metrics_full.copy()
+            metrics_filtered = metrics_full[metrics_full['wyt'] == 'all']
             deduplicated = metrics_filtered[metrics_filtered['source'].isin(['model', 'inferred'])]
 
         deduplicated = deduplicated.drop(columns=['gage_id', 'observed_years','alteration','source','comid'])
