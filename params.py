@@ -1,12 +1,12 @@
 winter_params = {
     'max_zero_allowed_per_year': 270,
-    'max_nan_allowed_per_year': 18,
+    'max_nan_allowed_per_year': 36,
     'max_consecutive_nan_allowed_per_year': 7
 }
 
 fall_params = {
     'max_zero_allowed_per_year': 270,
-    'max_nan_allowed_per_year': 18,
+    'max_nan_allowed_per_year': 36,
     'max_consecutive_nan_allowed_per_year': 7,
     'min_flow_rate': 1, # Don't calculate flow metrics if max flow is below this value.
     'sigma': 0.2,  # Smaller filter to find fall flush peak
@@ -27,7 +27,7 @@ fall_params = {
 
 spring_params = {
     'max_zero_allowed_per_year': 270,
-    'max_nan_allowed_per_year': 18,
+    'max_nan_allowed_per_year': 36,
     'max_consecutive_nan_allowed_per_year': 7,
     'max_peak_flow_date': 350,  # max search date for the peak flow date
     'search_window_left': 20,  # left side of search window set around max peak
@@ -52,7 +52,7 @@ spring_params = {
 
 summer_params = {
     'max_zero_allowed_per_year': 270,
-    'max_nan_allowed_per_year': 18,
+    'max_nan_allowed_per_year': 36,
     'max_consecutive_nan_allowed_per_year': 7,
     'sigma': 7,  # scalar to set amount of smoothing
     'sensitivity': 900,  # increased sensitivity returns smaller threshold for derivative
@@ -73,14 +73,15 @@ general_params = {
 }
 
 flashy_params = {
-    'max_nan_allowed_per_year': 100, # max nan days allowed in a year for metrics to still attempt to be calculated (missing or bad data eg: -99999)
+    'max_nan_allowed_per_year': 36, # max nan days allowed in a year for metrics to still attempt to be calculated (missing or bad data eg: -99999)
     'max_zero_allowed_per_year': 360, # max no flow days (< 0.1 cfs) allowed in a year for metrics to still attempt to be calculated
+    'max_consecutive_nan_allowed_per_year': 7, # max allowed unbroken streak of consecutive nan data days (missing or bad data eg: -99999)
     'rel_height': 1, # relative height compared to the top of the peak for surrounding data do be considered a plateau rather then no longer part of the peak
     'dry_min_flow_percent': 0.125, # a min flow threshold for the dry season to start based on the spring and min dry season baseflow
     'dry_min_peak_height': 15, # minimum peak height for a peak to be considered eligible for dry season recession (next param also affects this)
     'dry_min_peak_scaling_factor': 0.15, # factor to multiply the water year median by when calculating the min size of an elidible peak the min of min_peak_height_dry (above param) and Median*min_peak_scaling_factor_dry is used
     'dry_season_smoothing_window': 4, # window size for gaussian smoothing
-    'dry_season_smoothing_alpha': 1.3, # smoothing alpha for guassian smoothing, higher value = more aggressive smoothing
+    'dry_season_smoothing_alpha': 1.3, # smoothing alpha for gaussian smoothing, higher value = more aggressive smoothing
     'wet_min_peak_height': 10, # same as "dry_min_peak_height" but for peaks used by the wet timing metric 
     'wet_min_peak_scaling_factor': 0.1, # same as "dry_min_peak_scaling_factor" but for peaks used by the wet timing metric 
     'fall_min_height': 1, # min height for a peak to be considered for fall pulse flow

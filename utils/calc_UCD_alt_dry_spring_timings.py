@@ -1,5 +1,5 @@
 import numpy as np
-from utils.helpers import drop_last_nan_columns, replace_nan, regex_peak_detection, smth_gaussian
+from utils.helpers import drop_last_nan_columns, get_max_consecutive_nan, replace_nan, regex_peak_detection, smth_gaussian
 from params import flashy_params
 
 def Altered_Summer_Dry_Season_Tim_Varied(flow, flow_thresh, day_thresh=5, roc_thresh=0.02):
@@ -73,6 +73,7 @@ def Altered_Spring_Recession(flow_matrix):
     min_dry_flow_percent = flashy_params["dry_min_flow_percent"]
     max_nan_per_year = flashy_params["max_nan_allowed_per_year"]
     max_zero_per_year = flashy_params["max_zero_allowed_per_year"]
+    max_consecutive_nan_allowed_per_year = flashy_params['max_consecutive_nan_allowed_per_year']
     min_peak_height = flashy_params["dry_min_peak_height"]
     min_peak_scaling_factor = flashy_params["dry_min_peak_scaling_factor"]
     window = flashy_params["dry_season_smoothing_window"]
@@ -101,6 +102,17 @@ def Altered_Spring_Recession(flow_matrix):
             SP_Dur.append(np.nan)
             DS_Tim.append(np.nan)
             continue
+
+        # Skip the year if there are more than 7 consecutive NA points
+        elif get_max_consecutive_nan(flow_data) > max_consecutive_nan_allowed_per_year:
+            SP_Tim.append(np.nan)
+            SP_Mag.append(np.nan)
+            SP_ROC.append(np.nan)
+            SP_ROC_Max.append(np.nan)
+            SP_Dur.append(np.nan)
+            DS_Tim.append(np.nan)
+            continue
+
 
         # Check to see if there are more than the allowable number of 0s in the vector
         elif np.sum((flow_data <= 0.1) & ~np.isnan(flow_data)) >= max_zero_per_year:
