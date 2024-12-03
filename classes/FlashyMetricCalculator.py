@@ -1,6 +1,7 @@
 from classes.MetricCalculator import Calculator
 from utils.calc_UCD_alt_dry_spring_timings import Altered_Spring_Recession
 from utils.calc_UCD_alt_wet_fall_timings import Altered_Fall_Wet_Timing
+from params import flashy_params
 
 class FlashyCalculator(Calculator):
     # To be in line with python documentation https://docs.python.org/3/library/exceptions.html#NotImplementedError
@@ -20,6 +21,14 @@ class FlashyCalculator(Calculator):
 
     spring_transition_timing_magnitude = None
     _format_spring_transition_magnitude = None
+    
+    def __init__(self, flow_matrix, year_ranges, flow_class, first_year, start_date):
+       
+       self.params = {}
+       self.params['general_params'] = flashy_params
+       self.params['winter_params'] = flashy_params
+       super().__init__(flow_matrix, year_ranges, flow_class, first_year, start_date)
+
 
     def dry_spring_timings(self):
         # combines the functionality of start_of_summer, spring_transition_timing_magnitude, spring_transition_duration and spring_transition_roc from the reference calculator

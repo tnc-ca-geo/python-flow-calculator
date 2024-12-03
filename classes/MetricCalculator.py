@@ -25,7 +25,6 @@ class Calculator:
         self.start_date = start_date
         self.julian_start_date = datetime.strptime(
             "{}/2001".format(start_date), "%m/%d/%Y").timetuple().tm_yday
-        self.params = None
         
 
 
@@ -57,9 +56,9 @@ class Calculator:
     
     def all_year(self):
         params = self.params['general_params'] if self.params else general_params
-        average_annual_flows, standard_deviations, coefficient_variations = calc_all_year(
-            self.flow_matrix, params)
-        return self._format_all_year(average_annual_flows, standard_deviations, coefficient_variations)
+        average_annual_flows, standard_deviations, coefficient_variations, skipped_years_message = calc_all_year(
+            self.flow_matrix, self.first_year, params)
+        return self._format_all_year(average_annual_flows, standard_deviations, coefficient_variations), skipped_years_message
 
     def _format_all_year(self,average_annual_flows,standard_deviations,coefficient_variations):
         results = {}
