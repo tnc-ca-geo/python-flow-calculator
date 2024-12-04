@@ -31,7 +31,7 @@ def assess_alteration(gages, metrics_paths, output_files = 'user_output_files', 
             formatted_percentiles, formatted_raw, count = format_metrics(metrics, wyt = wyt, aa_start_year = aa_start_year, aa_end_year = aa_end_year)
             
             if formatted_raw.empty:
-                if aa_start_year and aa_start_year:
+                if aa_start_year and aa_end_year:
                     return_message = return_message + f"The year range selected {aa_start_year}-{aa_end_year} leaves the gage {gage_id} with no data for water year type {wyt}. Skipping it...\n"
                 else:
                     return_message = return_message + f"The gage {gage_id} has no data for water year type {wyt}. Skipping it...\n"
