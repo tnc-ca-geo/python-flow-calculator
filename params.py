@@ -68,8 +68,10 @@ summer_params = {
 general_params = {
     'annual_result_low_Percentille_filter': 0,
     'annual_result_high_Percentille_filter': 100,
-    'max_nan_allowed_per_year': 18, 
-    'max_consecutive_nan_allowed_per_year': 7
+    'max_zero_allowed_per_year': 270,
+    'max_nan_allowed_per_year': 36,
+    'max_consecutive_nan_allowed_per_year': 7,
+    'min_flow_rate': 1
 }
 
 flashy_params = {
