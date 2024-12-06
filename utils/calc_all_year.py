@@ -43,9 +43,7 @@ def calc_all_year(flow_matrix, first_year, general_params=def_gen_params):
         elif num_zeroes > max_zero_allowed_per_year:
             skipped_years_message = skipped_years_message + f'{year} skipped because number of zero flow days ({num_zeroes}) exceeds the max allowed zero flow days per year ({max_zero_allowed_per_year})\n'            
             continue
-        elif max_flow < min_flow_rate:
-            skipped_years_message = skipped_years_message + f'{year} skipped because max flow rate ({max_flow}) is less then the minimum required flow ({min_flow_rate})\n'            
-            continue
+
         
 
         average_annual_flows[-1] = np.nanmean(flow_matrix[:, index])
