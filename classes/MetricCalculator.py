@@ -17,7 +17,7 @@ class Calculator:
 
     exceedance_percent = [2, 5, 10, 20, 50]
 
-    def __init__(self, flow_matrix, year_ranges, flow_class, first_year, start_date):
+    def __init__(self, flow_matrix, year_ranges, flow_class, first_year, start_date, params = None):
         self.flow_matrix = flow_matrix
         self.year_ranges = fill_year_array(list(set(year_ranges)))
         self.flow_class = flow_class
@@ -25,9 +25,7 @@ class Calculator:
         self.start_date = start_date
         self.julian_start_date = datetime.strptime(
             "{}/2001".format(start_date), "%m/%d/%Y").timetuple().tm_yday
-        if not self.params:
-            self.params = None
-        
+        self.params = params
 
     def new_low_flow_metrics(self):
         if not self._summer_timings:

@@ -24,10 +24,10 @@ class FlashyCalculator(Calculator):
     
     def __init__(self, flow_matrix, year_ranges, flow_class, first_year, start_date):
        
-       self.params = {}
-       self.params['general_params'] = flashy_params
-       self.params['winter_params'] = flashy_params
-       super().__init__(flow_matrix, year_ranges, flow_class, first_year, start_date)
+       params = {}
+       params['general_params'] = flashy_params
+       params['winter_params'] = flashy_params
+       super().__init__(flow_matrix, year_ranges, flow_class, first_year, start_date, params = params)
 
 
     def dry_spring_timings(self):
