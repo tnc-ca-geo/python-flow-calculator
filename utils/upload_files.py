@@ -36,7 +36,8 @@ def upload_files(start_date, gage_arr, output_files = 'user_output_files', batch
             warning_message += csv_warning_message
             matrix = MatrixConversion(
                 dataset['date'], dataset['flow'], start_date)
-            results, used_calculator = get_results(matrix, int(gage.flow_class), start_date, gage.comid, gage.selected_calculator)
+            results, used_calculator, results_message = get_results(matrix, int(gage.flow_class), start_date, gage.comid, gage.selected_calculator)
+            warning_message += results_message
             output_dir0 = write_annual_flow_matrix(file_name, results, file_base_name[0])
             output_dir1 = write_annual_flow_result(file_name, results, file_base_name[1])
             if PRODUCE_DRH:
@@ -82,7 +83,7 @@ def calc_results_flashy(matrix, flow_class, start_date = '10/1', comid = None):
     results["wet"] = {}
     results["spring"] = {}
     results["summer"] = {}
-    results["all_year"] = calculator.all_year()
+    results["all_year"], return_message = calculator.all_year()
     results["winter"] = calculator.winter_highflow_annual()
     results["spring"], start_of_summer = calculator.dry_spring_timings()
     results["fall"], fall_wet_timings = calculator.fall_flush_timings_durations()
@@ -94,7 +95,7 @@ def calc_results_flashy(matrix, flow_class, start_date = '10/1', comid = None):
     results["new_low"], results["classification"] = calculator.new_low_flow_metrics()
     if comid is not None:
         results["classification"]["wyt"] = [comid_to_wyt(comid,i) for i in results["year_ranges"]]
-    return results
+    return results, return_message
 
 def calc_results_reference(matrix, flow_class, start_date = '10/1', comid = None):
     results = {}
@@ -108,7 +109,7 @@ def calc_results_reference(matrix, flow_class, start_date = '10/1', comid = None
     results["wet"] = {}
     results["spring"] = {}
     results["summer"] = {}
-    results["all_year"] = calculator.all_year()
+    results["all_year"], return_message = calculator.all_year()
     results["winter"] = calculator.winter_highflow_annual()
     start_of_summer = calculator.start_of_summer()
     results["fall"], fall_wet_timings = calculator.fall_flush_timings_durations()
@@ -123,7 +124,7 @@ def calc_results_reference(matrix, flow_class, start_date = '10/1', comid = None
     results["new_low"], results["classification"] = calculator.new_low_flow_metrics()
     if comid is not None:
         results["classification"]["wyt"] = [comid_to_wyt(comid,i) for i in results["year_ranges"]]
-    return results, calculator.calc_RBFI(), calc_avg_nan_per_year(copy.deepcopy(results)) 
+    return results, calculator.calc_RBFI(), calc_avg_nan_per_year(copy.deepcopy(results)), return_message 
 
 def get_results(matrix, flow_class, start_date = None, comid = None, desired_calculator = None):
     if flow_class is None or flow_class == 10:
@@ -132,25 +133,25 @@ def get_results(matrix, flow_class, start_date = None, comid = None, desired_cal
         # no specified calculator, determine which is better
     
         if int(flow_class) == 7:
-            flashy_res = calc_results_flashy(matrix, flow_class, start_date, comid)
-            return flashy_res, 'Flashy (Class 7)'
+            flashy_res, calc_return_message = calc_results_flashy(matrix, flow_class, start_date, comid)
+            return flashy_res, 'Flashy (Class 7)', calc_return_message
         else:
-            reference_res, rbfi, annual_nan = calc_results_reference(copy.deepcopy(matrix), flow_class, start_date, comid)
+            reference_res, rbfi, annual_nan, calc_return_message = calc_results_reference(copy.deepcopy(matrix), flow_class, start_date, comid)
             
             if(rbfi + annual_nan > 0.8):
-                flashy_res = calc_results_flashy(matrix, flow_class, start_date, comid)
-                return flashy_res, 'Flashy (RBFI + mean annual nan > 0.8)'
+                flashy_res, calc_return_message = calc_results_flashy(matrix, flow_class, start_date, comid)
+                return flashy_res, 'Flashy (RBFI + mean annual nan > 0.8)', calc_return_message
             else:
-                return reference_res, 'Reference (RBFI + mean annual nan <= 0.8)'
+                return reference_res, 'Reference (RBFI + mean annual nan <= 0.8)', calc_return_message
     
     elif desired_calculator.lower() == 'reference':
         # use the reference calculator
-        reference_res, _, _ = calc_results_reference(matrix, flow_class, start_date, comid)
-        return reference_res, 'Reference (User Specified)'
+        reference_res, _, _, calc_return_message = calc_results_reference(matrix, flow_class, start_date, comid)
+        return reference_res, 'Reference (User Specified)', calc_return_message
     elif desired_calculator.lower() == 'flashy':
         # use the ucdavis flashy calculator
-        flashy_res = calc_results_flashy(matrix, flow_class, start_date, comid)
-        return flashy_res, 'Flashy (User Specified)'
+        flashy_res,calc_return_message = calc_results_flashy(matrix, flow_class, start_date, comid)
+        return flashy_res, 'Flashy (User Specified)', calc_return_message
     
 def write_annual_flow_matrix(file_name, results, file_type):
     flow_matrix = np.array(results['flow_matrix']).T

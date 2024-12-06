@@ -1,5 +1,5 @@
 import numpy as np
-from utils.helpers import drop_last_nan_columns, replace_nan, regex_peak_detection
+from utils.helpers import drop_last_nan_columns, get_max_consecutive_nan, replace_nan, regex_peak_detection
 from params import flashy_params
 
 def Altered_Fall_Wet_Timing(flow_matrix, DS_Tim):
@@ -23,6 +23,7 @@ def Altered_Fall_Wet_Timing(flow_matrix, DS_Tim):
     median_scaling_factor = flashy_params['fall_median_scaling_factor']
     max_nan_per_year = flashy_params['max_nan_allowed_per_year']
     max_zero_per_year = flashy_params['max_zero_allowed_per_year']
+    max_consecutive_nan_allowed_per_year = flashy_params['max_consecutive_nan_allowed_per_year']
     # done to deal with the way the reference calculators deal with leap years while maintaining a square matrix
     flow_list = drop_last_nan_columns(flow_matrix)
     
@@ -50,8 +51,17 @@ def Altered_Fall_Wet_Timing(flow_matrix, DS_Tim):
             Wet_Tim.append(np.nan)
             continue
         
-        # Skip the year if there are more than 100 NA flow data points
-        if (np.count_nonzero(np.isnan(flow_data)) >= max_nan_per_year  or
+        # Skip the year if there are more than 7 consecutive NA points
+        elif get_max_consecutive_nan(flow_data) > max_consecutive_nan_allowed_per_year:
+            FA_Tim.append(np.nan)
+            FA_Mag.append(np.nan)
+            FA_Dif_num.append(np.nan)
+            FA_Dur.append(np.nan)
+            Wet_Tim.append(np.nan)
+            continue
+
+        # Skip the year if there are more than 36 NA flow data points
+        elif (np.count_nonzero(np.isnan(flow_data)) >= max_nan_per_year  or
             np.all(flow_data < 1)):
             # If conditions are met, set all the metrics to NaN
             FA_Tim.append(np.nan)
