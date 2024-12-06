@@ -25,8 +25,9 @@ class Calculator:
         self.start_date = start_date
         self.julian_start_date = datetime.strptime(
             "{}/2001".format(start_date), "%m/%d/%Y").timetuple().tm_yday
+        if not self.params:
+            self.params = None
         
-
 
     def new_low_flow_metrics(self):
         if not self._summer_timings:
