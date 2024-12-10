@@ -321,4 +321,4 @@ def read_csv_to_arrays(file_path):
 
     flow = df[flow_column]
 
-    return {date_column: dates, flow_column: flow}, warning_message
+    return {'date': dates, 'flow': flow}, warning_message
