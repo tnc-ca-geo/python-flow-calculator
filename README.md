@@ -148,11 +148,22 @@ See below for more information on what data you might want to give it.
 
    1. Data filtering:
 
-      The updated calculator requires no more then 18 days of missing data per water year and allows up to 7 days of consecutive missing data. The previous recommendation was to require 358 days of data to run a year. These differences may result in slight changes in metrics that are summarized over multiple years, including peak flow metrics.
+      The updated calculator requires no more then 36 days of missing or NA data per water year and allows up to 7 days of consecutive missing or NA data. The previous recommendation was to require 358 days of data to run a year. These differences may result in slight changes in metrics that are summarized over multiple years, including peak flow metrics. In particular, since the dry season extends into the subsequent water year, if the subsequent year is missing, dry season magnitude and duration metrics will not calculate.
 
    2. New low flow metrics:
 
-      After talking with the original author the low flow metrics have been adapted to fit in with the existing calculator(s) better, most notably this includes: the calculated DS_Tim is used as the start date whenever it is available and June 1st is used otherwise. The end date is always December 31st. For years classified as perennial the number of low flow days is not calculated to draw more attention to the minimum 7 day average metrics and vise versa for years classified as intermittent.
+      This version adds several low flow metrics which were not in the original calculator: DS_No_Flow_Dur, DS_No_Flow_Tim, DS_7d_Low_Mag, and DS_7D_Low_Tim. All of these seek to identify the driest period of the year. After talking with the original author the low flow metrics have been adapted to fit in with the existing calculator(s) better, most notably this includes: the calculated DS_Tim is used as the start of the search window for these metrics whenever it is available and June 1st is used otherwise. The end of the search window is always December 31st. For years classified as perennial the number of low flow days is not calculated to draw more attention to the minimum 7 day average metrics and vise versa for years classified as intermittent.
+
+  3. Water year type and intermittent/perennial classification:
+
+     Water year type is assigned for years after 1950 using the Natural Flows Database: rivers.codefornature.org. Years are divided in equal thirds into wet (0-33.3% exceedence), average (33.4-66.6% exceedence), and dry (66.7-100% exceedence).
+     Results for each year of a timeseries and for each timeseries overall are classified as either intermittent or perennial flow. A year was classified as intermittent if there were at least 5 consecutive days of zero flows (<=0.1cfs) during the dry season, and a stream was defined as intermittent if 15% or more of years were classified as intermittent. These are defined according to the methods in Ayers et al. 2024 (https://onlinelibrary.wiley.com/doi/abs/10.1029/2023WR035768).  
+   
+  5.  Corrections to reference flow calculator:
+
+     Several minor errors that had been identified in the original version of the calculator were corrected.
+        - Fall timing of 0 is no longer permitted, since this would occur in the previous water year.
+        - Spring magnitude for rainfed systems now matches the value at the start day (4 days after the last peak of the wet season).
 
 ## Questions and Comments
 
