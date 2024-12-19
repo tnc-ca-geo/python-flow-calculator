@@ -144,5 +144,5 @@ def calc_summer_baseflow_durations_magnitude(flow_matrix, summer_start_dates, fa
             summer_wet_durations.append(None)
             summer_no_flow_counts.append(None)
 
-    return summer_90_magnitudes, summer_50_magnitudes, summer_flush_durations, summer_wet_durations, summer_no_flow_counts
+    return summer_90_magnitudes, summer_50_magnitudes, summer_flush_durations, summer_wet_durations
 
