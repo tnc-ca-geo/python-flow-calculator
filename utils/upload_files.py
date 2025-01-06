@@ -178,8 +178,6 @@ def write_drh(file_name, results, file_type):
 
 def write_annual_flow_result(file_name, results, file_type):
     # remove summer no_flow from main output but save it for supplementary outputs
-    summer_no_flow = results['summer']['no_flow_counts']
-    del results['summer']['no_flow_counts']
 
     dataset = []
     # dict_to_array(result['all_year'], 'all_year', dataset)
@@ -196,7 +194,6 @@ def write_annual_flow_result(file_name, results, file_type):
                             ['standard_deviations'])
     dataset.append(['CV'] + results['all_year']
                             ['coefficient_variations'])
-    dataset.append(['DS_No_Flow'] + summer_no_flow)
     results['year_ranges'].insert(0,'Year')
     df = pd.DataFrame(dataset)
     df.columns = results['year_ranges']

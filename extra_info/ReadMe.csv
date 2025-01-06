@@ -34,10 +34,7 @@ Dry-season no-flow duration,days,DS_No_Flow_Dur,Longest number of days in which 
 Dry-season 7 day low flow magnitude,cfs,DS_7d_Low_Mag,Minimum 7 day rolling average magnitude observed within the dry season for each water year ignoring the last 6 days as they dont have a 7 day average totally within that dry season
 Dry-season 7 day low flow timing,water year day,DS_7d_Low_Tim,First observed date of occurence for the min 7 day average within the dry season. Note that this date is the start of the minimum 7 day period so consider the date in question and the next 6.
 Intermittent Classification,classification,Int_Class, Classification of either Perrenial or Intermittent based on the average number of no flow days in the supplied data per dry season
-,,,
-Supplemental Flow Metrics,,,
 Flow Metric Name,Unit,Flow Metric Code,Flow Metric Description
 Average annual flow,cfs,Avg,Average annual flow
 Standard deviaiton,cfs,Std,Stardard deviation of daily flow
 Coefficient of variation,unitless ,CV,Coefficient of variation (standard deviation divided by average annual flow)
-Dry-season no-flow,days,DS_No_Flow,Number of days during dry season in which flow magnitude is 0 cfs

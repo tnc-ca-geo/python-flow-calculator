@@ -142,17 +142,16 @@ class Calculator:
             self.fall_flush_timings_durations()
         if not self._fall_timings:
             self.fall_flush_timings_durations()
-        summer_90_magnitudes, summer_50_magnitudes, summer_flush_durations, summer_wet_durations, summer_no_flow_counts = calc_summer_baseflow_durations_magnitude(
+        summer_90_magnitudes, summer_50_magnitudes, summer_flush_durations, summer_wet_durations = calc_summer_baseflow_durations_magnitude(
             self.flow_matrix, self._summer_timings, self._fall_timings, self._fall_wet_timings)
-        return self._format_summer_baseflow(summer_90_magnitudes,summer_50_magnitudes,summer_flush_durations,summer_wet_durations,summer_no_flow_counts)
+        return self._format_summer_baseflow(summer_90_magnitudes,summer_50_magnitudes,summer_flush_durations,summer_wet_durations)
 
-    def _format_summer_baseflow(self,summer_90_magnitudes,summer_50_magnitudes,summer_flush_durations,summer_wet_durations,summer_no_flow_counts):
+    def _format_summer_baseflow(self,summer_90_magnitudes,summer_50_magnitudes,summer_flush_durations,summer_wet_durations):
         results = {}
         results["magnitudes_fifty"] = summer_50_magnitudes
         results["magnitudes_ninety"] = summer_90_magnitudes
         #results["summer_flush_durations"] = summer_flush_durations
         results["durations_wet"] = summer_wet_durations
-        results["no_flow_counts"] = summer_no_flow_counts
         return results
 
     def spring_transition_timing_magnitude(self):

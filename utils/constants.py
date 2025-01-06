@@ -19,7 +19,6 @@ TYPES = {
     'summer_magnitudes_fifty': "DS_Mag_50",
     'summer_durations_flush': "DS_Dur_WSI",
     'summer_durations_wet': "DS_Dur_WS",
-    'summer_no_flow_counts': "DS_No_Flow",
     'fall_timings_julian': "FA_Tim_julian",
     'fall_timings_water': "FA_Tim",
     'fall_magnitudes': "FA_Mag",
