@@ -14,7 +14,8 @@
      - [Formatting the CSV](#formatting-the-csv)
    - [Alteration Assessments](#alteration-assessments)
 5. [Testing](#testing)
-6. [Questions and Comments](#questions-and-comments)
+6. [Output data](#output-data)
+7. [Questions and Comments](#questions-and-comments)
    - [Extra info](#extra-info)
 
 ## About
@@ -132,6 +133,93 @@ See below for more information on what data you might want to give it.
 
    In addition to a default alteration assessment there is also the possibility to do a alteration assessment by water year type. For this to be possible your comid must be found within the `extra_info/comid_to_wyt.csv` file, which assigns one of 3 water year types to each year since 1950 for each comid reach. More information on the specifics of that file is contained within the `extra_info/README.md` file. The water year type alteration assessment will group the output metrics by water year type and compare them to the Code for Nature natural functional flow metrics by water year type. This can be more accurate if you have many years of data with a good distribution of different water year types.
 
+## Output data
+
+   Data calculated will be output to a folder within the `user_output_files/` directory with the following naming scheme: `<input_file_name>_YYYY-MM-DD-mm` with the `input_file_name` parameter being the gage id or "Multiple" if there were several gages run simultaneously using the batch functionality. For user uploaded time series data `input_file_name` is simply the name of the provided csv file.
+
+   Within that folder there will be several output files including the following files:
+
+   | File name                                             | Short description                                                                   | Required |
+   |-------------------------------------------------------|-------------------------------------------------------------------------------------|----------|
+   | `<input_file_name>_annual_flow_matrix.csv`            | Flow matrix created by the calculator from the input data to calculate metrics on.   | Yes      |
+   | `<input_file_name>_annual_flow_result.csv`            | All of the metrics calculated based on the flow matrix organized by water year.     | Yes      |
+   | `<input_file_name>_alteration_assessment.csv`         | Each metric and whether or not it is believed to be altered based on predicted data.| No       |
+   | `<input_file_name>_predicted_observed_percentiles.csv`| Predicted and observed percentiles used for the alteration assessment.              | No       |
+   | `<input_file_name>_run_metadata.csv`                  | Metadata and parameters used for the run of the calculator                          | Yes      |
+
+   Files with the required field are always output whereas the non required files will be output or not based on user input. Below is a breakdown of most of the files that may need some extra context.
+
+   The content of the `flow_result` file can be broken down in the following table (adapted version of [the original repositories README.csv](https://github.com/leogoesger/func-flow/blob/master/metrics_info/ReadMe.csv) file). Descriptions of results are included below, with more detailed explanations available in the [eFlows documentation](https://eflows.gitbook.io/project/website_summary). Some additional Low Flow metrics are included in the `flow_result` file and are sourced from the [Functional Low Flows Repository](https://github.com/jessayers20/Functional-Low-Flows).
+
+   | Name                               | Unit               | Code               | Description                                                                                   |
+   |------------------------------------|--------------------|--------------------|-----------------------------------------------------------------------------------------------|
+   | Fall pulse magnitude               | cfs                | FA_Mag             | Peak magnitude of fall pulse event (maximum daily peak flow during event)                     |
+   | Fall pulse timing                  | water year day     | FA_Tim             | Water year day of fall pulse event peak                                                       |
+   | Fall pulse duration                | days               | FA_Dur             | Duration of fall pulse event                                                                  |
+   | Wet-season low baseflow            | cfs                | Wet_BFL_Mag_10     | Magnitude of wet-season baseflows (10th percentile of daily flows within that season)         |
+   | Wet-season median baseflow         | cfs                | Wet_BFL_Mag_50     | Magnitude of wet-season baseflows (50th percentile of daily flows within that season)         |
+   | Wet-season timing                  | water year day     | Wet_Tim            | Start date of wet-season in water year days                                                   |
+   | Wet-season duration                | days               | Wet_BFL_Dur        | Wet-season baseflow duration (# of days from start of wet-season to start of spring season)   |
+   | 2-year flood magnitude             | cfs                | Peak_2             | 2-year recurrence interval peak flow                                                          |
+   | 5-year flood magnitude             | cfs                | Peak_5             | 5-year recurrence interval peak flow                                                          |
+   | 10-year flood magnitude            | cfs                | Peak_10            | 10-year recurrence interval peak flow                                                         |
+   | 2-year flood duration              | days               | Peak_Dur_2         | Seasonal duration of 2-year recurrence interval peak flow                                     |
+   | 5-year flood duration              | days               | Peak_Dur_5         | Seasonal duration of 5-year recurrence interval peak flow                                     |
+   | 10-year flood duration             | days               | Peak_Dur_10        | Seasonal duration of 10-year recurrence interval peak flow                                    |
+   | 2-year flood frequency             | occurrences        | Peak_Fre_2         | Frequency of 2-year recurrence interval peak flow within a season                             |
+   | 5-year flood frequency             | occurrences        | Peak_Fre_5         | Frequency of 5-year recurrence interval peak flow within a season                             |
+   | 10-year flood frequency            | occurrences        | Peak_Fre_10        | Frequency of 10-year recurrence interval peak flow within a season                            |
+   | Spring recession magnitude         | cfs                | SP_Mag             | Spring recession magnitude (daily flow on start date of spring-flow period)                   |
+   | Spring timing                      | water year day     | SP_Tim             | Start date of spring in water year days                                                       |
+   | Spring duration                    | days               | SP_Dur             | Spring flow recession duration (# of days from start of spring to start of dry-season period) |
+   | Spring rate of change              | percent            | SP_ROC             | Spring flow recession rate (median daily rate of change during recession)                     |
+   | Dry-season median baseflow         | cfs                | DS_Mag_50          | 50th percentile of daily flow within dry season                                               |
+   | Dry-season high baseflow           | cfs                | DS_Mag_90          | 90th percentile of daily flow within dry season                                               |
+   | Dry-season timing                  | water year day     | DS_Tim             | Dry-season baseflow start timing                                                              |
+   | Dry-season duration                | days               | DS_Dur_WS          | Dry-season baseflow duration                                                                  |
+   | Dry-season first Zero Flow Day     | water year day     | DS_No_Flow_Tim     | Date of first day where flow magnitude is <= 0.1 cfs                                          |
+   | Dry-season no-flow duration        | days               | DS_No_Flow_Dur     | Longest number of days with flow magnitude <= 0.1 cfs                                         |
+   | Dry-season 7-day low flow magnitude| cfs                | DS_7d_Low_Mag      | Minimum 7-day rolling average magnitude in the dry season                                     |
+   | Dry-season 7-day low flow timing   | water year day     | DS_7d_Low_Tim      | Start date of minimum 7-day period in the dry season                                          |
+   | Intermittent Classification        | classification     | Int_Class          | Classification of either Perennial or Intermittent based on average no-flow days per season   |
+   | Average annual flow                | cfs                | Avg                | Average annual flow                                                                           |
+   | Standard deviation                 | cfs                | Std                | Standard deviation of daily flow                                                              |
+   | Coefficient of variation           | unitless           | CV                 | Coefficient of variation (standard deviation divided by average annual flow)                  |
+
+   The `alteration_assessment` file's contents can be broken down as follows:
+
+   | Column Name       | Description                                                                                                  |
+   |-------------------|--------------------------------------------------------------------------------------------------------------|
+   | WYT               | Water Year Type. Categories include "any", "wet", "dry", and "moderate".                                     |
+   | metric            | Flow metric being evaluated (e.g., DS_Dur_WS, DS_Mag_50, FA_Tim).                                            |
+   | alteration_type   | Type of alteration found in the flow metric (e.g., "none_found", "high", "low", "late").                     |
+   | status            | Likely status of the metric based on alteration type (e.g., "likely_altered", "likely_unaltered").           |
+   | status_code       | Numeric code representing the status: 1 (unaltered) or -1 (altered).                                         |
+   | median_in_iqr     | Indicates if the median observed value of the metric is within the interquartile range (True or False).      |
+   | years_used        | Number of years used for the analysis.                                                                       |
+   | sufficient_data   | Indicates if there was sufficient data available for analysis. 10 or more years are reuqred (True or False). |
+
+   More information on what an alteration assessment is can be found in the [Alteration Assessments section](#alteration-assessments).
+
+   The accompanying predicted and observed percentiles used in the alteration assessment can be found in the `predicted_observed_percentiles` file which can be broken down as follows:
+
+   | Column Name      | Description                                                                                                        |
+   |------------------|--------------------------------------------------------------------------------------------------------------------|
+   | WYT              | Water Year Type the below percentiles are aggregated over. Categories include "any", "wet", "dry", and "moderate". |
+   | metric           | Flow metric being evaluated (e.g., DS_Dur_WS, DS_Mag_50, FA_Tim).                                                  |
+   | p10              | 10th percentile value of the observed data for the given metric.                                                   |
+   | p25              | 25th percentile value of the observed data for the given metric.                                                   |
+   | p50              | 50th percentile value (median) of the observed data for the given metric.                                          |
+   | p75              | 75th percentile value of the observed data for the given metric.                                                   |
+   | p90              | 90th percentile value of the observed data for the given metric.                                                   |
+   | p10_predicted    | Model-predicted 10th percentile value for the given metric.                                                        |
+   | p25_predicted    | Model-predicted 25th percentile value for the given metric.                                                        |
+   | p50_predicted    | Model-predicted 50th percentile value (median) for the given metric.                                               |
+   | p75_predicted    | Model-predicted 75th percentile value for the given metric.                                                        |
+   | p90_predicted    | Model-predicted 90th percentile value for the given metric.                                                        |
+
+   More information on the model used can be found in the [Alteration Assessments section](#alteration-assessments)
+
 ## Testing
 
    To run the test suite found in the `tests/` directory run the following command while in the root directory of this project:
@@ -154,16 +242,17 @@ See below for more information on what data you might want to give it.
 
       This version adds several low flow metrics which were not in the original calculator: DS_No_Flow_Dur, DS_No_Flow_Tim, DS_7d_Low_Mag, and DS_7D_Low_Tim. All of these seek to identify the driest period of the year. After talking with the original author the low flow metrics have been adapted to fit in with the existing calculator(s) better, most notably this includes: the calculated DS_Tim is used as the start of the search window for these metrics whenever it is available and June 1st is used otherwise. The end of the search window is always December 31st. For years classified as perennial the number of low flow days is not calculated to draw more attention to the minimum 7 day average metrics and vise versa for years classified as intermittent.
 
-  3. Water year type and intermittent/perennial classification:
+   3. Water year type and intermittent/perennial classification:
 
-     Water year type is assigned for years after 1950 using the Natural Flows Database: rivers.codefornature.org. Years are divided in equal thirds into wet (0-33.3% exceedence), average (33.4-66.6% exceedence), and dry (66.7-100% exceedence).
-     Results for each year of a timeseries and for each timeseries overall are classified as either intermittent or perennial flow. A year was classified as intermittent if there were at least 5 consecutive days of zero flows (<=0.1cfs) during the dry season, and a stream was defined as intermittent if 15% or more of years were classified as intermittent. These are defined according to the methods in Ayers et al. 2024 (https://onlinelibrary.wiley.com/doi/abs/10.1029/2023WR035768).  
-   
-  5.  Corrections to reference flow calculator:
+      Water year type is assigned for years after 1950 using the Natural Flows Database: [rivers.codefornature.org](rivers.codefornature.org). Years are divided in equal thirds into wet (0-33.3% exceedance), average (33.4-66.6% exceedance), and dry (66.7-100% exceedance).
+      Results for each year of a timeseries and for each timeseries overall are classified as either intermittent or perennial flow. A year was classified as intermittent if there were at least 5 consecutive days of zero flows (<=0.1cfs) during the dry season, and a stream was defined as intermittent if 15% or more of years were classified as intermittent. These are defined according to the methods in Ayers et al. 2024 ([https://onlinelibrary.wiley.com/doi/abs/10.1029/2023WR035768](https://onlinelibrary.wiley.com/doi/abs/10.1029/2023WR035768)).  
 
-     Several minor errors that had been identified in the original version of the calculator were corrected.
-        - Fall timing of 0 is no longer permitted, since this would occur in the previous water year.
-        - Spring magnitude for rainfed systems now matches the value at the start day (4 days after the last peak of the wet season).
+   4. Corrections to reference flow calculator:
+
+      Several minor errors that had been identified in the original version of the calculator were corrected.
+         - Fall timing of 0 is no longer permitted, since this would occur in the previous water year.
+         - Spring magnitude for rain fed systems now matches the value at the start day (4 days after the last peak of the wet season).
+         - Years that are both divisible by 100 and 4 are no longer considered leap years ie 1900 is not a leap year but was being considered one
 
 ## Questions and Comments
 
@@ -171,4 +260,4 @@ All questions or comment are encouraged to be sent to <nenerson@foundryspatial.c
 
 ### Extra info
 
-There are other README.md files within this project they can be found in the following directories: `extra_info/`, `user_input_files/` and `user_output_files/` directories. There is also a ReadMe.csv file from the reference flow calculator in `extra_info/`. Make sure to check them for a bit more information about the calculator.
+There are other README.md files within this project they can be found in the following directories: `extra_info/` and `user_input_files/`. Make sure to check them for a bit more information about the calculator.
