@@ -20,7 +20,9 @@
 
 ## About
 
-This is a remastered functional flow calculator a majority of the logic has been left unchanged but lots of new functionality has been added. The repository has been refactored to be more maintainable and the dependencies have all been updated. Sourced from the [original reference functional flows calculator](https://github.com/leogoesger/func-flow). Additional functionality has been implemented from [the ffc api client](https://github.com/ceff-tech/ffc_api_client) and [the flashy functional flow calculator](https://github.com/camcarpenter6/Alternate-Ruleset-FFC-BETA). As well as some [new low flow metrics](https://agupubs.onlinelibrary.wiley.com/doi/pdf/10.1029/2023WR035768) which have an R implementation [here](https://github.com/jessayers20/Functional-Low-Flows). It is still in active development so please report any bugs you find!
+This is a remastered functional flows calculator. A majority of the logic has been left unchanged but lots of new functionality has been added. The repository has been refactored to be more maintainable and the dependencies have all been updated. Sourced from the original reference functional flows calculator by Patterson et al. (https://www.sciencedirect.com/science/article/abs/pii/S002216942030247X), coded in python (https://github.com/leogoesger/func-flow). The stream classification used to adjust parameters was develope by Lane et al. (https://link.springer.com/article/10.1007/s00267-018-1077-7). Information on how to use these metrics and additional references are described in the California Environmental Flows Framework (ceff.ucdavis.edu). In particular, the alteration assessment is described in an appendix by Grantham (https://ceff.ucdavis.edu/sites/g/files/dgvnsk5566/files/media/documents/Appendix_J%20Assessing%20Flow%20Alteration.pdf), and uses modeled unimpaired functional flow metrics developed by Grantham et al. (https://www.frontiersin.org/journals/environmental-science/articles/10.3389/fenvs.2022.787473/full). Additional functionality has been implemented from the ffc api client R package developed by Peek and Santos (https://github.com/ceff-tech/ffc_api_client) and the flashy functional flows calculator developed by Carpenter et al. (https://github.com/camcarpenter6/Alternate-Ruleset-FFC-BETA). This code also incorporates new low flow metrics by Ayers et al. (https://agupubs.onlinelibrary.wiley.com/doi/pdf/10.1029/2023WR035768) which have an R implementation (https://github.com/jessayers20/Functional-Low-Flows). This remastered version was authored by Nathan Emerson of Foundry Spatial.
+
+This project was funded by the California Wildlife Conservation Board Stream Flow Enhancement Program under Proposition 1.
 
 ## Getting Started
 
@@ -256,7 +258,7 @@ See below for more information on what data you might want to give it.
 
 ## Questions and Comments
 
-All questions or comment are encouraged to be sent to <nenerson@foundryspatial.com>
+All questions or comment are encouraged to be sent to <kklausmeyer@tnc.org> or <bronwen.stanford@tnc.org>
 
 ### Extra info
 
