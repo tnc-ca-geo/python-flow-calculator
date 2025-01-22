@@ -146,7 +146,7 @@ See below for more information on what data you might want to give it.
 
 ## Output data
 
-   Data calculated will be output to a folder within the `user_output_files/` directory with the following naming scheme: `<input_file_name>_YYYY-MM-DD-mm` with the `input_file_name` parameter being the gage id or "Multiple" if there were several gages run simultaneously using the batch functionality. For user uploaded time series data `input_file_name` is simply the name of the provided csv file.
+   Data calculated will be output to a folder within the `user_output_files/` directory with the following naming scheme: `<input_file_name>_YYYY-MM-DD-mm` with the `input_file_name` parameter being the gage id or "Multiple" if there several gages were run simultaneously using the batch functionality. For user uploaded time series data `input_file_name` is simply the name of the provided csv file.
 
    Within that folder there will be several output files including the following files:
 
