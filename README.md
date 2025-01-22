@@ -160,7 +160,7 @@ See below for more information on what data you might want to give it.
 
    Files with the required field are always output whereas the non required files will be output or not based on user input. Below is a breakdown of most of the files that may need some extra context.
 
-   The content of the `flow_result` file can be broken down in the following table (adapted version of [the original repositories README.csv](https://github.com/leogoesger/func-flow/blob/master/metrics_info/ReadMe.csv) file). Descriptions of results are included below, with more detailed explanations available in the [eFlows documentation](https://eflows.gitbook.io/project/website_summary). Some additional Low Flow metrics are included in the `flow_result` file and are sourced from the [Functional Low Flows Repository](https://github.com/jessayers20/Functional-Low-Flows).
+   The content of the `flow_result` file can be broken down in the following table (adapted version of [the original repositories README.csv](https://github.com/leogoesger/func-flow/blob/master/metrics_info/ReadMe.csv) file). Descriptions of results are included below, with more detailed explanations available in the [eFlows documentation](https://eflows.gitbook.io/project/website_summary). Some additional Low Flow metrics are included in the `flow_result` file and are sourced from the [Functional Low Flows Repository](https://github.com/jessayers20/Functional-Low-Flows). All metrics are calculated on an annual basis (for each water year) except for peak flow magnitude.
 
    | Name                               | Unit               | Code               | Description                                                                                   |
    |------------------------------------|--------------------|--------------------|-----------------------------------------------------------------------------------------------|
@@ -174,12 +174,12 @@ See below for more information on what data you might want to give it.
    | 2-year flood magnitude             | cfs                | Peak_2             | 2-year recurrence interval peak flow                                                          |
    | 5-year flood magnitude             | cfs                | Peak_5             | 5-year recurrence interval peak flow                                                          |
    | 10-year flood magnitude            | cfs                | Peak_10            | 10-year recurrence interval peak flow                                                         |
-   | 2-year flood duration              | days               | Peak_Dur_2         | Seasonal duration of 2-year recurrence interval peak flow                                     |
-   | 5-year flood duration              | days               | Peak_Dur_5         | Seasonal duration of 5-year recurrence interval peak flow                                     |
-   | 10-year flood duration             | days               | Peak_Dur_10        | Seasonal duration of 10-year recurrence interval peak flow                                    |
-   | 2-year flood frequency             | occurrences        | Peak_Fre_2         | Frequency of 2-year recurrence interval peak flow within a season                             |
-   | 5-year flood frequency             | occurrences        | Peak_Fre_5         | Frequency of 5-year recurrence interval peak flow within a season                             |
-   | 10-year flood frequency            | occurrences        | Peak_Fre_10        | Frequency of 10-year recurrence interval peak flow within a season                            |
+   | 2-year flood duration              | days               | Peak_Dur_2         | Total days at or above 2-year recurrence interval peak flow                                     |
+   | 5-year flood duration              | days               | Peak_Dur_5         | Total days at or above 5-year recurrence interval peak flow                                     |
+   | 10-year flood duration             | days               | Peak_Dur_10        | Total days at or above 10-year recurrence interval peak flow                                    |
+   | 2-year flood frequency             | occurrences        | Peak_Fre_2         | Frequency of 2-year recurrence interval peak flow within a season (number of events)                            |
+   | 5-year flood frequency             | occurrences        | Peak_Fre_5         | Frequency of 5-year recurrence interval peak flow within a season (number of events)                            |
+   | 10-year flood frequency            | occurrences        | Peak_Fre_10        | Frequency of 10-year recurrence interval peak flow within a season (number of events)                           |
    | Spring recession magnitude         | cfs                | SP_Mag             | Spring recession magnitude (daily flow on start date of spring-flow period)                   |
    | Spring timing                      | water year day     | SP_Tim             | Start date of spring in water year days                                                       |
    | Spring duration                    | days               | SP_Dur             | Spring flow recession duration (# of days from start of spring to start of dry-season period) |
@@ -189,7 +189,7 @@ See below for more information on what data you might want to give it.
    | Dry-season timing                  | water year day     | DS_Tim             | Dry-season baseflow start timing                                                              |
    | Dry-season duration                | days               | DS_Dur_WS          | Dry-season baseflow duration                                                                  |
    | Dry-season first Zero Flow Day     | water year day     | DS_No_Flow_Tim     | Date of first day where flow magnitude is <= 0.1 cfs                                          |
-   | Dry-season no-flow duration        | days               | DS_No_Flow_Dur     | Longest number of days with flow magnitude <= 0.1 cfs                                         |
+   | Dry-season no-flow duration        | days               | DS_No_Flow_Dur     | Longest number of consecutive days with flow magnitude <= 0.1 cfs                                         |
    | Dry-season 7-day low flow magnitude| cfs                | DS_7d_Low_Mag      | Minimum 7-day rolling average magnitude in the dry season                                     |
    | Dry-season 7-day low flow timing   | water year day     | DS_7d_Low_Tim      | Start date of minimum 7-day period in the dry season                                          |
    | Intermittent Classification        | classification     | Int_Class          | Classification of either Perennial or Intermittent based on average no-flow days per season   |
@@ -201,7 +201,7 @@ See below for more information on what data you might want to give it.
 
    | Column Name       | Description                                                                                                  |
    |-------------------|--------------------------------------------------------------------------------------------------------------|
-   | WYT               | Water Year Type. Categories include "any", "wet", "dry", and "moderate".                                     |
+   | WYT               | Water Year Type. Categories include "any", "wet", "dry", and "moderate". Wet years are the wettest third of all complete water years from 1951-present, moderate years are the middle third, and dry years are the driest third. "Any" includes all years.                                   |
    | metric            | Flow metric being evaluated (e.g., DS_Dur_WS, DS_Mag_50, FA_Tim).                                            |
    | alteration_type   | Type of alteration found in the flow metric (e.g., "none_found", "high", "low", "late").                     |
    | status            | Likely status of the metric based on alteration type (e.g., "likely_altered", "likely_unaltered").           |
@@ -223,11 +223,11 @@ See below for more information on what data you might want to give it.
    | p50              | 50th percentile value (median) of the observed data for the given metric.                                          |
    | p75              | 75th percentile value of the observed data for the given metric.                                                   |
    | p90              | 90th percentile value of the observed data for the given metric.                                                   |
-   | p10_predicted    | Model-predicted 10th percentile value for the given metric.                                                        |
-   | p25_predicted    | Model-predicted 25th percentile value for the given metric.                                                        |
-   | p50_predicted    | Model-predicted 50th percentile value (median) for the given metric.                                               |
-   | p75_predicted    | Model-predicted 75th percentile value for the given metric.                                                        |
-   | p90_predicted    | Model-predicted 90th percentile value for the given metric.                                                        |
+   | p10_predicted    | Model-predicted natural 10th percentile value for the given metric.                                                        |
+   | p25_predicted    | Model-predicted natural 25th percentile value for the given metric.                                                        |
+   | p50_predicted    | Model-predicted natural 50th percentile value (median) for the given metric.                                               |
+   | p75_predicted    | Model-predicted natural 75th percentile value for the given metric.                                                        |
+   | p90_predicted    | Model-predicted natural 90th percentile value for the given metric.                                                        |
 
    More information on the model used can be found in the [Alteration Assessments section](#alteration-assessments)
 
@@ -243,11 +243,11 @@ See below for more information on what data you might want to give it.
 
 ## Known Differences
 
-   Although intended to be a direct upgrade of the reference flow calculator and the UCDavis Flashy flow calculator there are some known differences listed below:
+   Although intended to be a direct upgrade of Patterson et al.'s [reference functional flows calculator](https://github.com/leogoesger/func-flow) and Carpenter et al.'s [flashy functional flows calculator](https://github.com/camcarpenter6/Alternate-Ruleset-FFC-BETA) there are some known differences listed below:
 
    1. Data filtering:
 
-      The updated calculator requires no more then 36 days of missing or NA data per water year and allows up to 7 days of consecutive missing or NA data. The previous recommendation was to require 358 days of data to run a year. These differences may result in slight changes in metrics that are summarized over multiple years, including peak flow metrics. In particular, since the dry season extends into the subsequent water year, if the subsequent year is missing, dry season magnitude and duration metrics will not calculate.
+      The updated calculator allows up to 36 days of missing or NA data and up to 7 days of consecutive missing or NA data per water year. The previous recommendation was to require 358 days of data to run a year. These differences may result in slight changes in metrics that are summarized over multiple years, including peak flow metrics. In particular, since the dry season extends into the subsequent water year, if the subsequent year is missing, dry season magnitude and duration metrics will not calculate.
 
    2. New low flow metrics:
 
