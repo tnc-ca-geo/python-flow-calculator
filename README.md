@@ -20,18 +20,18 @@
 
 ## About
 
-This is a remastered functional flows calculator. A majority of the logic has been left unchanged but lots of new functionality has been added. The repository has been refactored to be more maintainable and the dependencies have all been updated. 
-- The original version of the reference functional flows calculator was written by Patterson et al. (https://www.sciencedirect.com/science/article/abs/pii/S002216942030247X), coded in python (https://github.com/leogoesger/func-flow).
-- The statewide hydrologic stream classification used to adjust parameters was developed by Lane et al. (https://link.springer.com/article/10.1007/s00267-018-1077-7).
-- Information on how to use these metrics and additional references are described in the California Environmental Flows Framework (https://ceff.ucdavis.edu).
-- In particular, the alteration assessment is described in an appendix by Grantham (https://ceff.ucdavis.edu/sites/g/files/dgvnsk5566/files/media/documents/Appendix_J%20Assessing%20Flow%20Alteration.pdf), and uses modeled unimpaired functional flow metrics developed by Grantham et al. (https://www.frontiersin.org/journals/environmental-science/articles/10.3389/fenvs.2022.787473/full). The modeled natural metrics are available at https://rivers.codefornature.org
-- This version incorporates the flashy functional flows calculator developed by Carpenter et al. (https://github.com/camcarpenter6/Alternate-Ruleset-FFC-BETA). This version also incorporates Carpenter et al.'s decision tree for when to use the reference vs flashy calculator.
-- This code also incorporates new low flow metrics by Ayers et al. (https://agupubs.onlinelibrary.wiley.com/doi/pdf/10.1029/2023WR035768) which have an R implementation (https://github.com/jessayers20/Functional-Low-Flows).
+This is a remastered functional flows calculator. A majority of the logic has been left unchanged but lots of new functionality has been added. The repository has been refactored to be more maintainable and the dependencies have all been updated. See references at end for more details on the following sources.
+- The original version of the reference functional flows calculator was written by Patterson et al. 2020 (https://www.sciencedirect.com/science/article/abs/pii/S002216942030247X), available here (https://github.com/leogoesger/func-flow).
+- The statewide hydrologic stream classification used to adjust parameters was developed by Lane et al. 2018 (https://link.springer.com/article/10.1007/s00267-018-1077-7).
+- Information on how to use these metrics and additional references are described in the California Environmental Flows Framework technical report (https://ceff.ucdavis.edu).
+- In particular, the alteration assessment is described in an appendix to the technical report by Grantham (https://ceff.ucdavis.edu/sites/g/files/dgvnsk5566/files/media/documents/Appendix_J%20Assessing%20Flow%20Alteration.pdf), and uses modeled unimpaired functional flow metrics developed by Grantham et al. 2022 (https://www.frontiersin.org/journals/environmental-science/articles/10.3389/fenvs.2022.787473/full). The modeled natural metrics are available at https://rivers.codefornature.org
+- This version incorporates the flashy functional flows calculator developed by Carpenter et al. 2025 (https://github.com/camcarpenter6/Alternate-Ruleset-FFC-BETA). This version also incorporates Carpenter et al.'s decision tree for when to use the reference vs flashy calculator.
+- This code incorporates new low flow metrics by Ayers et al. 2024 (https://agupubs.onlinelibrary.wiley.com/doi/pdf/10.1029/2023WR035768) which have an R implementation (https://github.com/jessayers20/Functional-Low-Flows).
 - Additional functionality has been implemented from the ffc api client R package developed by Peek and Santos (https://github.com/ceff-tech/ffc_api_client).
 
-This remastered version was authored by Nathan Emerson of Foundry Spatial.
+This remastered version was authored by Nathan Emerson of Foundry Spatial, with input from Kirk Klausmeyer and Bronwen Stanford of The Nature Conservancy.
 
-This project was funded by the California Wildlife Conservation Board Stream Flow Enhancement Program under Proposition 1.
+This project was funded by the California Wildlife Conservation Board Stream Flow Enhancement Program under Proposition 1, funding awarded to The Nature Conservancy of California.
 
 ## Getting Started
 
@@ -265,6 +265,19 @@ See below for more information on what data you might want to give it.
          - Spring magnitude for rain fed systems now matches the value at the start day (4 days after the last peak of the wet season).
          - Years that are both divisible by 100 and 4 are no longer considered leap years ie 1900 is not a leap year but was being considered one
 
+## References
+
+Ayers, J. R., Yarnell, S. M., Baruch, E., Lusardi, R. A., & Grantham, T. E. 2024. Perennial and non‐perennial streamflow regime shifts across California, USA. Water Resources Research, 60, e2023WR035768. https://doi.org/10.1029/2023WR035768
+Baker, D. B., R. P. Richards, T. T. Loftus, and J. W. Kramer. 2004. A New Flashiness Index: Characteristics and Applications to Midwestern Rivers and Streams. JAWRA Journal of the American Water Resources Association 40:503–522. https://doi.org/10.1111/j.1752-1688.2004.tb01046.x  
+California Environmental Flows Working Group (CEFWG). 2021. California Environmental Flows Framework Version 1.0. California Water Quality Monitoring Council Technical Report 65 pp. https://ceff.ucdavis.edu/tech-report. 
+Grantham, T. E., D. M. Carlisle, J. Howard, B. Lane, R. Lusardi, A. Obester, S. Sandoval-Solis, B. Stanford, E. D. Stein, K. T. Taniguchi-Quan, S. M. Yarnell, and J. K. H. Zimmerman. 2022. Modeling Functional Flows in California’s Rivers. Frontiers in Environmental Science 10. https://doi.org/10.3389/fenvs.2022.787473 
+Lane, B.A., S. Sandoval-Solis, E.D. Stein, S.M. Yarnell, G.B. Pasternack, and H.E. Dahlke. 2018. Beyond metrics? The role of hydrologic baseline archetypes in environmental water management. Environmental Management 62:678-693. https://doi.org/10.1007/s00267-018-1077-7
+Patterson, N. K., B. A. Lane, S. Sandoval-Solis, G. B. Pasternack, S. M. Yarnell, and Y. Qiu. 2020. A hydrologic feature detection algorithm to quantify seasonal components of flow regimes. Journal of Hydrology 585:124787. https://doi.org/10.1016/j.jhydrol.2020.124787 
+Santos, N., & Peek, R. (2020). FFC API Client (Version 0.9.8.3) [Computer software]. https://github.com/ceff-tech/ffc_api_client
+Yarnell, S. M., G. E. Petts, J. C. Schmidt, A. A. Whipple, E. E. Beller, C. N. Dahm, P. Goodwin, and J. H. Viers. 2015. Functional Flows in Modified Riverscapes: Hydrographs, Habitats and Opportunities. BioScience 65:963–972. https://doi.org/10.1093/biosci/biv102 
+Yarnell, S. M., E. D. Stein, J. A. Webb, T. Grantham, R. A. Lusardi, J. Zimmerman, R. A. Peek, B. A. Lane, J. Howard, and S. Sandoval-Solis. 2020. A functional flows approach to selecting ecologically relevant flow metrics for environmental flow applications. River Research and Applications 36:318–324. https://doi.org/10.1002/rra.3575 
+
+
 ## Questions and Comments
 
 All questions or comment are encouraged to be sent to <kklausmeyer@tnc.org> or <bronwen.stanford@tnc.org>
@@ -272,3 +285,4 @@ All questions or comment are encouraged to be sent to <kklausmeyer@tnc.org> or <
 ### Extra info
 
 There are other README.md files within this project they can be found in the following directories: `extra_info/` and `user_input_files/`. Make sure to check them for a bit more information about the calculator.
+
