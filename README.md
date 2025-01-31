@@ -268,13 +268,21 @@ See below for more information on what data you might want to give it.
 ## References
 
 Ayers, J. R., Yarnell, S. M., Baruch, E., Lusardi, R. A., & Grantham, T. E. 2024. Perennial and non‐perennial streamflow regime shifts across California, USA. Water Resources Research, 60, e2023WR035768. https://doi.org/10.1029/2023WR035768
+
 Baker, D. B., R. P. Richards, T. T. Loftus, and J. W. Kramer. 2004. A New Flashiness Index: Characteristics and Applications to Midwestern Rivers and Streams. JAWRA Journal of the American Water Resources Association 40:503–522. https://doi.org/10.1111/j.1752-1688.2004.tb01046.x  
-California Environmental Flows Working Group (CEFWG). 2021. California Environmental Flows Framework Version 1.0. California Water Quality Monitoring Council Technical Report 65 pp. https://ceff.ucdavis.edu/tech-report. 
+
+California Environmental Flows Working Group (CEFWG). 2021. California Environmental Flows Framework Version 1.0. California Water Quality Monitoring Council Technical Report 65 pp. https://ceff.ucdavis.edu/tech-report.
+
 Grantham, T. E., D. M. Carlisle, J. Howard, B. Lane, R. Lusardi, A. Obester, S. Sandoval-Solis, B. Stanford, E. D. Stein, K. T. Taniguchi-Quan, S. M. Yarnell, and J. K. H. Zimmerman. 2022. Modeling Functional Flows in California’s Rivers. Frontiers in Environmental Science 10. https://doi.org/10.3389/fenvs.2022.787473 
+
 Lane, B.A., S. Sandoval-Solis, E.D. Stein, S.M. Yarnell, G.B. Pasternack, and H.E. Dahlke. 2018. Beyond metrics? The role of hydrologic baseline archetypes in environmental water management. Environmental Management 62:678-693. https://doi.org/10.1007/s00267-018-1077-7
+
 Patterson, N. K., B. A. Lane, S. Sandoval-Solis, G. B. Pasternack, S. M. Yarnell, and Y. Qiu. 2020. A hydrologic feature detection algorithm to quantify seasonal components of flow regimes. Journal of Hydrology 585:124787. https://doi.org/10.1016/j.jhydrol.2020.124787 
+
 Santos, N., & Peek, R. (2020). FFC API Client (Version 0.9.8.3) [Computer software]. https://github.com/ceff-tech/ffc_api_client
+
 Yarnell, S. M., G. E. Petts, J. C. Schmidt, A. A. Whipple, E. E. Beller, C. N. Dahm, P. Goodwin, and J. H. Viers. 2015. Functional Flows in Modified Riverscapes: Hydrographs, Habitats and Opportunities. BioScience 65:963–972. https://doi.org/10.1093/biosci/biv102 
+
 Yarnell, S. M., E. D. Stein, J. A. Webb, T. Grantham, R. A. Lusardi, J. Zimmerman, R. A. Peek, B. A. Lane, J. Howard, and S. Sandoval-Solis. 2020. A functional flows approach to selecting ecologically relevant flow metrics for environmental flow applications. River Research and Applications 36:318–324. https://doi.org/10.1002/rra.3575 
 
 
