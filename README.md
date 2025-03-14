@@ -13,9 +13,11 @@
    - [Batch CSV Mode](#batch-csv-mode)
      - [Formatting the CSV](#formatting-the-csv)
    - [Alteration Assessments](#alteration-assessments)
-5. [Testing](#testing)
-6. [Output data](#output-data)
-7. [Questions and Comments](#questions-and-comments)
+5. [Output data](#output-data)
+6. [Testing](#testing)
+7. [Known Differences](#known-differences)
+8. [References](#references)
+9. [Questions and Comments](#questions-and-comments)
    - [Extra info](#extra-info)
 
 ## About
