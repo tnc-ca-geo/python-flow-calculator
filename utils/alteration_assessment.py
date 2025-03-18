@@ -6,7 +6,7 @@ from utils.helpers import comid_to_wyt
 from io import StringIO
 
 def assess_alteration(gages, metrics_paths, output_files = 'user_output_files', aa_start_year = None, aa_end_year = None, wyt_list = ['any']):
-    
+
     return_message = ''
 
     if not metrics_paths:
@@ -16,7 +16,7 @@ def assess_alteration(gages, metrics_paths, output_files = 'user_output_files', 
     for (gage, metrics) in zip(gages, metrics_paths):
         comid = gage.comid
         gage_id = gage.gage_id
-        has_wyt = comid_to_wyt(comid, 2022)    
+        has_wyt = comid_to_wyt(comid, 2022)
         for wyt in wyt_list:
             if has_wyt == 'unknown' and wyt != "any":
                 return_message = return_message + f"The selected comid: {comid} for the gage: {gage_id} has no water year types associated with it skipping it for water year type {wyt}...\n"
@@ -27,9 +27,9 @@ def assess_alteration(gages, metrics_paths, output_files = 'user_output_files', 
             if predicted_metrics.empty:
                 return_message = return_message + f"Predicted metrics could not be generated for comid {comid} and water year type {wyt}. Is this comid outside the study area? Skipping it...\n"
                 continue
-            
+
             formatted_percentiles, formatted_raw, count = format_metrics(metrics, wyt = wyt, aa_start_year = aa_start_year, aa_end_year = aa_end_year)
-            
+
             if formatted_raw.empty:
                 if aa_start_year and aa_end_year:
                     return_message = return_message + f"The year range selected {aa_start_year}-{aa_end_year} leaves the gage {gage_id} with no data for water year type {wyt}. Skipping it...\n"
@@ -38,20 +38,20 @@ def assess_alteration(gages, metrics_paths, output_files = 'user_output_files', 
                 continue
 
             output_df = compare_data_frames(formatted_raw, predicted_metrics, formatted_percentiles, count)
-            
+
             output_df.insert(0, 'WYT', wyt)
             aa_dict = {}
             aa_dict['aa'] = output_df.copy(deep = True)
             aa_dict['gage_id'] = gage_id
             alteration_assessment_list.append(aa_dict)
-    
+
     if len(alteration_assessment_list) > 0:
-        write_alteration_assessment(alteration_assessment_list, output_files, wyt = True)        
-    
+        write_alteration_assessment(alteration_assessment_list, output_files, wyt = True)
+
     return return_message
 
 def compare_data_frames(raw_metrics, predicted_metrics, raw_percentiles, count):
-    
+
     combined_df = pd.merge(raw_percentiles, predicted_metrics, on='metric', suffixes=('', '_predicted'))
     combined_df['alteration_type'] = "unknown"
     combined_df['status'] = "indeterminate"
@@ -60,10 +60,10 @@ def compare_data_frames(raw_metrics, predicted_metrics, raw_percentiles, count):
 
     # This is for Ted if he still uses this tool
     combined_df['median_in_iqr'] = np.where(((combined_df['p50'] <= combined_df['p75_predicted']) & (combined_df['p50'] >= combined_df['p25_predicted'])), True, combined_df['median_in_iqr'])
-    
+
     combined_df['alteration_type'] = np.where(combined_df['p50'] < combined_df['p25_predicted'], 'low', combined_df['alteration_type'])
     combined_df['alteration_type'] = np.where(combined_df['p50'] > combined_df['p75_predicted'], 'high', combined_df['alteration_type'])
-    
+
     for index, row in combined_df.iterrows():
         if (row['p50'] >= row['p10_predicted']) and (row['p50'] <= row['p90_predicted']):
             if not observations_altered(observations=raw_metrics, metric = row['metric'], low_bound=row['p10_predicted'], high_bound=row['p90_predicted'], median = row['p50']):
@@ -83,10 +83,10 @@ def compare_data_frames(raw_metrics, predicted_metrics, raw_percentiles, count):
     return combined_df
 
 def write_alteration_assessment(aa_list, output_dir, wyt = False):
-    
+
     first_df = True
     out_df = None
-    
+
     for dict in aa_list:
         df = dict['aa']
         gage_id = dict['gage_id']
@@ -105,7 +105,7 @@ def write_alteration_assessment(aa_list, output_dir, wyt = False):
         else:
             out_df, df
             out_df = pd.concat([out_df,df], ignore_index=True)
-    
+
     file_string = 'combined'
     list_to_add = ['Source']
     # case when we are not batching
@@ -119,9 +119,9 @@ def write_alteration_assessment(aa_list, output_dir, wyt = False):
     else:
         out_path = os.path.join(output_dir,f'{file_string}_alteration_assessment.csv')
         alteration_results = out_df[list_to_add + ['metric','alteration_type', 'status', 'status_code', 'median_in_iqr', 'years_used', 'sufficient_data']]
-    
+
     alteration_results.to_csv(out_path, index = False)
-    
+
     if wyt:
         out_path = os.path.join(output_dir,f'{file_string}_predicted_observed_percentiles.csv')
         percentiles = out_df[list_to_add + ['WYT', 'metric', 'p10', 'p25', 'p50', 'p75', 'p90', 'p10_predicted', 'p25_predicted', 'p50_predicted', 'p75_predicted', 'p90_predicted']]
@@ -134,8 +134,8 @@ def write_alteration_assessment(aa_list, output_dir, wyt = False):
 def observations_altered(observations, metric, low_bound, high_bound, median):
     obs = pd.to_numeric(observations[metric], errors = 'coerce')
     obs = obs.fillna(median)
-    
-    percentage = ((obs > high_bound) & (obs < low_bound)).mean() * 100
+
+    percentage = ((obs > high_bound) | (obs < low_bound)).mean() * 100
     if percentage > 50:
         return True
     else:
@@ -143,7 +143,7 @@ def observations_altered(observations, metric, low_bound, high_bound, median):
 
 
 def format_metrics(file_path, wyt = None, aa_start_year = None, aa_end_year = None):
-    
+
     metric_data = pd.read_csv(file_path, header=0)
     if aa_start_year is not None:
         metric_data.drop(metric_data[metric_data.Year < aa_start_year].index, inplace=True)
@@ -180,14 +180,14 @@ def get_predicted_flow_metrics(comid, wyt="any"):
         deduplicated = deduplicated.drop(columns=['gage_id', 'observed_years','alteration','source','comid'])
         deduplicated = fill_na_10th_percentile(deduplicated)
         return replace_ffm_column(deduplicated)
-        
+
     else:
         raise Exception(f"Failed to fetch predicted metrics from flow-api does this comid exist {comid}?")
 
 
-    
 
-def replace_ffm_column(df):  
+
+def replace_ffm_column(df):
     mapping_dict = {
     "ds_mag_50": "DS_Mag_50",
     "ds_mag_90": "DS_Mag_90",
@@ -214,11 +214,11 @@ def replace_ffm_column(df):
     "wet_bfl_mag_50": "Wet_BFL_Mag_50",
     "wet_tim": "Wet_Tim"
     }
-    
+
     df["ffm"] = df["ffm"].map(mapping_dict)
     df = df.rename(columns={"ffm": "metric"})
     df = df.drop(columns=["unit", "observed_year_start", "observed_year_end"])
-    
+
     return df
 
 
@@ -229,9 +229,9 @@ def fill_na_10th_percentile(df):
         df.loc[condition, 'p10'] = 0
         warning_msg = "Predicted flow metrics have NA values in the 10th percentile column - they have been filled with 0 values where the 25th percentile value is 0 and left as is otherwise"
         print(warning_msg)
-        
+
         if df['p10'].isna().any():
             warning_msg = "Unfilled NAs remain in the p10 column - we can't safely fill these because the p25 column is greater than 0 - this will likely break the code later in the package, so expect an error! These NA values should be addressed more broadly by the CEFF tech team."
             print(warning_msg)
-    
+
     return df
