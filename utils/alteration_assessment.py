@@ -133,7 +133,7 @@ def write_alteration_assessment(aa_list, output_dir, wyt = False):
 
 def observations_altered(observations, metric, low_bound, high_bound, median):
     obs = pd.to_numeric(observations[metric], errors = 'coerce')
-    obs = obs.fillna(median)
+    obs = obs.dropna()
 
     percentage = ((obs > high_bound) | (obs < low_bound)).mean() * 100
     if percentage > 50:
