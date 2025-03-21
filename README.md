@@ -13,11 +13,12 @@
    - [Batch CSV Mode](#batch-csv-mode)
      - [Formatting the CSV](#formatting-the-csv)
    - [Alteration Assessments](#alteration-assessments)
-5. [Output data](#output-data)
+5. [Output Data](#output-data)
 6. [Testing](#testing)
 7. [Known Differences](#known-differences)
-8. [References](#references)
-9. [Questions and Comments](#questions-and-comments)
+8. [Manual Adjustments](#maual-adjustments)
+9. [References](#references)
+10. [Questions and Comments](#questions-and-comments)
    - [Extra info](#extra-info)
 
 ## About
@@ -266,6 +267,13 @@ See below for more information on what data you might want to give it.
          - Fall timing of 0 is no longer permitted, since this would occur in the previous water year.
          - Spring magnitude for rain fed systems now matches the value at the start day (4 days after the last peak of the wet season).
          - Years that are both divisible by 100 and 4 are no longer considered leap years ie 1900 is not a leap year but was being considered one
+
+## Manual Adjustments
+All calculator parameters can be adjusted manually using the params.py file.
+
+In addition, the following output settings can be adjusted:
+- To output individual files rather than a combined file when running multiple gages...
+- 
 
 ## References
 
