@@ -16,7 +16,7 @@
 5. [Output Data](#output-data)
 6. [Testing](#testing)
 7. [Known Differences](#known-differences)
-8. [Manual Adjustments](#maual-adjustments)
+8. [Manual Adjustments](#manual-adjustments)
 9. [References](#references)
 10. [Questions and Comments](#questions-and-comments)
    - [Extra info](#extra-info)
