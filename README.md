@@ -266,12 +266,12 @@ See below for more information on what data you might want to give it.
       Several minor errors that had been identified in the original version of the calculator were corrected.
          - Fall timing of 0 is no longer permitted, since this would occur in the previous water year.
          - Spring magnitude for rain fed systems now matches the value at the start day (4 days after the last peak of the wet season).
-         - Years that are both divisible by 100 and 4 are no longer considered leap years ie 1900 is not a leap year but was being considered one
+         - Years that are both divisible by 100 and 4 are no longer considered leap years ie 1900 is not a leap year but was being considered one.
 
 ## Manual Adjustments
 All calculator parameters can be adjusted manually using the params.py file.
 
-In addition, the following output settings can be adjusted in `utils/constants.py`:
+In addition, the following settings can be adjusted in `utils/constants.py`:
 - To output individual files in addition to a combined file when running multiple gages switch `DELETE_INDIVIDUAL_FILES_WHEN_BATCH` from `True` to `False`
 - To modify the water year start date change `WY_START_DATE` from `'10/1'` to another date in `mm/dd` format
 - To produce a Dimensionless Reference Hydrograph in addition to the normal output files change `PRODUCE_DRH` from `False` to `True`
