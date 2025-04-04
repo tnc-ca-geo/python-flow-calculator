@@ -105,7 +105,7 @@ See below for more information on what data you might want to give it.
 
    Currently there are 3 supported data sources for the functional flows calculator:
 
-   1. [USGS](https://www.usgs.gov/) gage data downloaded using the [dataretrieval-python](https://github.com/DOI-USGS/dataretrieval-python) package developed by USGS. This API is very speedy and seems well supported! Currently the following [parameter ids](https://help.waterdata.usgs.gov/parameter_cd?group_cd=PHY) are supported: 1. 00060 (discharge in cf/s) and 2. 72137 (discharge, tidally filtered, in cf/s). A couple example gage ids are 11274500 and 11522500 if you wish to test it out.  
+   1. [USGS](https://www.usgs.gov/) gage data downloaded using the [dataretrieval-python](https://github.com/DOI-USGS/dataretrieval-python) package developed by USGS. This API is very speedy and seems well supported! Currently the following [parameter ids](https://help.waterdata.usgs.gov/parameter_cd?group_cd=PHY) are supported: 1. 00060 (discharge in cf/s) and 2. 72137 (discharge, tidally filtered, in cf/s). A couple example gage ids are 11274500 and 11522500 if you wish to test it out.
    2. [CDEC](http://cdec.water.ca.gov/) gage data downloaded using the CDEC API. Note that this api is not documented anywhere and is very slow. Currently only parameter ids 20, 41 and 165 (discharge) are supported. Where possible use USGS gage data or take the files downloaded by the flow calculator on the first go through and use them as user uploaded data to save time. Data is downloaded to the /gage_data directory if you wish to view it after the flow calculator runs. A couple example gage ID's are 'NRN' and 'LCH' if you wish to test it out. Note: CDEC full natural flow "gages" are not included in this dataset as they include many negative values and the data cannot be run through the calculator without cleaning.
    3. User uploaded data. If you have a csv of observations or data from a different data source that is not supported it can be accepted. Ensure all CSVs to be uploaded have a column labeled `flow` and a column labeled `date` it is fine if more columns exist but those two must as they are used as the observations of discharge in cf/s at the given date. If you plan on using Questionnaire mode please ensure your formatted csv files are all in `user_input_files/`. An example file is located at `user_input_files/example_input.csv`
 
@@ -259,7 +259,7 @@ See below for more information on what data you might want to give it.
    3. Water year type and intermittent/perennial classification:
 
       Water year type is assigned for years after 1950 using the Natural Flows Database: [rivers.codefornature.org](rivers.codefornature.org). Years are divided in equal thirds into wet (0-33.3% exceedance), average (33.4-66.6% exceedance), and dry (66.7-100% exceedance).
-      Results for each year of a timeseries and for each timeseries overall are classified as either intermittent or perennial flow. A year was classified as intermittent if there were at least 5 consecutive days of zero flows (<=0.1cfs) during the dry season, and a stream was defined as intermittent if 15% or more of years were classified as intermittent. These are defined according to the methods in Ayers et al. 2024 ([https://onlinelibrary.wiley.com/doi/abs/10.1029/2023WR035768](https://onlinelibrary.wiley.com/doi/abs/10.1029/2023WR035768)).  
+      Results for each year of a timeseries and for each timeseries overall are classified as either intermittent or perennial flow. A year was classified as intermittent if there were at least 5 consecutive days of zero flows (<=0.1cfs) during the dry season, and a stream was defined as intermittent if 15% or more of years were classified as intermittent. These are defined according to the methods in Ayers et al. 2024 ([https://onlinelibrary.wiley.com/doi/abs/10.1029/2023WR035768](https://onlinelibrary.wiley.com/doi/abs/10.1029/2023WR035768)).
 
    4. Corrections to reference flow calculator:
 
@@ -271,29 +271,31 @@ See below for more information on what data you might want to give it.
 ## Manual Adjustments
 All calculator parameters can be adjusted manually using the params.py file.
 
-In addition, the following output settings can be adjusted:
-- To output individual files rather than a combined file when running multiple gages...
-- 
+In addition, the following output settings can be adjusted in `utils/constants.py`:
+- To output individual files in addition to a combined file when running multiple gages switch `DELETE_INDIVIDUAL_FILES_WHEN_BATCH` from `True` to `False`
+- To modify the water year start date change `WY_START_DATE` from `'10/1'` to another date in `mm/dd` format
+- To produce a Dimensionless Reference Hydrograph in addition to the normal output files change `PRODUCE_DRH` from `False` to `True`
 
+The remainder of the settings in
 ## References
 
 Ayers, J. R., Yarnell, S. M., Baruch, E., Lusardi, R. A., & Grantham, T. E. 2024. Perennial and non‐perennial streamflow regime shifts across California, USA. Water Resources Research, 60, e2023WR035768. https://doi.org/10.1029/2023WR035768
 
-Baker, D. B., R. P. Richards, T. T. Loftus, and J. W. Kramer. 2004. A New Flashiness Index: Characteristics and Applications to Midwestern Rivers and Streams. JAWRA Journal of the American Water Resources Association 40:503–522. https://doi.org/10.1111/j.1752-1688.2004.tb01046.x  
+Baker, D. B., R. P. Richards, T. T. Loftus, and J. W. Kramer. 2004. A New Flashiness Index: Characteristics and Applications to Midwestern Rivers and Streams. JAWRA Journal of the American Water Resources Association 40:503–522. https://doi.org/10.1111/j.1752-1688.2004.tb01046.x
 
 California Environmental Flows Working Group (CEFWG). 2021. California Environmental Flows Framework Version 1.0. California Water Quality Monitoring Council Technical Report 65 pp. https://ceff.ucdavis.edu/tech-report.
 
-Grantham, T. E., D. M. Carlisle, J. Howard, B. Lane, R. Lusardi, A. Obester, S. Sandoval-Solis, B. Stanford, E. D. Stein, K. T. Taniguchi-Quan, S. M. Yarnell, and J. K. H. Zimmerman. 2022. Modeling Functional Flows in California’s Rivers. Frontiers in Environmental Science 10. https://doi.org/10.3389/fenvs.2022.787473 
+Grantham, T. E., D. M. Carlisle, J. Howard, B. Lane, R. Lusardi, A. Obester, S. Sandoval-Solis, B. Stanford, E. D. Stein, K. T. Taniguchi-Quan, S. M. Yarnell, and J. K. H. Zimmerman. 2022. Modeling Functional Flows in California’s Rivers. Frontiers in Environmental Science 10. https://doi.org/10.3389/fenvs.2022.787473
 
 Lane, B.A., S. Sandoval-Solis, E.D. Stein, S.M. Yarnell, G.B. Pasternack, and H.E. Dahlke. 2018. Beyond metrics? The role of hydrologic baseline archetypes in environmental water management. Environmental Management 62:678-693. https://doi.org/10.1007/s00267-018-1077-7
 
-Patterson, N. K., B. A. Lane, S. Sandoval-Solis, G. B. Pasternack, S. M. Yarnell, and Y. Qiu. 2020. A hydrologic feature detection algorithm to quantify seasonal components of flow regimes. Journal of Hydrology 585:124787. https://doi.org/10.1016/j.jhydrol.2020.124787 
+Patterson, N. K., B. A. Lane, S. Sandoval-Solis, G. B. Pasternack, S. M. Yarnell, and Y. Qiu. 2020. A hydrologic feature detection algorithm to quantify seasonal components of flow regimes. Journal of Hydrology 585:124787. https://doi.org/10.1016/j.jhydrol.2020.124787
 
 Santos, N., & Peek, R. (2020). FFC API Client (Version 0.9.8.3) [Computer software]. https://github.com/ceff-tech/ffc_api_client
 
-Yarnell, S. M., G. E. Petts, J. C. Schmidt, A. A. Whipple, E. E. Beller, C. N. Dahm, P. Goodwin, and J. H. Viers. 2015. Functional Flows in Modified Riverscapes: Hydrographs, Habitats and Opportunities. BioScience 65:963–972. https://doi.org/10.1093/biosci/biv102 
+Yarnell, S. M., G. E. Petts, J. C. Schmidt, A. A. Whipple, E. E. Beller, C. N. Dahm, P. Goodwin, and J. H. Viers. 2015. Functional Flows in Modified Riverscapes: Hydrographs, Habitats and Opportunities. BioScience 65:963–972. https://doi.org/10.1093/biosci/biv102
 
-Yarnell, S. M., E. D. Stein, J. A. Webb, T. Grantham, R. A. Lusardi, J. Zimmerman, R. A. Peek, B. A. Lane, J. Howard, and S. Sandoval-Solis. 2020. A functional flows approach to selecting ecologically relevant flow metrics for environmental flow applications. River Research and Applications 36:318–324. https://doi.org/10.1002/rra.3575 
+Yarnell, S. M., E. D. Stein, J. A. Webb, T. Grantham, R. A. Lusardi, J. Zimmerman, R. A. Peek, B. A. Lane, J. Howard, and S. Sandoval-Solis. 2020. A functional flows approach to selecting ecologically relevant flow metrics for environmental flow applications. River Research and Applications 36:318–324. https://doi.org/10.1002/rra.3575
 
 
 ## Questions and Comments
