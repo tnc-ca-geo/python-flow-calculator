@@ -276,7 +276,7 @@ In addition, the following output settings can be adjusted in `utils/constants.p
 - To modify the water year start date change `WY_START_DATE` from `'10/1'` to another date in `mm/dd` format
 - To produce a Dimensionless Reference Hydrograph in addition to the normal output files change `PRODUCE_DRH` from `False` to `True`
 
-The remainder of the settings in
+The remainder of the constants in the `constants.py` file are not recommended to be manually changed unless you are very familiar with the inner workings of the calculator
 ## References
 
 Ayers, J. R., Yarnell, S. M., Baruch, E., Lusardi, R. A., & Grantham, T. E. 2024. Perennial and non‐perennial streamflow regime shifts across California, USA. Water Resources Research, 60, e2023WR035768. https://doi.org/10.1029/2023WR035768
