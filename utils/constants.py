@@ -1,9 +1,12 @@
-VERSION = '0.9.8'
+# The below constants are fine for experienced users to modify to fine-tune how the calculator runs
 WY_START_DATE = '10/1'
-DELETE_INDIVIDUAL_FILES_WHEN_BATCH = True
-QUIT_ON_ERROR = False # do you want the entire process to stop when an error occurs, True assumes you want more detailed messages as you are hopefully debugging it
-SKIP_PROMPTS_BATCH = True # do you want to skip the prompts confirming you want to continue?
+DELETE_INDIVIDUAL_FILES_WHEN_BATCH = True # The batch file will still be made but this flag determines if the individual files are deleted during the batch process
 PRODUCE_DRH = False
+SKIP_PROMPTS_BATCH = True # do you want to skip the prompts confirming you want to continue when using batch processing?
+
+# Constants below here are not recommended to be changed unless you are very familiar with the calculators inner workings or an active maintainer
+VERSION = '1.0.0'
+QUIT_ON_ERROR = False # do you want the entire process to stop when an error occurs, True assumes you want more detailed messages as you are hopefully debugging it
 TYPES = {
     'all_year_average_annual_flows': "Avg",
     'all_year_standard_deviations': "Std",
@@ -50,7 +53,7 @@ TYPES = {
     'winter_frequencys__twenty': "Fre_20",
     'winter_frequencys__fifty': "Fre_50",
 
-    # Exceedance percentiles translated to recurrence intervals for output: exc_50 -> peak_2, exc_20 -> peak_5, exc_10 -> peak_10, exc_5 -> peak_20, exc_2 -> peak_50 
+    # Exceedance percentiles translated to recurrence intervals for output: exc_50 -> peak_2, exc_20 -> peak_5, exc_10 -> peak_10, exc_5 -> peak_20, exc_2 -> peak_50
     'winter_timings_two': "Peak_Tim_50",
     'winter_timings_five': "Peak_Tim_20",
     'winter_timings_ten': "Peak_Tim_10",
