@@ -6,7 +6,7 @@ SKIP_PROMPTS_BATCH = True # do you want to skip the prompts confirming you want 
 
 # Constants below here are not recommended to be changed unless you are very familiar with the calculators inner workings or an active maintainer
 VERSION = '1.0.0'
-QUIT_ON_ERROR = False # do you want the entire process to stop when an error occurs, True assumes you want more detailed messages as you are hopefully debugging it
+QUIT_ON_ERROR = True # do you want the entire process to stop when an error occurs, True assumes you want more detailed messages as you are hopefully debugging it
 TYPES = {
     'all_year_average_annual_flows': "Avg",
     'all_year_standard_deviations': "Std",
@@ -88,3 +88,5 @@ NUMBER_TO_CLASS = {1: 'SM', 2: 'HSR', 3: 'LSR', 4: 'WS', 5: 'GW', 6: 'PGR', 7: '
 CLASS_TO_NUMBER = {value: key for key, value in NUMBER_TO_CLASS.items()}
 REQUIRED_BATCH_COLUMNS = ['usgs', 'cdec', 'path', 'comid', 'class', 'lat', 'calculator']
 LONGITUDE_COLUMNS = ['lon', 'lng']
+INPUT_FILE_DIR = 'user_input_files'
+OUTPUT_FILE_DIR = 'user_output_files'

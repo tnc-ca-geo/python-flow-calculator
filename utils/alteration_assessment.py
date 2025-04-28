@@ -3,9 +3,10 @@ import numpy as np
 import requests
 import os
 from utils.helpers import comid_to_wyt
+from utils.constants import OUTPUT_FILE_DIR
 from io import StringIO
 
-def assess_alteration(gages, metrics_paths, output_files = 'user_output_files', aa_start_year = None, aa_end_year = None, wyt_list = ['any']):
+def assess_alteration(gages, metrics_paths, output_files = OUTPUT_FILE_DIR, aa_start_year = None, aa_end_year = None, wyt_list = ['any']):
 
     return_message = ''
 
@@ -13,7 +14,15 @@ def assess_alteration(gages, metrics_paths, output_files = 'user_output_files', 
         return_message += 'No metric data entered WYT alteration assessment, it is likely all metric calculation failed\n'
 
     alteration_assessment_list = []
+    num_gages = len(gages)
+    last_gage = ''
+    i =0
     for (gage, metrics) in zip(gages, metrics_paths):
+        current_gage = gage
+        if current_gage != last_gage:
+            print(f'On comid: {gage.comid} {i/num_gages * 100}% complete')
+            i = i +1
+
         comid = gage.comid
         gage_id = gage.gage_id
         has_wyt = comid_to_wyt(comid, 2022)
@@ -114,22 +123,22 @@ def write_alteration_assessment(aa_list, output_dir, wyt = False):
         list_to_add = []
 
     if wyt:
-        out_path = os.path.join(output_dir,f'{file_string}_alteration_assessment.csv')
+        out_path = os.path.join(output_dir,f'{file_string}_alteration_assessment.parquet')
         alteration_results = out_df[list_to_add + ['WYT' ,'metric','alteration_type', 'status', 'status_code', 'median_in_iqr', 'years_used', 'sufficient_data']]
     else:
-        out_path = os.path.join(output_dir,f'{file_string}_alteration_assessment.csv')
+        out_path = os.path.join(output_dir,f'{file_string}_alteration_assessment.parquet')
         alteration_results = out_df[list_to_add + ['metric','alteration_type', 'status', 'status_code', 'median_in_iqr', 'years_used', 'sufficient_data']]
 
-    alteration_results.to_csv(out_path, index = False)
+    alteration_results.to_parquet(out_path, index = False)
 
     if wyt:
-        out_path = os.path.join(output_dir,f'{file_string}_predicted_observed_percentiles.csv')
+        out_path = os.path.join(output_dir,f'{file_string}_predicted_observed_percentiles.parquet')
         percentiles = out_df[list_to_add + ['WYT', 'metric', 'p10', 'p25', 'p50', 'p75', 'p90', 'p10_predicted', 'p25_predicted', 'p50_predicted', 'p75_predicted', 'p90_predicted']]
     else:
-        out_path = os.path.join(output_dir,f'{file_string}_predicted_observed_percentiles.csv')
+        out_path = os.path.join(output_dir,f'{file_string}_predicted_observed_percentiles.parquet')
         percentiles = out_df[list_to_add + ['metric', 'p10', 'p25', 'p50', 'p75', 'p90', 'p10_predicted', 'p25_predicted', 'p50_predicted', 'p75_predicted', 'p90_predicted']]
 
-    percentiles.to_csv(out_path, index = False)
+    percentiles.to_parquet(out_path, index = False)
 
 def observations_altered(observations, metric, low_bound, high_bound, median):
     obs = pd.to_numeric(observations[metric], errors = 'coerce')

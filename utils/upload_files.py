@@ -7,7 +7,7 @@ from classes.FlashyMetricCalculator import FlashyCalculator
 from classes.matrix_convert import MatrixConversion
 from classes.MetricCalculator import Calculator
 from utils.helpers import calc_avg_nan_per_year, comid_to_wyt, dict_to_array
-from utils.constants import DELETE_INDIVIDUAL_FILES_WHEN_BATCH, QUIT_ON_ERROR, NUMBER_TO_CLASS, PRODUCE_DRH
+from utils.constants import DELETE_INDIVIDUAL_FILES_WHEN_BATCH, QUIT_ON_ERROR, NUMBER_TO_CLASS, PRODUCE_DRH, OUTPUT_FILE_DIR
 from params import summer_params
 from params import fall_params
 from params import spring_params
@@ -15,21 +15,23 @@ from params import winter_params
 from params import flashy_params
 
 
-def upload_files(start_date, gage_arr, output_files = 'user_output_files', batched = False, alteration_needed = False, aa_start_year = None, aa_end_year = None):
-    
+def upload_files(start_date, gage_arr, output_files = OUTPUT_FILE_DIR, batched = False, alteration_needed = False, aa_start_year = None, aa_end_year = None):
+
     warning_message = ''
 
-    # these 3 are for storing file names and file types of files that will later need to be batched together 
-    output_file_dirs = [[],[]]
+    # these 3 are for storing file names and file types of files that will later need to be batched together
+    output_file_dirs = [[]]
     metadata_files = []
     file_identifiers = []
-    file_base_name = ['annual_flow_matrix', 'annual_flow_result']
-    
-    
+    file_base_name = ['annual_flow_result']
+
+    i = 0
     for gage in gage_arr:
-        
+        print(f"starting metric computation on comid:{gage.comid} {i/len(gage_arr) * 100}% complete this parquet file")
+        i = i+1
+
         try:
-            
+
             file = gage.download_directory
             file_name = os.path.join(output_files, os.path.splitext(os.path.basename(file))[0])
             dataset, csv_warning_message = read_csv_to_arrays(file)
@@ -38,8 +40,8 @@ def upload_files(start_date, gage_arr, output_files = 'user_output_files', batch
                 dataset['date'], dataset['flow'], start_date)
             results, used_calculator, results_message = get_results(matrix, int(gage.flow_class), start_date, gage.comid, gage.selected_calculator)
             warning_message += results_message
-            output_dir0 = write_annual_flow_matrix(file_name, results, file_base_name[0])
-            output_dir1 = write_annual_flow_result(file_name, results, file_base_name[1])
+            #output_dir0 = write_annual_flow_matrix(file_name, results, file_base_name[0])
+            output_dir1 = write_annual_flow_result(file_name, results, file_base_name[0])
             if PRODUCE_DRH:
                 write_drh(file_name, results, 'drh')
             formatted = f'{gage.gage_id}'
@@ -47,8 +49,8 @@ def upload_files(start_date, gage_arr, output_files = 'user_output_files', batch
             metadata_file = write_parameters(param_path, gage.flow_class, used_calculator, aa_start_year, aa_end_year)
 
             file_identifiers.append(os.path.splitext(os.path.basename(file))[0])
-            output_file_dirs[0].append(output_dir0)
-            output_file_dirs[1].append(output_dir1)
+            #output_file_dirs[0].append(output_dir0)
+            output_file_dirs[0].append(output_dir1)
             metadata_files.append(metadata_file)
         except Exception as e:
             original_message = str(e)
@@ -58,8 +60,8 @@ def upload_files(start_date, gage_arr, output_files = 'user_output_files', batch
             else:
                 warning_message += f"There was an error when calculating metrics for gage {gage} proceeding to next gage\n"
                 continue
-    
-    
+
+
     if batched:
         for file_paths, base_name in zip(output_file_dirs, file_base_name):
             if not file_paths:
@@ -70,7 +72,7 @@ def upload_files(start_date, gage_arr, output_files = 'user_output_files', batch
         batch_metadata_files(metadata_files, file_identifiers, output_files)
 
 
-    return output_file_dirs[1], warning_message
+    return output_file_dirs[0], warning_message
 
 def calc_results_flashy(matrix, flow_class, start_date = '10/1', comid = None):
     results = {}
@@ -124,26 +126,26 @@ def calc_results_reference(matrix, flow_class, start_date = '10/1', comid = None
     results["new_low"], results["classification"] = calculator.new_low_flow_metrics()
     if comid is not None:
         results["classification"]["wyt"] = [comid_to_wyt(comid,i) for i in results["year_ranges"]]
-    return results, calculator.calc_RBFI(), calc_avg_nan_per_year(copy.deepcopy(results)), return_message 
+    return results, calculator.calc_RBFI(), calc_avg_nan_per_year(copy.deepcopy(results)), return_message
 
 def get_results(matrix, flow_class, start_date = None, comid = None, desired_calculator = None):
     if flow_class is None or flow_class == 10:
         flow_class = 3
     if desired_calculator is None:
         # no specified calculator, determine which is better
-    
+
         if int(flow_class) == 7:
             flashy_res, calc_return_message = calc_results_flashy(matrix, flow_class, start_date, comid)
             return flashy_res, 'Flashy (Class 7)', calc_return_message
         else:
             reference_res, rbfi, annual_nan, calc_return_message = calc_results_reference(copy.deepcopy(matrix), flow_class, start_date, comid)
-            
+
             if(rbfi + annual_nan > 0.8):
                 flashy_res, calc_return_message = calc_results_flashy(matrix, flow_class, start_date, comid)
                 return flashy_res, 'Flashy (RBFI + mean annual nan > 0.8)', calc_return_message
             else:
                 return reference_res, 'Reference (RBFI + mean annual nan <= 0.8)', calc_return_message
-    
+
     elif desired_calculator.lower() == 'reference':
         # use the reference calculator
         reference_res, _, _, calc_return_message = calc_results_reference(matrix, flow_class, start_date, comid)
@@ -152,7 +154,7 @@ def get_results(matrix, flow_class, start_date = None, comid = None, desired_cal
         # use the ucdavis flashy calculator
         flashy_res,calc_return_message = calc_results_flashy(matrix, flow_class, start_date, comid)
         return flashy_res, 'Flashy (User Specified)', calc_return_message
-    
+
 def write_annual_flow_matrix(file_name, results, file_type):
     flow_matrix = np.array(results['flow_matrix']).T
     year_column = np.array(results['year_ranges'])
@@ -163,8 +165,8 @@ def write_annual_flow_matrix(file_name, results, file_type):
                header=days_header, fmt='%s', comments='')
 
     return output_dir
-        
-def write_drh(file_name, results, file_type):  
+
+def write_drh(file_name, results, file_type):
     dataset = []
     for key, value in results['DRH'].items():
         data = value
@@ -203,7 +205,7 @@ def write_annual_flow_result(file_name, results, file_type):
     df.rename(columns={'index': 'Year'}, inplace=True)
     df = df[~df[['DS_Tim', 'SP_Tim', 'Wet_Tim', 'FA_Tim']].isnull().all(axis=1)]
     output_dir = file_name + '_' + file_type + '.csv'
-    df.to_csv(output_dir, index=False)    
+    df.to_csv(output_dir, index=False)
     return output_dir
 
 def write_parameters(file_name, flow_class, used_calculator, aa_start = None, aa_end = None, file_type = 'run_metadata'):
@@ -260,10 +262,10 @@ def batch_metadata_files(metadata_file_paths, file_identifier, output_dir):
             os.remove(file_path)
     column_order = ['Source'] + column_names
     combined_data = combined_data[column_order]
-    combined_data.to_csv(os.path.join(output_dir, "combined_metadata.csv"), index=False)
+    combined_data.to_parquet(os.path.join(output_dir, "combined_metadata.parquet"), index=False)
 
 def batch_files(file_paths, base_file_name, file_identifier, output_dir, alteration_needed):
-    
+
     combined_data = pd.DataFrame()
 
     for file_path, file_id in zip(file_paths, file_identifier):
@@ -277,10 +279,11 @@ def batch_files(file_paths, base_file_name, file_identifier, output_dir, alterat
         if os.path.isfile(file_path) and DELETE_INDIVIDUAL_FILES_WHEN_BATCH:
             if not (alteration_needed and base_file_name == 'annual_flow_result'):
                 os.remove(file_path)
-    
+
     column_order = ['Source'] + [col for col in combined_data.columns if col != 'Source']
     combined_data = combined_data[column_order]
-    combined_data.to_csv(os.path.join(output_dir, "combined_" + base_file_name + ".csv"), index=False)
+    print(f'Writing output to {os.path.join(output_dir, "combined_" + base_file_name + ".parquet")}')
+    combined_data.to_parquet(os.path.join(output_dir, "combined_" + base_file_name + ".parquet"), index=False)
 
 def read_csv_to_arrays(file_path):
     warning_message = ''
@@ -293,14 +296,14 @@ def read_csv_to_arrays(file_path):
 
     if flow_column is None:
         raise ValueError("Neither 'flow' nor 'discharge' column found in the CSV.")
-    
+
     df = df[[date_column, flow_column]]
     try:
         df[flow_column] = pd.to_numeric(df[flow_column],errors='raise')
     except Exception as e:
         warning_message += f'The provided "{flow_column}" column within {file_path} is not strictly numeric (contains some non numeric characters in some entries), these rows will be ignored and treated as missing. Please review your csv file if this is unexpected.\n'
         df[flow_column] = pd.to_numeric(df[flow_column], errors='coerce')
-    
+
     # Count negative values in the flow_column
     num_negative_values = (df[flow_column] < 0).sum()
 
@@ -309,7 +312,7 @@ def read_csv_to_arrays(file_path):
 
     # Replace negative values with NaN
     df.loc[df[flow_column] < 0, flow_column] = np.nan
-    
+
     try:
         dates = pd.to_datetime(df[date_column], errors='raise')
     except Exception as e:
