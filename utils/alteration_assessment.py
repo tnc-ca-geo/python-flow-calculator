@@ -4,8 +4,16 @@ import requests
 import os
 from utils.helpers import comid_to_wyt
 from io import StringIO
+import seaborn as sns
+import matplotlib
+matplotlib.use('Agg')
+from matplotlib.patches import Rectangle
+import matplotlib.pyplot as plt
 
-def assess_alteration(gages, metrics_paths, output_files = 'user_output_files', aa_start_year = None, aa_end_year = None, wyt_list = ['any']):
+def assess_alteration(gages, metrics_paths, output_files = 'user_output_files', aa_start_year = None, aa_end_year = None, wyt_list = ['any'], box_plots = False):
+
+    if box_plots:
+        os.mkdir(os.path.join(output_files, 'box_plots'))
 
     return_message = ''
 
@@ -46,7 +54,7 @@ def assess_alteration(gages, metrics_paths, output_files = 'user_output_files', 
             alteration_assessment_list.append(aa_dict)
 
     if len(alteration_assessment_list) > 0:
-        write_alteration_assessment(alteration_assessment_list, output_files, wyt = True)
+        return_message += write_alteration_assessment(alteration_assessment_list, output_files, wyt = True, box_plots = box_plots)
 
     return return_message
 
@@ -82,15 +90,47 @@ def compare_data_frames(raw_metrics, predicted_metrics, raw_percentiles, count):
 
     return combined_df
 
-def write_alteration_assessment(aa_list, output_dir, wyt = False):
+def write_alteration_assessment(aa_list, output_dir, wyt = False, box_plots = False):
+    warning_message = ''
 
     first_df = True
     out_df = None
+
+    if box_plots:
+        box_plot_dir = os.path.join(output_dir, 'box_plots')
 
     for dict in aa_list:
         df = dict['aa']
         gage_id = dict['gage_id']
         peaks = ('Peak_10', 'Peak_5', 'Peak_2')
+
+        string_suffix = ''
+        wyt_string = ''
+
+        if wyt:
+            wyt_string = df.at[0, 'WYT']
+            string_suffix = f'and WYT {wyt_string}'
+
+        if box_plots:
+            all_configs = [
+                ('SP_', 'Spring Metrics'),
+                ('Wet_', 'Wet Season Metrics'),
+                ('DS_', 'Dry Season Metrics'),
+                ('FA_', 'Fall Metrics'),
+                ('Peak_Dur_', 'Peak Duration Metrics'),
+                ('Peak_Fre_', 'Peak Frequency Metrics'),
+            ]
+
+            for prefix, title in all_configs:
+                if prefix.startswith('Peak_') and wyt_string != 'any':
+                    continue
+                warning_message += plot_metric_group(
+                    df,
+                    prefix=prefix,
+                    title=f'{title} for {gage_id} {string_suffix}',
+                    filename=os.path.join(box_plot_dir, f'{gage_id}_{prefix}{wyt_string}.png')
+                )
+
         df = df[~df['metric'].isin(peaks)]
         timing_cols = ['DS_Tim', 'FA_Tim', 'SP_Tim', 'Wet_Tim']
         condition = (df['metric'].isin(timing_cols)) & (df['alteration_type'] == 'low')
@@ -130,6 +170,8 @@ def write_alteration_assessment(aa_list, output_dir, wyt = False):
         percentiles = out_df[list_to_add + ['metric', 'p10', 'p25', 'p50', 'p75', 'p90', 'p10_predicted', 'p25_predicted', 'p50_predicted', 'p75_predicted', 'p90_predicted']]
 
     percentiles.to_csv(out_path, index = False)
+
+    return warning_message
 
 def observations_altered(observations, metric, low_bound, high_bound, median):
     obs = pd.to_numeric(observations[metric], errors = 'coerce')
@@ -235,3 +277,91 @@ def fill_na_10th_percentile(df):
             print(warning_msg)
 
     return df
+
+def plot_metric_group(df, prefix, title, filename):
+
+    df_subset = df[df['metric'].str.startswith(prefix)]
+    if df_subset.empty:
+        return f'Unable to produce boxplot file {filename}, missing all predicted or observed values for this subset of metrics / water year type\n'
+
+    observed = df_subset.melt(
+        id_vars=['metric'],
+        value_vars=['p10', 'p25', 'p50', 'p75', 'p90'],
+        var_name='percentile',
+        value_name='Value'
+    )
+    observed['Percentile Type'] = 'observed'
+
+    predicted = df_subset.melt(
+        id_vars=['metric'],
+        value_vars=['p10_predicted', 'p25_predicted', 'p50_predicted', 'p75_predicted', 'p90_predicted'],
+        var_name='percentile',
+        value_name='Value'
+    )
+    predicted['Percentile Type'] = 'predicted'
+    predicted['percentile'] = predicted['percentile'].str.replace('_predicted', '', regex=False)
+
+    combined = pd.concat([observed, predicted], ignore_index=True)
+
+    sns.set_theme(style="whitegrid")
+    g = sns.catplot(
+        data=combined,
+        x='Percentile Type',
+        y='Value',
+        hue='Percentile Type',
+        col='metric',
+        kind='box',
+        col_wrap=2,
+        sharey=False,
+        palette='Set2',
+        legend=False,
+        linewidth=0.8,
+        whis = (0,100)
+    )
+
+    for ax in g.axes.flat:
+        ymin, ymax = ax.get_ylim()
+        y_range = ymax - ymin
+        ax.set_ylim(ymin, ymax + 0.1 * y_range)
+        for patch in ax.artists:
+            patch.set_edgecolor('none')
+        for line in ax.lines[4::6]:
+            line.set_color('black')
+            line.set_linewidth(2.0)
+
+    g.set_titles(col_template="{col_name}", size=12, weight='bold')
+    g.set_axis_labels("", "Value")
+    g.figure.subplots_adjust(top=0.9)
+    g.figure.suptitle(title, fontsize=16, weight='bold')
+
+    for ax, metric_name in zip(g.axes.flat, df_subset['metric'].unique()):
+        ax.set_title("")
+
+        pos = ax.get_position()
+
+        g.figure.patches.append(
+            Rectangle(
+                (pos.x0, pos.y1),
+                pos.width,
+                0.03,
+                transform=g.figure.transFigure,
+                color='lightgray',
+                zorder=2,
+                clip_on=False
+            )
+        )
+
+        g.figure.text(
+            x=pos.x0 + pos.width / 2,
+            y=pos.y1 + 0.015,
+            s=metric_name,
+            ha='center',
+            va='center',
+            fontsize=10,
+            fontweight='bold',
+            zorder=3
+        )
+
+    g.savefig(filename, format='png', dpi=300, bbox_inches='tight')
+    plt.close(g.figure)
+    return ''
