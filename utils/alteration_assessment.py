@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 def assess_alteration(gages, metrics_paths, output_files = 'user_output_files', aa_start_year = None, aa_end_year = None, wyt_list = ['any'], box_plots = False):
 
     if box_plots:
-        os.mkdir(os.path.join(output_files, 'box_plots'))
+        os.makedirs(os.path.join(output_files, 'box_plots'), exist_ok=True)
 
     return_message = ''
 
@@ -96,9 +96,6 @@ def write_alteration_assessment(aa_list, output_dir, wyt = False, box_plots = Fa
     first_df = True
     out_df = None
 
-    if box_plots:
-        box_plot_dir = os.path.join(output_dir, 'box_plots')
-
     for dict in aa_list:
         df = dict['aa']
         gage_id = dict['gage_id']
@@ -112,6 +109,11 @@ def write_alteration_assessment(aa_list, output_dir, wyt = False, box_plots = Fa
             string_suffix = f'and WYT {wyt_string}'
 
         if box_plots:
+            box_plot_dir = os.path.join(output_dir, 'box_plots')
+
+            if not ((len(aa_list) == 1) or (wyt and len(aa_list) <= 4)):
+                box_plot_dir = os.path.join(box_plot_dir, f'{gage_id}')
+                os.makedirs(box_plot_dir, exist_ok=True)
             all_configs = [
                 ('SP_', 'Spring Metrics'),
                 ('Wet_', 'Wet Season Metrics'),
