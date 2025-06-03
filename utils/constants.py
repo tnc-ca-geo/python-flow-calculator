@@ -5,7 +5,7 @@ PRODUCE_DRH = False
 SKIP_PROMPTS_BATCH = True # do you want to skip the prompts confirming you want to continue when using batch processing?
 
 # Constants below here are not recommended to be changed unless you are very familiar with the calculators inner workings or an active maintainer
-VERSION = '1.0.0'
+VERSION = '1.1.0'
 QUIT_ON_ERROR = False # do you want the entire process to stop when an error occurs, True assumes you want more detailed messages as you are hopefully debugging it
 TYPES = {
     'all_year_average_annual_flows': "Avg",

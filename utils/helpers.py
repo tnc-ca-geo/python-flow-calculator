@@ -3,7 +3,7 @@ import os
 from datetime import datetime, timedelta
 import numpy as np
 import re
-from numpy import NaN, Inf, arange, isscalar, asarray, array
+from numpy import nan, inf, arange, isscalar, asarray, array
 from utils.constants import TYPES
 
 def fill_year_array(years):
@@ -80,8 +80,8 @@ def peakdet(v, delta, x = None):
     if delta < 0:
         raise Exception('Input argument delta must be positive')
 
-    mn, mx = Inf, -Inf
-    mnpos, mxpos = NaN, NaN
+    mn, mx = inf, -inf
+    mnpos, mxpos = nan, nan
 
     lookformax = True
 
@@ -168,11 +168,11 @@ def find_index(arr, item):
             return index
 
 def comid_to_class(comid):
-    
+
     comid = int(comid)
     dir_path = os.path.dirname(os.path.realpath(__file__))
     parent_dir = os.path.abspath(os.path.join(dir_path, os.pardir))
-    path_to_class_file = os.path.join(parent_dir, "extra_info", "comid_to_stream_class.csv")   
+    path_to_class_file = os.path.join(parent_dir, "extra_info", "comid_to_stream_class.csv")
     df = pd.read_csv(path_to_class_file)
     filtered_row = df[(df['comid'] == comid)]
     if filtered_row.empty:
@@ -192,18 +192,18 @@ def comid_to_wyt(comid, water_year):
 
     dir_path = os.path.dirname(os.path.realpath(__file__))
     parent_dir = os.path.abspath(os.path.join(dir_path, os.pardir))
-    path_to_wyt_file = os.path.join(parent_dir, "extra_info", "comid_to_wyt.csv")    
+    path_to_wyt_file = os.path.join(parent_dir, "extra_info", "comid_to_wyt.csv")
     df = pd.read_csv(path_to_wyt_file)
     filtered_row = df[(df['comid'] == comid)]
     if filtered_row.empty:
         return 'unknown'
-    
+
     data = filtered_row['compressed_wyt'].iloc[0]
     data_str = str(data)
     wyt_encoded = data_str[water_year]
     mapping_dict = {'0': 'moderate','1': 'wet', '2': 'dry'}
     wyt = mapping_dict[wyt_encoded]
-    
+
     return wyt
 
 def calc_avg_nan_per_year(results):
@@ -250,7 +250,7 @@ def dict_to_array(data, field_type, dataset):
                 data = value
                 data.insert(0, TYPES[field_type+'_'+key])
                 dataset.append(data)
-                
+
         elif field_type == '':
             # dont add a leading underscore for no reason
             data = value
@@ -285,7 +285,7 @@ def regex_peak_detection(x, nups=1, ndowns=1, zero='0', peakpat=None,
     """
     x = np.asarray(x)
     if not np.issubdtype(x.dtype, np.number) or np.isnan(x).any():
-        raise ValueError("Input 'x' must be a numeric vector without NaNs.")
+        raise ValueError("Input 'x' must be a numeric vector without nans.")
 
     if zero not in ('0', '+', '-'):
         raise ValueError("Argument 'zero' can only be '0', '+', or '-'.")
@@ -305,12 +305,12 @@ def regex_peak_detection(x, nups=1, ndowns=1, zero='0', peakpat=None,
         else:
             signs_str_list.append('0')
     sign_str = ''.join(signs_str_list)
-    
+
     # Replace zeros if necessary
     if zero != '0':
         sign_str = sign_str.replace('0', zero)
-    
-          
+
+
     # Define the peak pattern
     if peakpat is None:
         peakpat = r'[+]{%d,}[-]{%d,}' % (nups, ndowns)
@@ -321,7 +321,7 @@ def regex_peak_detection(x, nups=1, ndowns=1, zero='0', peakpat=None,
         return np.array([])
 
     x1 = np.array([m.start() for m in matches])
-    
+
     x2 = np.array([m.end() for m in matches])
 
     n = len(x1)
@@ -418,7 +418,7 @@ def smth_gaussian(x, window=None, alpha=None, tails=False):
     hkw_l = int(size_w / 2)
     hkw_r = size_w - hkw_l
     ret = np.zeros(size_d)
-    
+
     for i in range(size_d):
         ix_d = np.arange(i - hkw_l, i + hkw_r)
         ix_w = (ix_d >= 0) & (ix_d < size_d)
@@ -428,7 +428,7 @@ def smth_gaussian(x, window=None, alpha=None, tails=False):
             W_nm = normalize(W_nm)
         D_nm = x[ix_d]
         ret[i] = np.dot(D_nm, W_nm)
-    
+
     if not tails:
         ret[:hkw_l] = np.nan
         ret[-hkw_r:] = np.nan
