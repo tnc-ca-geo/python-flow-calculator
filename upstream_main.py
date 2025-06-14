@@ -54,7 +54,7 @@ def process_parquet_files(parquet_file):
     return gauge_list
 
 def main():
-    #download_upwards_data()
+    download_upwards_data()
     input_path = Path(INPUT_FILE_DIR)
     for parquet_file in input_path.glob("*.parquet"):
         gauges = process_parquet_files(parquet_file)
