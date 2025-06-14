@@ -31,7 +31,7 @@ def calc_spring_transition_timing_magnitude(flow_matrix, class_number, summer_ti
         """Get flow data and interpolate between None values"""
         flow_data = flow_matrix[:, column_number]
         flow_data = replace_nan(flow_data.copy())
-        
+
         current_sensitivity = sensitivity / 1000
 
         if class_number == 4:
@@ -109,6 +109,8 @@ def calc_spring_transition_timing_magnitude(flow_matrix, class_number, summer_ti
 
             """If search window is too small, move on to next value in maxarray. If it is the last value in maxarray, proceed inside loop"""
             if len(flow_data_window) < 50:
+                if 'counter' not in locals():
+                    continue
                 if counter != len(maxarray)-1:
                     continue
 
@@ -127,7 +129,7 @@ def calc_spring_transition_timing_magnitude(flow_matrix, class_number, summer_ti
             for index in index_zeros:
                 new_index.append(max_flow_index -
                                  current_search_window_left + index)
-            
+
             """Loop through the indices where derivative=0, from right to left"""
             for i in reversed(new_index):
                 threshold = max(spl_first_deriv(x_axis_window))
@@ -139,7 +141,7 @@ def calc_spring_transition_timing_magnitude(flow_matrix, class_number, summer_ti
                 if summer_timings[column_number] is not None and i < summer_timings[column_number] and i > timing_cutoff and spl(i) - spl(i-1) > threshold * current_sensitivity * 1 and spl(i-1) - spl(i-2) > threshold * current_sensitivity * 2 and spl(i-2) - spl(i-3) > threshold * current_sensitivity * 3 and spl(i-3) - spl(i-4) > threshold * current_sensitivity * 4 and (spl(i) - min_flow_window) / range_window > min_percentage_of_max_flow:
                     timings[-1] = i
                     break
-                 
+
             """Check if timings is before max flow index"""
             if timings[-1] < max_flow_index:  # replace max flow index with cutoff date
                 timings[-1] = max_flow_index + lag_time
@@ -152,10 +154,10 @@ def calc_spring_transition_timing_magnitude(flow_matrix, class_number, summer_ti
                     flow_data[timings[-1] - 4: timings[-1] + 7], max_flow_window_new)
                 timings[-1] = timings[-1] - 4 + new_timings + lag_time
                 magnitudes[-1] = max_flow_window_new
-            
+
             """Fix From Bronwen & Cam"""
             if class_number == 4 or class_number == 6 or class_number == 7 or class_number == 8:
-                magnitudes[-1] = flow_data[timings[-1] - 1] 
+                magnitudes[-1] = flow_data[timings[-1] - 1]
 
             if summer_timings[column_number] is not None and timings[-1] > summer_timings[column_number]:
                 timings[-1] = None
