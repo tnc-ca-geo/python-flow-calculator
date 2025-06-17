@@ -72,6 +72,7 @@ def compare_data_frames(raw_metrics, predicted_metrics, raw_percentiles, count):
     combined_df['alteration_type'] = np.where(combined_df['p50'] < combined_df['p25_predicted'], 'low', combined_df['alteration_type'])
     combined_df['alteration_type'] = np.where(combined_df['p50'] > combined_df['p75_predicted'], 'high', combined_df['alteration_type'])
 
+    # Initial status assignment
     for index, row in combined_df.iterrows():
         if (row['p50'] >= row['p10_predicted']) and (row['p50'] <= row['p90_predicted']):
             if not observations_altered(observations=raw_metrics, metric = row['metric'], low_bound=row['p10_predicted'], high_bound=row['p90_predicted'], median = row['p50']):
@@ -82,11 +83,39 @@ def compare_data_frames(raw_metrics, predicted_metrics, raw_percentiles, count):
             combined_df.at[index, 'status'] = "likely_altered"
             combined_df.at[index, 'status_code'] = -1
 
+    # Add years of data
     count = count.to_frame()
     count.columns = ['years_used']
     count['metric'] = count.index
     combined_df = pd.merge(combined_df, count, on='metric')
-    combined_df['sufficient_data'] = np.where(combined_df['years_used'] < 10, False, True)
+
+    # Define peak flow metric condition
+    is_peak = combined_df['metric'].str.contains("peak", case=False)
+
+    # Determine status based on alteration and years used
+    combined_df['status'] = np.where(
+        ((combined_df['years_used'] < 5) & ~is_peak) |
+        ((combined_df['years_used'] < 10) & is_peak),
+        'insufficient_data',
+        combined_df['status']
+    )
+    combined_df['status_code'] = np.where(
+        combined_df['status'] == 'insufficient_data',
+        0,
+        combined_df['status_code']
+    )
+
+    combined_df.loc[
+        ((combined_df['status'] == 'likely_altered') & ~is_peak & (combined_df['years_used'] < 15)) |
+        ((combined_df['status'] == 'likely_altered') & is_peak & (combined_df['years_used'] < 20)),
+        'status'
+    ] = 'possibly_altered'
+
+    combined_df.loc[
+        ((combined_df['status'] == 'likely_unaltered') & ~is_peak & (combined_df['years_used'] < 15)) |
+        ((combined_df['status'] == 'likely_unaltered') & is_peak & (combined_df['years_used'] < 20)),
+        'status'
+    ] = 'possibly_unaltered'
 
     return combined_df
 
@@ -121,19 +150,24 @@ def write_alteration_assessment(aa_list, output_dir, wyt = False, box_plots = Fa
                 ('FA_', 'Fall Metrics'),
                 ('Peak_Dur_', 'Peak Duration Metrics'),
                 ('Peak_Fre_', 'Peak Frequency Metrics'),
+                ('Peak_', 'Peak Magnitude Metrics'),
             ]
 
             for prefix, title in all_configs:
+
+                used_df = df
                 if prefix.startswith('Peak_') and wyt_string != 'any':
                     continue
+                if prefix == 'Peak_':
+                    used_df = df[df['metric'].isin(peaks)]
+
                 warning_message += plot_metric_group(
-                    df,
+                    used_df,
                     prefix=prefix,
                     title=f'{title} for {gage_id} {string_suffix}',
                     filename=os.path.join(box_plot_dir, f'{gage_id}_{prefix}{wyt_string}.png')
                 )
 
-        df = df[~df['metric'].isin(peaks)]
         timing_cols = ['DS_Tim', 'FA_Tim', 'SP_Tim', 'Wet_Tim']
         condition = (df['metric'].isin(timing_cols)) & (df['alteration_type'] == 'low')
         df.loc[condition, 'alteration_type'] = 'early'
@@ -157,10 +191,10 @@ def write_alteration_assessment(aa_list, output_dir, wyt = False, box_plots = Fa
 
     if wyt:
         out_path = os.path.join(output_dir,f'{file_string}_alteration_assessment.csv')
-        alteration_results = out_df[list_to_add + ['WYT' ,'metric','alteration_type', 'status', 'status_code', 'median_in_iqr', 'years_used', 'sufficient_data']]
+        alteration_results = out_df[list_to_add + ['WYT' ,'metric','alteration_type', 'status', 'status_code', 'median_in_iqr', 'years_used']]
     else:
         out_path = os.path.join(output_dir,f'{file_string}_alteration_assessment.csv')
-        alteration_results = out_df[list_to_add + ['metric','alteration_type', 'status', 'status_code', 'median_in_iqr', 'years_used', 'sufficient_data']]
+        alteration_results = out_df[list_to_add + ['metric','alteration_type', 'status', 'status_code', 'median_in_iqr', 'years_used']]
 
     alteration_results.to_csv(out_path, index = False)
 
