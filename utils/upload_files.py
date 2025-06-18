@@ -291,11 +291,14 @@ def read_csv_to_arrays(file_path):
     df = pd.read_csv(file_path, skipinitialspace=True)
     df.columns = df.columns.str.lower()
 
-    date_column = 'date'
+    date_column = 'date' if 'date' in df.columns else None
     flow_column = 'flow' if 'flow' in df.columns else 'discharge' if 'discharge' in df.columns else None
 
     if flow_column is None:
         raise ValueError("Neither 'flow' nor 'discharge' column found in the CSV.")
+
+    if date_column is None:
+        raise ValueError("'date' column not found in the CSV.")
 
     df = df[[date_column, flow_column]]
     try:

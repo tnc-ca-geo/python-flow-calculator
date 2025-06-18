@@ -164,3 +164,4 @@ cython_debug/
 **/post_processedFiles/
 
 cache/*
+batch_upload.py

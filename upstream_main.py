@@ -79,7 +79,7 @@ def main():
                     if os.path.isfile(gage.download_directory):
                         os.remove(gage.download_directory)
 
-        with py7zr.SevenZipFile(f'{str(gauges[0].comid)[:4]}_actual.7z', 'w') as archive:
+        with py7zr.SevenZipFile(f'{str(gauges[0].comid)[:4]}_unimpaired.7z', 'w') as archive:
             archive.writeall(output_files_dir, 'base')
 
         #upload_file(f'{str(gauges[0].comid)[:4]}.7z')
@@ -89,7 +89,7 @@ def main():
 def download_upwards_data():
     with open('filenames.txt', 'r') as file:
         lines = file.read().splitlines()
-    base_url = 'https://ca-reach-scale-predictions.hydroforecast.com/actual_flows/v1/'
+    base_url = 'https://ca-reach-scale-predictions.hydroforecast.com/unimpaired_flows/v1/'
     for line in lines:
         file_name = line.strip()
         url = f"{base_url}{file_name}"
