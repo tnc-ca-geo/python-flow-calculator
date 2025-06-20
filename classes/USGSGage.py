@@ -14,7 +14,7 @@ class USGSGage(AbstractGage):
         - measurement_unit (str, optional): The measurement unit for the gage readings (default is 'cfs').
         """
         super().__init__(gage_id)
-        
+
     def download_metadata(self):
         """
         Download metadata for the USGS Gage, including latitude and longitude.
@@ -26,7 +26,7 @@ class USGSGage(AbstractGage):
             df = nwis.get_info(sites=self.gage_id)
             self.latitude = df[0]['dec_lat_va'].iloc[0]
             self.longitude = df[0]['dec_long_va'].iloc[0]
-    
+
     def save_daily_data(self):
         """
         Save daily flow data for the USGS Gage to a CSV file.
@@ -44,7 +44,7 @@ class USGSGage(AbstractGage):
             raise Exception(f'No data found for {self.gage_id} is this a valid USGS gage? (ensure that gages less than 9 gigits long are front padded with 0)')
         if len(df.index) < 365:
             raise NotEnoughDataError(f"There was little data available for {self.gage_id}")
-            
+
         self.start_date = df.index[0]
         # mapping both 72137_Mean and 00060_Mean to flow because we know there will only be 1 or the other
         df = df.rename(columns={'72137_Mean': 'flow', '00060_Mean': 'flow', 'datetime': 'date', 'site_no': 'gage', '00060_Mean_cd': 'flow_flag', '72137_Mean_cd': 'flow_flag'})
@@ -68,7 +68,7 @@ class USGSGage(AbstractGage):
 
         if self.comid not in (None, ''):
             return self.comid
-       
+
         target_id = self.gage_id
         folder_path = os.path.join(os.getcwd(), 'extra_info')
         csv_file_path = os.path.join(folder_path, f'filtered_stream_gages_v3c_20240311.csv')
@@ -85,13 +85,12 @@ class USGSGage(AbstractGage):
 
         if (self.comid is None) or (self.comid == ''):
             super().get_comid()
-        
+
         return self.comid
 
     def __str__(self):
         """
         Return a string representation of the USGS Gage.
         """
-        
+
         return f"USGS Gage ID: {self.gage_id}, Location: {self.latitude}, {self.longitude}, Measurement Unit: {self.measurement_unit}"
-        
