@@ -62,7 +62,7 @@ def compare_data_frames(raw_metrics, predicted_metrics, raw_percentiles, count):
 
     combined_df = pd.merge(raw_percentiles, predicted_metrics, on='metric', suffixes=('', '_predicted'))
     combined_df['alteration_type'] = "unknown"
-    combined_df['status'] = "indeterminate"
+    combined_df['status'] = "likely_indeterminate"
     combined_df['status_code'] = 0
     combined_df['median_in_iqr'] = False
 
@@ -90,12 +90,12 @@ def compare_data_frames(raw_metrics, predicted_metrics, raw_percentiles, count):
     combined_df = pd.merge(combined_df, count, on='metric')
 
     # Define peak flow metric condition
-    is_peak = combined_df['metric'].str.contains("peak", case=False)
+    # Including this for now until its solidified that there is no more need for special peak logic
+    # is_peak = combined_df['metric'].str.contains("peak", case=False)
 
     # Determine status based on alteration and years used
     combined_df['status'] = np.where(
-        ((combined_df['years_used'] < 5) & ~is_peak) |
-        ((combined_df['years_used'] < 10) & is_peak),
+        ((combined_df['years_used'] < 5)),
         'insufficient_data',
         combined_df['status']
     )
@@ -106,16 +106,19 @@ def compare_data_frames(raw_metrics, predicted_metrics, raw_percentiles, count):
     )
 
     combined_df.loc[
-        ((combined_df['status'] == 'likely_altered') & ~is_peak & (combined_df['years_used'] < 15)) |
-        ((combined_df['status'] == 'likely_altered') & is_peak & (combined_df['years_used'] < 20)),
+        ((combined_df['status'] == 'likely_altered') & (combined_df['years_used'] < 15)),
         'status'
     ] = 'possibly_altered'
 
     combined_df.loc[
-        ((combined_df['status'] == 'likely_unaltered') & ~is_peak & (combined_df['years_used'] < 15)) |
-        ((combined_df['status'] == 'likely_unaltered') & is_peak & (combined_df['years_used'] < 20)),
+        ((combined_df['status'] == 'likely_unaltered') & (combined_df['years_used'] < 15)),
         'status'
     ] = 'possibly_unaltered'
+
+    combined_df.loc[
+        ((combined_df['status'] == 'likely_indeterminate') & (combined_df['years_used'] < 15)),
+        'status'
+    ] = 'possibly_indeterminate'
 
     return combined_df
 
