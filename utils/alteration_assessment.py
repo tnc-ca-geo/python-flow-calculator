@@ -91,11 +91,12 @@ def compare_data_frames(raw_metrics, predicted_metrics, raw_percentiles, count):
 
     # Define peak flow metric condition
     is_peak = combined_df['metric'].str.contains("peak", case=False)
+    total_years_used = len(raw_metrics['Year'].dropna())
 
     # Determine status based on alteration and years used
     combined_df['status'] = np.where(
         ((combined_df['years_used'] < 5) & ~is_peak) |
-        ((combined_df['years_used'] < 10) & is_peak),
+        ((total_years_used < 10) & is_peak),
         'insufficient_data',
         combined_df['status']
     )
@@ -107,13 +108,13 @@ def compare_data_frames(raw_metrics, predicted_metrics, raw_percentiles, count):
 
     combined_df.loc[
         ((combined_df['status'] == 'likely_altered') & ~is_peak & (combined_df['years_used'] < 15)) |
-        ((combined_df['status'] == 'likely_altered') & is_peak & (combined_df['years_used'] < 20)),
+        ((combined_df['status'] == 'likely_altered') & is_peak & (total_years_used < 20)),
         'status'
     ] = 'possibly_altered'
 
     combined_df.loc[
         ((combined_df['status'] == 'likely_unaltered') & ~is_peak & (combined_df['years_used'] < 15)) |
-        ((combined_df['status'] == 'likely_unaltered') & is_peak & (combined_df['years_used'] < 20)),
+        ((combined_df['status'] == 'likely_unaltered') & is_peak & (total_years_used < 20)),
         'status'
     ] = 'possibly_unaltered'
 
