@@ -45,7 +45,8 @@ def assess_alteration(gages, metrics_paths, output_files = 'user_output_files', 
                     return_message = return_message + f"The gage {gage_id} has no data for water year type {wyt}. Skipping it...\n"
                 continue
 
-            output_df = compare_data_frames(formatted_raw, predicted_metrics, formatted_percentiles, count)
+            output_df, compare_warning = compare_data_frames(formatted_raw, predicted_metrics, formatted_percentiles, count, wyt)
+            return_message = return_message + compare_warning
 
             output_df.insert(0, 'WYT', wyt)
             aa_dict = {}
@@ -58,7 +59,7 @@ def assess_alteration(gages, metrics_paths, output_files = 'user_output_files', 
 
     return return_message
 
-def compare_data_frames(raw_metrics, predicted_metrics, raw_percentiles, count):
+def compare_data_frames(raw_metrics, predicted_metrics, raw_percentiles, count, wyt):
 
     combined_df = pd.merge(raw_percentiles, predicted_metrics, on='metric', suffixes=('', '_predicted'))
     combined_df['alteration_type'] = "unknown"
@@ -89,10 +90,12 @@ def compare_data_frames(raw_metrics, predicted_metrics, raw_percentiles, count):
     count['metric'] = count.index
     combined_df = pd.merge(combined_df, count, on='metric')
 
+    warning_message = ''
     # Define peak flow metric condition
     is_peak = combined_df['metric'].str.contains("peak", case=False)
     total_years_used = len(raw_metrics['Year'].dropna())
-
+    if total_years_used < 20 and wyt == 'any':
+        warning_message = f'At least 20 years of data are recommended for a peak flows analysis or an alteration assessment but only {total_years_used} years were used. Peak flow metrics and alteration assessment may not be accurate.\n'
     # Determine status based on alteration and years used
     combined_df['status'] = np.where(
         ((combined_df['years_used'] < 5) & ~is_peak) |
@@ -118,7 +121,7 @@ def compare_data_frames(raw_metrics, predicted_metrics, raw_percentiles, count):
         'status'
     ] = 'possibly_unaltered'
 
-    return combined_df
+    return combined_df, warning_message
 
 def write_alteration_assessment(aa_list, output_dir, wyt = False, box_plots = False):
     warning_message = ''
