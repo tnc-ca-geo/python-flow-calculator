@@ -95,7 +95,7 @@ def compare_data_frames(raw_metrics, predicted_metrics, raw_percentiles, count, 
     is_peak = combined_df['metric'].str.contains("peak", case=False)
     total_years_used = len(raw_metrics['Year'].dropna())
     if total_years_used < 20 and wyt == 'any':
-        warning_message = f'At least 20 years of data are recommended for a peak flows analysis or an alteration assessment but only {total_years_used} years were used. Peak flow metrics and alteration assessment may not be accurate.\n'
+        warning_message = 'At least 20 years of data are recommended for a peak flows analysis or an alteration assessment. Peak flow metrics and alteration assessment may not be accurate.\n'
     # Determine status based on alteration and years used
     combined_df['status'] = np.where(
         ((combined_df['years_used'] < 5) & ~is_peak) |
