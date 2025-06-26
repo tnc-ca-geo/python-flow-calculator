@@ -103,10 +103,17 @@ def compare_data_frames(raw_metrics, predicted_metrics, raw_percentiles, count, 
         'insufficient_data',
         combined_df['status']
     )
+
     combined_df['status_code'] = np.where(
         combined_df['status'] == 'insufficient_data',
         0,
         combined_df['status_code']
+    )
+
+    combined_df['alteration_type'] = np.where(
+        combined_df['status'] == 'insufficient_data',
+        "unknown",
+        combined_df['alteration_type']
     )
 
     combined_df.loc[
