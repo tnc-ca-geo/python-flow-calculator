@@ -182,29 +182,27 @@ def comid_to_class(comid):
     return int(data)
 
 def comid_to_wyt(comid, water_year):
-
     comid = int(comid)
     water_year = int(water_year)
-
-    if water_year < 1951 or water_year > 2023:
-        return 'unknown'
-    water_year = water_year - 1951
 
     dir_path = os.path.dirname(os.path.realpath(__file__))
     parent_dir = os.path.abspath(os.path.join(dir_path, os.pardir))
     path_to_wyt_file = os.path.join(parent_dir, "extra_info", "comid_to_wyt.csv")
     df = pd.read_csv(path_to_wyt_file)
-    filtered_row = df[(df['comid'] == comid)]
+
+    filtered_row = df[df['comid'] == comid]
     if filtered_row.empty:
         return 'unknown'
 
-    data = filtered_row['compressed_wyt'].iloc[0]
-    data_str = str(data)
-    wyt_encoded = data_str[water_year]
-    mapping_dict = {'0': 'moderate','1': 'wet', '2': 'dry'}
-    wyt = mapping_dict[wyt_encoded]
+    data_str = str(filtered_row['compressed_wyt'].iloc[0])
+    index = water_year - 1951
 
-    return wyt
+    if index < 0 or index >= len(data_str):
+        return 'unknown'  # Year out of available range for this comid
+
+    mapping_dict = {'0': 'moderate', '1': 'wet', '2': 'dry'}
+    wyt_encoded = data_str[index]
+    return mapping_dict.get(wyt_encoded, 'unknown')
 
 def calc_avg_nan_per_year(results):
     dataset = []
