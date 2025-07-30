@@ -504,7 +504,7 @@ if __name__ == '__main__':
 
             while entering:
                 gage_id = questionary.text('Please enter a CDEC Gage ID you would like to analyze'
-                                        ,validate = lambda id: True if bool(re.match(r'^[a-zA-Z]{3}', id)) else "Please enter a valid CDEC Gage id").ask()
+                                        ,validate = lambda id: True if bool(re.match(r'^[a-zA-Z0-9]{3}', id)) else "Please enter a valid CDEC Gage id").ask()
 
 
                 if not gage_id:

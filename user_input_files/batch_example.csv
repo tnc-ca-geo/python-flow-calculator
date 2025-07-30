@@ -1,5 +1,5 @@
 usgs,cdec,path,comid,class,lat,lng,calculator
-,LTK,,8200535,,,,
+,MC7,,8200535,,,,
 ,NRN,,8200535,FER,,,Flashy
 ,,user_input_files/example_input.csv,,,41.191,-123.343,reference
 11523000,,,,,,,
