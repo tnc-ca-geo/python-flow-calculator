@@ -288,7 +288,7 @@ def read_csv_to_arrays(file_path):
     df = pd.read_csv(file_path, skipinitialspace=True)
     df.columns = df.columns.str.lower()
 
-    date_column = 'date'
+    date_column = 'date' if 'date' in df.columns else None
     flow_column = 'flow' if 'flow' in df.columns else 'discharge' if 'discharge' in df.columns else None
 
     if flow_column is None:
