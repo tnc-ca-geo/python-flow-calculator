@@ -32,7 +32,7 @@ class USGSGage(AbstractGage):
         Save daily flow data for the USGS Gage to a CSV file.
 
         Uses the nwis package to retrieve daily flow data, transforms the data, and saves it
-        to a CSV file named '{gage_id}_data.csv' in the 'gage_data' folder. If tidally filtered data is availble that will be used instead of normal discharge
+        to a CSV file named '{gage_id}_data.csv' in the 'gage_data' folder. If tidally filtered data is available that will be used instead of normal discharge
 
         Returns:
         - csv_file_path (str): The path to the saved CSV file.
@@ -41,7 +41,7 @@ class USGSGage(AbstractGage):
         if df.empty or len(df.index) < 365:
             df = nwis.get_record(sites = self.gage_id, service="dv", parameterCd = "00060", statCd="00003", start="1800-10-01")
         if df.empty:
-            raise Exception(f'No data found for {self.gage_id} is this a valid USGS gage? (ensure that gages less than 9 gigits long are front padded with 0)')
+            raise Exception(f'No data found for {self.gage_id} is this a valid USGS gage? (ensure that gages less than 9 digits long are front padded with 0)')
         if len(df.index) < 365:
             raise NotEnoughDataError(f"There was little data available for {self.gage_id}")
 
